@@ -20,7 +20,7 @@
         #searchInput { flex: 1; border: 2px solid #ddd; border-radius: 12px; padding: 12px; outline: none; }
         .btn-mic { background: #f8f9fa; border: 2px solid #ddd; border-radius: 12px; padding: 0 15px; font-size: 20px; }
         .btn-call { background: var(--red); color: white; border: none; border-radius: 12px; padding: 15px; width: 100%; font-weight: bold; font-size: 18px; }
-        .btn-test { background: #28a745; color: white; border: none; border-radius: 12px; padding: 10px; width: 100%; margin-top: 10px; font-size: 14px; }
+        .btn-debug { background: #28a745; color: white; border: none; border-radius: 12px; padding: 8px; width: 100%; margin-top: 8px; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -35,19 +35,17 @@
             <button class="btn-mic" id="micBtn">🎤</button>
         </div>
         <button class="btn-call" id="callBtn">📞 CALL RESHMA</button>
-        <button class="btn-test" id="testVoiceBtn">DEBUG: TEST GOOGLE VOICE</button>
+        <button class="btn-debug" id="testVoiceBtn">DEBUG: TEST GOOGLE VOICE</button>
     </footer>
 </div>
 
 <script src="config.js"></script>
 <script>
-    // 1. CAR IMAGES
     const images = ["mg.png", "haval.png", "omodapng.png"];
     let idx = 0;
     function changeImg() { document.getElementById("heroImg").style.backgroundImage = `url('${images[idx]}')`; idx = (idx + 1) % images.length; }
     changeImg(); setInterval(changeImg, 5000);
 
-    // 2. PREMIUM GOOGLE FEMALE VOICE (FIXED)
     async function speakReshma(text) {
         const apiKey = window.__APP_CONFIG__.googleKey;
         try {
@@ -64,18 +62,20 @@
             if (data.audioContent) {
                 const audio = new Audio("data:audio/mp3;base64," + data.audioContent);
                 audio.play();
-            } else { console.error("Google API Error", data); }
+            } else { console.error("Google Error:", data); alert("Google API Error! Check Console."); }
         } catch (e) { console.error("Voice failed", e); }
     }
 
-    // 3. CALL BUTTON
     document.getElementById("callBtn").onclick = () => {
         const txt = "Assalam o Alaikum! Main Reshma hoon. Drive P K mein khush amdeed. Aap konsi gaari dhoond rahe hain?";
         document.getElementById("results").innerHTML = `<div class="ai-message"><b>Reshma:</b><br>${txt}</div>`;
         speakReshma(txt);
     };
 
-    // 4. MIC LOGIC
+    document.getElementById("testVoiceBtn").onclick = () => {
+        speakReshma("Google Voice Working.");
+    };
+
     const micBtn = document.getElementById("micBtn");
     if ('webkitSpeechRecognition' in window) {
         const recognition = new webkitSpeechRecognition();
@@ -89,7 +89,6 @@
         };
     }
 
-    // 5. OPENAI LOGIC
     async function handleSearch(query) {
         document.getElementById("results").innerHTML = `<p style="color:red">Reshma dhoond rahi hai...</p>`;
         try {
@@ -110,9 +109,6 @@
             speakReshma(reply);
         } catch (e) { console.error(e); }
     }
-
-    // 6. DEBUG BUTTON
-    document.getElementById("testVoiceBtn").onclick = () => speakReshma("Ji, mera naam Reshma hai. Google voice test ho raha hai.");
 </script>
 </body>
 </html>
