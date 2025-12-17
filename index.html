@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>DrivePK AI - Voice</title>
+<title>DrivePK AI - Voice Search</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -88,18 +88,17 @@ footer {
 </div>
 
 <script>
-const VOICE_ENDPOINT = "https://meilibeauty.co.uk/voice.php";
+/* ================= CONFIG ================= */
+const VOICE_ENDPOINT  = "https://meilibeauty.co.uk/voice.php";
+const SEARCH_ENDPOINT = "https://meilibeauty.co.uk/search.php";
 
-// ✅ Browser-safe MP3 ring tone
-const ringTone = new Audio(
-  "https://cdn.pixabay.com/download/audio/2022/03/15/audio_5c9b4b1f08.mp3"
-);
-
+/* ================= STATE ================= */
+let ringTone = new Audio("https://cdn.pixabay.com/download/audio/2022/03/15/audio_5c9b4b1f08.mp3");
 let currentVoice = null;
 let recognition = null;
 let timers = [];
 
-// Speak using backend TTS
+/* ================= VOICE OUTPUT ================= */
 async function speak(text) {
   const res = await fetch(VOICE_ENDPOINT, {
     method:"POST",
@@ -111,25 +110,48 @@ async function speak(text) {
   currentVoice.play();
 }
 
-// Start microphone listening
+/* ================= VOICE INPUT ================= */
 function startListening() {
-  if (!('webkitSpeechRecognition' in window)) return;
+  if (!('webkitSpeechRecognition' in window)) {
+    alert("Voice input not supported in this browser.");
+    return;
+  }
 
   recognition = new webkitSpeechRecognition();
   recognition.lang = "en-US";
   recognition.interimResults = false;
   recognition.continuous = false;
 
-  recognition.onresult = (e) => {
+  recognition.onresult = async (e) => {
     const userText = e.results[0][0].transcript;
+
     document.getElementById("chat").innerHTML +=
       `<div class="bubble user"><b>You:</b><br>${userText}</div>`;
+
+    // 🔍 SEND TO SEARCH BACKEND
+    const res = await fetch(SEARCH_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: userText })
+    });
+
+    const data = await res.json();
+
+    if (data.results && data.results.length) {
+      let html = "";
+      data.results.forEach(car => {
+        html += `• ${car.title} – ${car.price} (${car.city})<br>`;
+      });
+
+      document.getElementById("chat").innerHTML +=
+        `<div class="bubble"><b>Reshma:</b><br>Yeh gaariyaan mil sakti hain:<br>${html}</div>`;
+    }
   };
 
   recognition.start();
 }
 
-// Start call
+/* ================= CALL FLOW ================= */
 function startCall() {
   stopAll();
 
@@ -143,7 +165,7 @@ function startCall() {
     ringTone.play();
   }, 1800));
 
-  // Speak immediately after 2 rings
+  // Greeting
   timers.push(setTimeout(() => {
     ringTone.pause();
 
@@ -155,7 +177,7 @@ function startCall() {
     speak(greet);
   }, 3600));
 
-  // Ask for car model quickly after greeting
+  // Ask for car model
   timers.push(setTimeout(() => {
     const ask =
       "Aap kaunsi gaari ka model search karna chahte hain?";
@@ -168,7 +190,7 @@ function startCall() {
   }, 7000));
 }
 
-// Stop everything immediately
+/* ================= STOP ================= */
 function stopAll() {
   ringTone.pause();
   ringTone.currentTime = 0;
@@ -184,6 +206,7 @@ function stopAll() {
   timers = [];
 }
 
+/* ================= EVENTS ================= */
 document.getElementById("callBtn").onclick = startCall;
 document.getElementById("stopBtn").onclick = stopAll;
 </script>
