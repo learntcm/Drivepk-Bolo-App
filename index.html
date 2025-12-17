@@ -2,80 +2,126 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>DrivePK AI Voice</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <style>
+* {
+  box-sizing: border-box;
+}
+
 body {
-  background:#111;
   margin:0;
+  padding:0;
+  height:100vh;
+  background:#111;
+  font-family:Segoe UI, sans-serif;
   display:flex;
   justify-content:center;
-  height:100vh;
-  font-family:Segoe UI, sans-serif;
 }
+
 .app {
-  max-width:420px;
   width:100%;
+  max-width:420px;
+  height:100vh;
   background:#fff;
   display:flex;
   flex-direction:column;
+  overflow:hidden;
 }
+
+/* HEADER (smaller) */
 header {
   background:#000;
   color:#fff;
-  padding:14px;
+  padding:10px;
   text-align:center;
-  border-bottom:4px solid #E81F25;
+  font-weight:bold;
+  border-bottom:3px solid #E81F25;
+  flex-shrink:0;
 }
+
+/* CHAT AREA */
 #chat {
   flex:1;
-  padding:16px;
+  padding:10px;
   overflow-y:auto;
+  background:#fafafa;
 }
+
+/* BUBBLES */
 .bubble {
-  background:#f2f2f2;
-  padding:12px;
-  border-radius:12px;
-  margin-bottom:10px;
+  background:#f1f1f1;
+  padding:10px;
+  border-radius:10px;
+  margin-bottom:8px;
+  font-size:14px;
   border-left:4px solid #E81F25;
 }
+
 .user {
   background:#ffeaea;
   border-left:4px solid #000;
 }
+
+/* RESULTS */
+.car {
+  background:#fff;
+  border:1px solid #ddd;
+  border-radius:8px;
+  padding:8px;
+  margin-bottom:6px;
+  font-size:13px;
+}
+
+/* FOOTER (STICKY) */
 footer {
   display:flex;
-  gap:10px;
-  padding:16px;
+  gap:8px;
+  padding:10px;
+  border-top:1px solid #ddd;
+  background:#fff;
+  flex-shrink:0;
 }
+
 button {
   flex:1;
-  padding:14px;
+  padding:12px;
   border:none;
-  border-radius:10px;
+  border-radius:8px;
+  font-size:15px;
   font-weight:bold;
 }
-.start { background:#E81F25; color:#fff; }
-.stop { background:#444; color:#fff; }
+
+.start {
+  background:#E81F25;
+  color:#fff;
+}
+
+.stop {
+  background:#444;
+  color:#fff;
+}
 </style>
 </head>
 
 <body>
 
 <div class="app">
+
   <header>DRIVEPK EXPERT</header>
 
   <div id="chat">
-    <div class="bubble">Click START CALL to begin.</div>
+    <div class="bubble">Tap START CALL to begin.</div>
   </div>
 
   <footer>
     <button class="start" id="start">📞 START CALL</button>
     <button class="stop" id="stop">⛔ STOP</button>
   </footer>
+
 </div>
 
 <script type="module">
@@ -89,59 +135,22 @@ const stop = document.getElementById("stop");
 let voice;
 let recognition;
 
-/* ===============================
-   JAZZ-STYLE RINGTONE (NO FILE)
-================================ */
-let audioCtx;
-let osc;
-let ringInterval;
-
-function startRingtone() {
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-
-  osc.type = "sine";
-  osc.frequency.value = 440;
-  gain.gain.value = 0.25;
-
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start();
-
-  ringInterval = setInterval(() => {
-    osc.frequency.value = osc.frequency.value === 440 ? 480 : 440;
-  }, 300);
-
-  setTimeout(stopRingtone, 3000);
-}
-
-function stopRingtone() {
-  if (ringInterval) clearInterval(ringInterval);
-  if (osc) osc.stop();
-  if (audioCtx) audioCtx.close();
-}
-
-/* ===============================
-   VOICE (TTS)
-================================ */
+/* ---------- SPEAK + LISTEN ---------- */
 function speakAndListen(text) {
   fetch("https://meilibeauty.co.uk/voice.php", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text })
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ text })
   })
   .then(r => r.blob())
   .then(b => {
     voice = new Audio(URL.createObjectURL(b));
-    voice.onended = () => startListening();
+    voice.onended = startListening;
     voice.play();
   });
 }
 
-/* ===============================
-   SPEECH RECOGNITION
-================================ */
+/* ---------- LISTEN ---------- */
 function startListening() {
   recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
   recognition.lang = "ur-PK";
@@ -151,81 +160,77 @@ function startListening() {
     const text = e.results[0][0].transcript;
     chat.innerHTML += `<div class="bubble user"><b>You:</b><br>${text}</div>`;
     handleSearch(text);
-  };
-
-  recognition.onerror = () => {
-    speakAndListen("Maazrat, main samajh nahi saki. Dobara boliye.");
+    chat.scrollTop = chat.scrollHeight;
   };
 
   recognition.start();
 }
 
-/* ===============================
-   SEARCH LOGIC
-================================ */
+/* ---------- PARSE ---------- */
 function parseFilters(text) {
   const t = text.toLowerCase();
-
   const brands = ["toyota","honda","suzuki","kia","hyundai","nissan","mg"];
   const models = ["corolla","civic","city","alto","mehran","sportage","yaris"];
 
-  let brand = "";
-  let model = "";
+  let brand="", model="";
 
-  brands.forEach(b => { if (t.includes(b)) brand = b.charAt(0).toUpperCase()+b.slice(1); });
-  models.forEach(m => { if (t.includes(m)) model = m.charAt(0).toUpperCase()+m.slice(1); });
+  brands.forEach(b => t.includes(b) && (brand = b.charAt(0).toUpperCase()+b.slice(1)));
+  models.forEach(m => t.includes(m) && (model = m.charAt(0).toUpperCase()+m.slice(1)));
 
   const yearMatch = t.match(/(19|20)\d{2}/);
   const year = yearMatch ? parseInt(yearMatch[0]) : null;
 
-  let city = "";
-  if (t.includes("lahore")) city = "Lahore";
-  if (t.includes("karachi")) city = "Karachi";
-  if (t.includes("islamabad")) city = "Islamabad";
-  if (t.includes("rawalpindi")) city = "Rawalpindi";
+  let city="";
+  if (t.includes("lahore")) city="Lahore";
+  if (t.includes("karachi")) city="Karachi";
+  if (t.includes("islamabad")) city="Islamabad";
+  if (t.includes("rawalpindi")) city="Rawalpindi";
 
   return { brand, model, year, city };
 }
 
+/* ---------- SEARCH ---------- */
 async function handleSearch(text) {
-  const filters = parseFilters(text);
-
-  if (!filters.brand && !filters.model) {
-    speakAndListen("Aap kaunsi gaari search karna chahte hain?");
-    return;
-  }
-
   speakAndListen("Main gaari search kar rahi hoon.");
 
+  const filters = parseFilters(text);
   const result = await carService.searchCars(filters, 1, 5);
 
-  if (!result?.data?.length) {
-    speakAndListen("Maazrat, is search ke liye koi gaari nahi mili.");
+  const cars =
+    result?.data?.cars ||
+    result?.data?.results ||
+    result?.cars ||
+    result?.results ||
+    result?.data ||
+    [];
+
+  if (!cars.length) {
+    speakAndListen("Maazrat, koi gaari nahi mili.");
     return;
   }
 
-  let list = "";
-  result.data.forEach(c => {
-    list += `• ${c.title || c.brand + " " + c.model} – ${c.price}<br>`;
+  let html = `<div class="bubble"><b>Search Results</b></div>`;
+  cars.forEach(c => {
+    html += `
+      <div class="car">
+        <b>${c.title || c.brand + " " + c.model}</b><br>
+        ${c.price || "Price N/A"} — ${c.city || "City N/A"}
+      </div>
+    `;
   });
 
-  chat.innerHTML += `<div class="bubble"><b>Reshma:</b><br>${list}</div>`;
+  chat.innerHTML += html;
+  chat.scrollTop = chat.scrollHeight;
 }
 
-/* ===============================
-   BUTTONS
-================================ */
+/* ---------- BUTTONS ---------- */
 start.onclick = () => {
-  startRingtone();
-  setTimeout(() => {
-    speakAndListen(
-      "Assalam-o-Alaikum, mera naam Reshma hai. Main aap ki kis tarah madad kar sakti hoon?"
-    );
-  }, 3000);
+  speakAndListen(
+    "Assalam-o-Alaikum, mera naam Reshma hai. Main aap ki kis tarah madad kar sakti hoon?"
+  );
 };
 
 stop.onclick = () => {
-  stopRingtone();
   if (voice) { voice.pause(); voice.currentTime = 0; }
   if (recognition) recognition.abort();
 };
