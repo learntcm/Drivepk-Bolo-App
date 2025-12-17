@@ -1,10 +1,48 @@
-const GOOGLE_KEY = "AIzaSyAzEgST_gBAhua-L0VZyiL6tryuQ-zaSRg"; 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DrivePK AI Reshma</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --red: #E81F25; --black: #000; }
+        body { background: #1a1a1a; margin: 0; display: flex; justify-content: center; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; }
+        .app-container { width: 100%; max-width: 450px; height: 100vh; background: #ffffff; display: flex; flex-direction: column; }
+        header { background: var(--black); color: white; padding: 15px; display: flex; align-items: center; gap: 12px; z-index: 10; }
+        .logo { background: var(--red); width: 35px; height: 35px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .hero { height: 45vh; background: #222; width: 100%; position: relative; overflow: hidden; border-bottom: 3px solid var(--red); }
+        #heroImg { width: 100%; height: 100%; background-size: cover; background-position: center; transition: 1s ease; background-image: url('https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80'); }
+        #results { flex-grow: 1; padding: 20px; overflow-y: auto; text-align: center; }
+        .ai-message { background: #fdf2f2; padding: 18px; border-radius: 15px; border-left: 5px solid var(--red); text-align: left; margin-top: 10px; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        footer { background: white; padding: 20px; border-top: 1px solid #eee; }
+        .btn-mic { background: #f8f9fa; border: 2px solid #ddd; border-radius: 12px; padding: 0 18px; font-size: 22px; cursor: pointer; }
+        .btn-call { background: var(--red); color: white; border: none; border-radius: 12px; padding: 18px; width: 100%; font-weight: bold; font-size: 18px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header><div class="logo">D</div><div style="font-weight: bold;">DrivePK AI Reshma</div></header>
+    <div class="hero"><div id="heroImg"></div></div>
+    <div id="results"><p style="color: #ccc;">Sawaal poochein ya Call karein...</p></div>
+    <footer>
+        <div class="search-row" style="display: flex; gap: 10px; margin-bottom: 12px;">
+            <input type="text" id="searchInput" placeholder="Search car brands..." style="flex: 1; border: 2px solid #ddd; border-radius: 12px; padding: 14px; outline: none;">
+            <button class="btn-mic" id="micBtn">🎤</button>
+        </div>
+        <button class="btn-call" id="callBtn">📞 CALL RESHMA</button>
+    </footer>
+</div>
+
+<script>
+    const GOOGLE_KEY = "AIzaSyAzEgST_gBAhua-L0VZyiL6tryuQ-zaSRg"; 
     const OPENAI_KEY = "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";
 
     async function speakReshma(text) {
         if (!text) return;
         
-        // Use SSML for a clear "Welcome to DrivePK" with a natural pause
+        // ADDED BACK SSML TAGS: These are vital for the voice to work
         const ssmlData = `<speak>Welcome to DrivePK. <break time='400ms'/> ${text}</speak>`;
 
         try {
@@ -26,33 +64,26 @@ const GOOGLE_KEY = "AIzaSyAzEgST_gBAhua-L0VZyiL6tryuQ-zaSRg";
             const data = await response.json();
             if (data.audioContent) {
                 const audio = new Audio("data:audio/mp3;base64," + data.audioContent);
-                // This play() call is now directly inside the user-click event chain
-                await audio.play();
-            } else if (data.error) {
-                console.error("Google Error:", data.error.message);
+                audio.play();
             }
-        } catch (e) {
-            console.error("Execution Error:", e);
-        }
+        } catch (e) { console.error("Voice error:", e); }
     }
 
-    // Fixed the "Call" button to trigger the welcome message immediately
     document.getElementById("callBtn").addEventListener("click", function() {
         const welcomeTxt = "Main Reshma hoon. Aap konsi gaari dhoond rahe hain?";
         document.getElementById("results").innerHTML = `<div class="ai-message"><b>Reshma:</b><br>Welcome to DrivePK! ${welcomeTxt}</div>`;
         speakReshma(welcomeTxt);
     });
 
-    // Mic Logic
     const micBtn = document.getElementById("micBtn");
     if ('webkitSpeechRecognition' in window) {
         const recognition = new webkitSpeechRecognition();
         recognition.lang = 'ur-PK';
-        
-        micBtn.onclick = () => { recognition.start(); };
-        
+        micBtn.onclick = () => { recognition.start(); micBtn.style.background = "#ffcccc"; };
         recognition.onresult = async (event) => {
             const query = event.results[0][0].transcript;
+            document.getElementById("searchInput").value = query;
+            micBtn.style.background = "#f8f9fa";
             handleSearch(query);
         };
     }
@@ -65,7 +96,10 @@ const GOOGLE_KEY = "AIzaSyAzEgST_gBAhua-L0VZyiL6tryuQ-zaSRg";
                 headers: { 'Authorization': `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     model: "gpt-3.5-turbo",
-                    messages: [{role: "system", content: "You are Reshma from DrivePK. Answer in 1 short Roman Urdu sentence."}, {role: "user", content: query}]
+                    messages: [
+                        {role: "system", content: "You are Reshma, a friendly car expert for DrivePK. Reply in short Roman Urdu."},
+                        {role: "user", content: query}
+                    ]
                 })
             });
             const data = await response.json();
@@ -74,3 +108,6 @@ const GOOGLE_KEY = "AIzaSyAzEgST_gBAhua-L0VZyiL6tryuQ-zaSRg";
             speakReshma(reply);
         } catch (e) { console.error(e); }
     }
+</script>
+</body>
+</html>
