@@ -11,8 +11,8 @@
         .app-container { width: 100%; max-width: 450px; height: 100vh; background: #ffffff; display: flex; flex-direction: column; }
         header { background: var(--black); color: white; padding: 15px; display: flex; align-items: center; gap: 12px; z-index: 10; }
         .logo { background: var(--red); width: 35px; height: 35px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .hero { height: 50vh; background: #000; width: 100%; position: relative; overflow: hidden; border-bottom: 3px solid var(--red); }
-        #heroImg { width: 100%; height: 100%; background-size: cover; background-position: center; transition: 1.5s ease; }
+        .hero { height: 50vh; background: #222; width: 100%; position: relative; overflow: hidden; border-bottom: 3px solid var(--red); }
+        #heroImg { width: 100%; height: 100%; background-size: cover; background-position: center; transition: 1s ease; }
         #results { flex-grow: 1; padding: 20px; overflow-y: auto; text-align: center; }
         .ai-message { background: #fdf2f2; padding: 18px; border-radius: 15px; border-left: 5px solid var(--red); text-align: left; margin-top: 10px; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
         footer { background: white; padding: 20px; border-top: 1px solid #eee; }
@@ -20,6 +20,7 @@
         #searchInput { flex: 1; border: 2px solid #ddd; border-radius: 12px; padding: 14px; outline: none; }
         .btn-mic { background: #f8f9fa; border: 2px solid #ddd; border-radius: 12px; padding: 0 18px; font-size: 22px; }
         .btn-call { background: var(--red); color: white; border: none; border-radius: 12px; padding: 18px; width: 100%; font-weight: bold; font-size: 18px; }
+        .btn-debug { background: #28a745; color: white; border: none; border-radius: 12px; padding: 8px; width: 100%; margin-top: 8px; font-size: 12px; opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -34,6 +35,7 @@
             <button class="btn-mic" id="micBtn">🎤</button>
         </div>
         <button class="btn-call" id="callBtn">📞 CALL RESHMA</button>
+        <button class="btn-debug" id="testBtn">DEBUG: TEST VOICE</button>
     </footer>
 </div>
 
@@ -41,57 +43,52 @@
     const GOOGLE_KEY = "AIzaSyAzEgST_gBAhua-L0VZyiL6tryuQ-zaSRg"; 
     const OPENAI_KEY = "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";
 
+    // 1. CAR IMAGES (Uses placeholders if your files are missing)
     const images = ["mg.png", "haval.png", "omodapng.png"];
     let idx = 0;
     function changeImg() { 
         const div = document.getElementById("heroImg");
-        if(div) { div.style.backgroundImage = `url('${images[idx]}')`; idx = (idx + 1) % images.length; }
+        const imgUrl = images[idx];
+        div.style.backgroundImage = `url('${imgUrl}'), url('https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=1000&auto=format&fit=crop')`; 
+        idx = (idx + 1) % images.length;
     }
     changeImg(); setInterval(changeImg, 5000);
 
-    // THE ULTIMATE VOICE SELECTOR
+    // 2. SIMPLIFIED VOICE LOGIC
     async function speakReshma(text) {
-        // We will try these voices in order. 1 is best (Neural), 3 is basic.
-        const voiceOptions = [
-            { name: "ur-PK-Neural2-A", type: "PREMIUM" },
-            { name: "ur-PK-Wavenet-A", type: "HIGH" },
-            { name: "ur-PK-Standard-A", type: "BASIC" }
-        ];
+        try {
+            const response = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${GOOGLE_KEY}`, {
+                method: 'POST',
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    input: { text: text },
+                    voice: { languageCode: "ur-PK", ssmlGender: "FEMALE" },
+                    audioConfig: { audioEncoding: "MP3", pitch: 0.5, speakingRate: 1.0 }
+                })
+            });
 
-        for (let voice of voiceOptions) {
-            try {
-                const response = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${GOOGLE_KEY}`, {
-                    method: 'POST',
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        input: { text: text },
-                        voice: { languageCode: "ur-PK", name: voice.name },
-                        audioConfig: { 
-                            audioEncoding: "MP3", 
-                            pitch: -1.0,        // Lower pitch makes it sound less like a "squeaky robot"
-                            speakingRate: 1.05, // Slightly faster, matching Google Translate speed
-                            effectsProfileId: ["telephony-class-application"] // Optimizes for clear speech
-                        }
-                    })
-                });
+            const data = await response.json();
 
-                const data = await response.json();
-                if (data.audioContent) {
-                    const audio = new Audio("data:audio/mp3;base64," + data.audioContent);
-                    audio.play();
-                    console.log("Using voice: " + voice.name);
-                    return; // Stop if it works!
-                }
-            } catch (e) { console.error("Trying next voice..."); }
-        }
+            if (data.audioContent) {
+                const audio = new Audio("data:audio/mp3;base64," + data.audioContent);
+                audio.play();
+            } else if (data.error) {
+                // This will tell us the EXACT error reason
+                alert("GOOGLE ERROR: " + data.error.message);
+                console.error(data.error);
+            }
+        } catch (e) { alert("Connection Error: " + e.message); }
     }
 
+    document.getElementById("testBtn").onclick = () => speakReshma("Assalam o Alaikum, testing connection.");
+
     document.getElementById("callBtn").onclick = () => {
-        const txt = "Assalam o Alaikum! Main Reshma hoon. Drive P K mein khush amdeed. Aap konsi gaari dhoond rahe hain?";
+        const txt = "Assalam o Alaikum! Main Reshma hoon. Aap konsi gaari dhoond rahe hain?";
         document.getElementById("results").innerHTML = `<div class="ai-message"><b>Reshma:</b><br>${txt}</div>`;
         speakReshma(txt);
     };
 
+    // 3. MIC & CHAT
     const micBtn = document.getElementById("micBtn");
     if ('webkitSpeechRecognition' in window) {
         const recognition = new webkitSpeechRecognition();
@@ -106,15 +103,15 @@
     }
 
     async function handleSearch(query) {
-        document.getElementById("results").innerHTML = `<p style="color:red; font-weight:bold;">Reshma dhoond rahi hai...</p>`;
+        document.getElementById("results").innerHTML = `<p style="color:red">Reshma dhoond rahi hai...</p>`;
         try {
             const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     model: "gpt-3.5-turbo",
-                    messages: [{role: "system", content: "You are Reshma, a professional Pakistani car expert. Speak in natural, friendly ROMAN URDU."}, 
-                               {role: "user", content: `Reply to: "${query}" in 1 short sentence.`}]
+                    messages: [{role: "system", content: "You are Reshma, car expert. Friendly Roman Urdu."}, 
+                               {role: "user", content: query}]
                 })
             });
             const data = await response.json();
