@@ -1,0 +1,30 @@
+{
+  "name": "ai-car-finder",
+  "version": "1.0.0",
+  "description": "Voice-based car search PWA using OpenAI",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && node scripts/bundle.js",
+    "build:ts": "tsc",
+    "build:bundle": "node scripts/bundle.js",
+    "watch": "tsc --watch",
+    "serve": "npx http-server . -p 8080 -c-1 -P https://api.drivepk.com",
+    "dev": "tsc --watch"
+  },
+  "keywords": [
+    "pwa",
+    "voice",
+    "car-search",
+    "openai"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "esbuild": "^0.27.1",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "openai": "^6.10.0"
+  }
+}

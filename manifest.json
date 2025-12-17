@@ -1,0 +1,10 @@
+{
+  "name": "AI Car Finder",
+  "short_name": "Car Finder",
+  "description": "Voice-based car search using AI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "orientation": "portrait-primary"
+}

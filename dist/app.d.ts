@@ -1,0 +1,47 @@
+export declare class App {
+    private voiceRecorder;
+    private audioVisualizer;
+    private openAIService;
+    private carService;
+    private currentFilters;
+    private currentPage;
+    private currentCars;
+    private isSearchMode;
+    private recordButton;
+    private transcriptDisplay;
+    private durationDisplay;
+    private canvas;
+    private filtersDisplay;
+    private loadingIndicator;
+    private errorAlert;
+    private searchInput;
+    private searchButton;
+    private carResultsContainer;
+    private loadMoreButton;
+    private resultsTitle;
+    constructor();
+    private checkSecureContext;
+    private loadConfig;
+    setOpenAIConfig(apiKey: string, customBackendUrl?: string): void;
+    private setupVoiceRecorder;
+    private toggleRecording;
+    private startRecording;
+    private stopRecording;
+    private handleTextSearch;
+    private processTranscript;
+    private loadRecentCars;
+    private loadMoreCars;
+    private fetchCars;
+    private handleCarResponse;
+    private renderCars;
+    private formatPricePKR;
+    private updateLoadMoreButton;
+    private displayFilters;
+    private formatPrice;
+    private updateDuration;
+    private updateUI;
+    private showLoading;
+    private showError;
+    private hideError;
+}
+//# sourceMappingURL=app.d.ts.map
