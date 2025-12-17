@@ -17,7 +17,7 @@ body {
   justify-content: center;
 }
 
-.app {
+#app {
   width: 100%;
   max-width: 420px;
   height: 100svh;
@@ -36,32 +36,40 @@ header {
   border-bottom: 3px solid #E81F25;
 }
 
-#chat {
+#audioCanvas {
+  width: 100%;
+  height: 60px;
+  background: #000;
+}
+
+#messages {
   flex: 1;
   padding: 10px;
   overflow-y: auto;
-  font-size: 14px;
 }
 
-.message {
-  margin-bottom: 8px;
-  padding: 10px;
-  border-radius: 8px;
+.msg {
+  padding: 8px;
+  margin-bottom: 6px;
+  border-radius: 6px;
   background: #f3f3f3;
+  font-size: 14px;
 }
 
 .ai {
   border-left: 4px solid #E81F25;
 }
 
-.user {
-  background: #eaeaea;
+#searchBox {
+  padding: 8px;
 }
 
-#waveform {
+#textSearch {
   width: 100%;
-  height: 50px;
-  background: #000;
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
 }
 
 footer {
@@ -80,46 +88,44 @@ button {
   border-radius: 6px;
 }
 
-#startBtn {
+#startCall {
   background: #E81F25;
   color: #fff;
 }
 
-#stopBtn {
+#stopCall {
   background: #444;
   color: #fff;
-}
-
-input {
-  width: 100%;
-  padding: 10px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="app">
+<div id="app">
   <header>DRIVEPK VOICE</header>
 
-  <canvas id="waveform"></canvas>
+  <!-- REQUIRED BY audioVisualizer -->
+  <canvas id="audioCanvas"></canvas>
 
-  <div id="chat"></div>
+  <!-- REQUIRED BY App -->
+  <div id="messages"></div>
 
-  <div style="padding:8px">
-    <input id="searchInput" placeholder="Gaari ka model bolain ya likhain…" />
+  <!-- REQUIRED BY search -->
+  <div id="searchBox">
+    <input id="textSearch" placeholder="Gaari ka model bolain ya likhain…" />
   </div>
 
   <footer>
-    <button id="startBtn">📞 START CALL</button>
-    <button id="stopBtn">⛔ STOP</button>
+    <button id="startCall">📞 START CALL</button>
+    <button id="stopCall">⛔ STOP</button>
   </footer>
 </div>
 
-<!-- ✅ THIS MUST BE bundle -->
+<!-- REQUIRED CONFIG -->
+<script src="./dist/config.js"></script>
+
+<!-- MAIN BUNDLE -->
 <script src="./dist/app.bundle.js"></script>
 
 </body>
