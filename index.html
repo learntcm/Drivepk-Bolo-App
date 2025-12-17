@@ -1,136 +1,76 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DrivePK - Talk to Reshma</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        :root { --red: #E81F25; --black: #000; }
-        body { background: #111; margin: 0; display: flex; justify-content: center; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; color: white; }
-        .app-container { width: 100%; max-width: 450px; height: 100vh; background: #fff; display: flex; flex-direction: column; color: #333; }
-        header { background: var(--black); color: white; padding: 15px; display: flex; align-items: center; gap: 12px; }
-        .logo { background: var(--red); width: 35px; height: 35px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; }
-        .hero { height: 45vh; background: #000; position: relative; border-bottom: 4px solid var(--red); }
-        #heroImg { width: 100%; height: 100%; background-size: cover; background-position: center; transition: 1s ease; opacity: 0.8; }
-        .status-dot { width: 10px; height: 10px; background: #28a745; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        #results { flex-grow: 1; padding: 20px; overflow-y: auto; text-align: center; }
-        .ai-message { background: #fdf2f2; padding: 15px; border-radius: 15px; border-left: 5px solid var(--red); text-align: left; margin-top: 10px; animation: fadeIn 0.5s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        footer { background: white; padding: 20px; border-top: 1px solid #eee; }
-        .btn-mic { background: var(--red); color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 24px; box-shadow: 0 4px 15px rgba(232, 31, 37, 0.4); cursor: pointer; }
-        .btn-mic.listening { animation: pulse 1.5s infinite; background: #000; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        .hint { font-size: 12px; color: #888; margin-top: 10px; }
-    </style>
-</head>
-<body>
-
-<div class="app-container">
-    <header>
-        <div class="logo">D</div>
-        <div><strong>DrivePK AI Reshma</strong> <br> <small><span class="status-dot"></span> Online</small></div>
-    </header>
-    
-    <div class="hero">
-        <div id="heroImg"></div>
-    </div>
-
-    <div id="results">
-        <p style="color: #999; margin-top: 20%;">Press the red mic and say "Assalam o Alaikum"</p>
-    </div>
-
-    <footer class="text-center">
-        <button class="btn-mic" id="micBtn">🎤</button>
-        <div class="hint" id="statusText">Tap to start talking</div>
-    </footer>
-</div>
-
-<script>
-    const GOOGLE_KEY = "AIzaSyAzEgST_gBAhua-L0VZyiL6tryuQ-zaSRg"; 
+const GOOGLE_KEY = "AIzaSyAzEgST_gBAhua-L0VZyiL6tryuQ-zaSRg"; 
     const OPENAI_KEY = "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";
 
-    // 1. Placeholder Background (Fixes the black screen)
-    const images = ["https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=800&q=80"];
-    document.getElementById("heroImg").style.backgroundImage = `url('${images[0]}')`;
-
-    // 2. Natural Voice Logic
     async function speakReshma(text) {
+        if (!text) return;
+        
+        // Use SSML for a clear "Welcome to DrivePK" with a natural pause
+        const ssmlData = `<speak>Welcome to DrivePK. <break time='400ms'/> ${text}</speak>`;
+
         try {
             const response = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${GOOGLE_KEY}`, {
                 method: 'POST',
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    input: { text: text },
+                    input: { ssml: ssmlData },
                     voice: { languageCode: "ur-PK", name: "ur-PK-Wavenet-A" },
                     audioConfig: { 
                         audioEncoding: "MP3", 
-                        pitch: -0.5,        // Warm female tone
-                        speakingRate: 1.0,  // Natural speed
+                        pitch: -0.5, 
+                        speakingRate: 0.95,
                         effectsProfileId: ["telephony-class-application"]
                     }
                 })
             });
+
             const data = await response.json();
             if (data.audioContent) {
                 const audio = new Audio("data:audio/mp3;base64," + data.audioContent);
-                audio.play();
+                // This play() call is now directly inside the user-click event chain
+                await audio.play();
+            } else if (data.error) {
+                console.error("Google Error:", data.error.message);
             }
-        } catch (e) { console.error("Voice Error", e); }
+        } catch (e) {
+            console.error("Execution Error:", e);
+        }
     }
 
-    // 3. Speech Recognition (Activation)
-    const micBtn = document.getElementById("micBtn");
-    const statusText = document.getElementById("statusText");
+    // Fixed the "Call" button to trigger the welcome message immediately
+    document.getElementById("callBtn").addEventListener("click", function() {
+        const welcomeTxt = "Main Reshma hoon. Aap konsi gaari dhoond rahe hain?";
+        document.getElementById("results").innerHTML = `<div class="ai-message"><b>Reshma:</b><br>Welcome to DrivePK! ${welcomeTxt}</div>`;
+        speakReshma(welcomeTxt);
+    });
 
+    // Mic Logic
+    const micBtn = document.getElementById("micBtn");
     if ('webkitSpeechRecognition' in window) {
         const recognition = new webkitSpeechRecognition();
         recognition.lang = 'ur-PK';
-        recognition.continuous = false;
-
-        micBtn.onclick = () => {
-            recognition.start();
-            micBtn.classList.add('listening');
-            statusText.innerText = "Listening...";
-        };
-
-        recognition.onresult = (event) => {
-            const result = event.results[0][0].transcript;
-            micBtn.classList.remove('listening');
-            statusText.innerText = "Processing...";
-            handleAISearch(result);
-        };
-
-        recognition.onerror = () => {
-            micBtn.classList.remove('listening');
-            statusText.innerText = "Tap to try again";
+        
+        micBtn.onclick = () => { recognition.start(); };
+        
+        recognition.onresult = async (event) => {
+            const query = event.results[0][0].transcript;
+            handleSearch(query);
         };
     }
 
-    async function handleAISearch(query) {
-        document.getElementById("results").innerHTML = `<div class="ai-message"><b>You:</b> ${query}</div>`;
+    async function handleSearch(query) {
+        document.getElementById("results").innerHTML = `<div class="ai-message"><b>Searching...</b></div>`;
         try {
             const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${OPENAI_KEY}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     model: "gpt-3.5-turbo",
-                    messages: [
-                        {role: "system", content: "You are Reshma, a friendly car expert from DrivePK. Speak in natural, warm ROMAN URDU. Keep replies to 1 short sentence."},
-                        {role: "user", content: query}
-                    ]
+                    messages: [{role: "system", content: "You are Reshma from DrivePK. Answer in 1 short Roman Urdu sentence."}, {role: "user", content: query}]
                 })
             });
             const data = await response.json();
             const reply = data.choices[0].message.content;
-            
-            document.getElementById("results").innerHTML += `<div class="ai-message"><b>Reshma:</b><br>${reply}</div>`;
-            statusText.innerText = "Reshma is speaking...";
+            document.getElementById("results").innerHTML = `<div class="ai-message"><b>Reshma:</b><br>${reply}</div>`;
             speakReshma(reply);
-            
-            setTimeout(() => { statusText.innerText = "Tap to talk again"; }, 3000);
-        } catch (e) { statusText.innerText = "Error connecting..."; }
+        } catch (e) { console.error(e); }
     }
-</script>
-</body>
-</html>
