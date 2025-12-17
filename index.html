@@ -37,14 +37,12 @@ header {
   border-bottom: 3px solid #E81F25;
 }
 
-/* Audio visualizer canvas (REQUIRED) */
 #audioCanvas {
   width: 100%;
   height: 60px;
   background: #000;
 }
 
-/* Messages */
 #messages {
   flex: 1;
   padding: 10px;
@@ -63,7 +61,6 @@ header {
   border-left: 4px solid #E81F25;
 }
 
-/* Search */
 #searchBox {
   padding: 8px;
 }
@@ -76,13 +73,11 @@ header {
   border: 1px solid #ccc;
 }
 
-/* Footer buttons */
 footer {
   display: flex;
   gap: 6px;
   padding: 8px;
   border-top: 1px solid #ddd;
-  background: #fff;
 }
 
 button {
@@ -111,13 +106,10 @@ button {
 <div id="app">
   <header>DRIVEPK VOICE</header>
 
-  <!-- REQUIRED: audio visualizer -->
   <canvas id="audioCanvas"></canvas>
 
-  <!-- REQUIRED: messages container -->
   <div id="messages"></div>
 
-  <!-- REQUIRED: text search input -->
   <div id="searchBox">
     <input id="textSearch" placeholder="Gaari ka model bolain ya likhain…" />
   </div>
@@ -128,21 +120,17 @@ button {
   </footer>
 </div>
 
-<!-- ===============================
-     RUNTIME CONFIG (REQUIRED)
-     =============================== -->
+<!-- ✅ Runtime config MUST be BEFORE bundle -->
 <script>
 window.__APP_CONFIG__ = {
-  apiBaseUrl: "",        // same origin / proxy
-  customBackendUrl: "", // optional
-  openAIKey: null       // disabled (no cost)
+  apiBaseUrl: "",
+  customBackendUrl: "",
+  openAIKey: null
 };
 </script>
 
-<!-- ===============================
-     MAIN COMPILED APP
-     =============================== -->
-<script src="./dist/app.bundle.js"></script>
+<!-- ✅ DEFER IS THE KEY FIX -->
+<script src="./dist/app.bundle.js" defer></script>
 
 </body>
 </html>
