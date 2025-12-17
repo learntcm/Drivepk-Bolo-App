@@ -8,10 +8,7 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
 <style>
-:root {
-  --red:#E81F25;
-  --black:#000;
-}
+:root { --red:#E81F25; --black:#000; }
 body {
   background:#111;
   margin:0;
@@ -52,31 +49,25 @@ header {
   font-size:15px;
   border-left:4px solid var(--red);
 }
+.user {
+  background:#e81f2515;
+  border-left:4px solid var(--black);
+}
 footer {
   padding:16px;
   display:flex;
   gap:10px;
 }
-.btn-main {
+.btn-main, .btn-stop {
   flex:1;
-  background:var(--red);
-  color:#fff;
   border:none;
   padding:14px;
   border-radius:12px;
   font-size:16px;
   font-weight:bold;
 }
-.btn-stop {
-  flex:1;
-  background:#444;
-  color:#fff;
-  border:none;
-  padding:14px;
-  border-radius:12px;
-  font-size:16px;
-  font-weight:bold;
-}
+.btn-main { background:var(--red); color:#fff; }
+.btn-stop { background:#444; color:#fff; }
 </style>
 </head>
 
@@ -87,9 +78,7 @@ footer {
   <div class="hero"></div>
 
   <div id="chat">
-    <div class="bubble">
-      Click START CALL to begin.
-    </div>
+    <div class="bubble">Click START CALL to begin.</div>
   </div>
 
   <footer>
@@ -101,65 +90,98 @@ footer {
 <script>
 const VOICE_ENDPOINT = "https://meilibeauty.co.uk/voice.php";
 
-let ringTone = new Audio("https://actions.google.com/sounds/v1/alarms/telephone_ring.ogg");
-let currentVoice = null;
-let ringTimeout1 = null;
-let ringTimeout2 = null;
-let speakTimeout = null;
+// ✅ Browser-safe MP3 ring tone
+const ringTone = new Audio(
+  "https://cdn.pixabay.com/download/audio/2022/03/15/audio_5c9b4b1f08.mp3"
+);
 
-// Speak via backend
+let currentVoice = null;
+let recognition = null;
+let timers = [];
+
+// Speak using backend TTS
 async function speak(text) {
   const res = await fetch(VOICE_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text })
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ text })
   });
-
   const blob = await res.blob();
   currentVoice = new Audio(URL.createObjectURL(blob));
   currentVoice.play();
 }
 
+// Start microphone listening
+function startListening() {
+  if (!('webkitSpeechRecognition' in window)) return;
+
+  recognition = new webkitSpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+  recognition.continuous = false;
+
+  recognition.onresult = (e) => {
+    const userText = e.results[0][0].transcript;
+    document.getElementById("chat").innerHTML +=
+      `<div class="bubble user"><b>You:</b><br>${userText}</div>`;
+  };
+
+  recognition.start();
+}
+
 // Start call
 function startCall() {
-  stopAll(); // reset first
+  stopAll();
 
+  // Ring 1
   ringTone.currentTime = 0;
   ringTone.play();
 
-  ringTimeout1 = setTimeout(() => {
-    ringTone.pause();
+  // Ring 2
+  timers.push(setTimeout(() => {
     ringTone.currentTime = 0;
     ringTone.play();
-  }, 2000);
+  }, 1800));
 
-  speakTimeout = setTimeout(() => {
+  // Speak immediately after 2 rings
+  timers.push(setTimeout(() => {
     ringTone.pause();
-    ringTone.currentTime = 0;
 
-    const msg =
+    const greet =
       "Assalam-o-Alaikum, mera naam Reshma hai. Main aap ki kis tarah madad kar sakti hoon?";
 
     document.getElementById("chat").innerHTML +=
-      `<div class="bubble"><b>Reshma:</b><br>${msg}</div>`;
+      `<div class="bubble"><b>Reshma:</b><br>${greet}</div>`;
+    speak(greet);
+  }, 3600));
 
-    speak(msg);
-  }, 4000);
+  // Ask for car model quickly after greeting
+  timers.push(setTimeout(() => {
+    const ask =
+      "Aap kaunsi gaari ka model search karna chahte hain?";
+
+    document.getElementById("chat").innerHTML +=
+      `<div class="bubble"><b>Reshma:</b><br>${ask}</div>`;
+    speak(ask);
+
+    setTimeout(startListening, 1200);
+  }, 7000));
 }
 
 // Stop everything immediately
 function stopAll() {
-  if (ringTone) {
-    ringTone.pause();
-    ringTone.currentTime = 0;
-  }
+  ringTone.pause();
+  ringTone.currentTime = 0;
+
   if (currentVoice) {
     currentVoice.pause();
     currentVoice.currentTime = 0;
   }
-  clearTimeout(ringTimeout1);
-  clearTimeout(ringTimeout2);
-  clearTimeout(speakTimeout);
+
+  if (recognition) recognition.stop();
+
+  timers.forEach(t => clearTimeout(t));
+  timers = [];
 }
 
 document.getElementById("callBtn").onclick = startCall;
