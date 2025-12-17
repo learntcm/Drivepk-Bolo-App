@@ -27,7 +27,6 @@ body {
   overflow: hidden;
 }
 
-/* Header */
 header {
   background: #000;
   color: #fff;
@@ -38,13 +37,11 @@ header {
   border-bottom: 3px solid #E81F25;
 }
 
-/* Content area (controlled by app.js) */
 #app-root {
   flex: 1;
   overflow: hidden;
 }
 
-/* Footer fixed (visual only – logic is in app.js) */
 footer {
   display: flex;
   gap: 6px;
@@ -79,18 +76,16 @@ button {
 <div class="app">
   <header>DRIVEPK VOICE</header>
 
-  <!-- app.js renders everything here -->
   <div id="app-root"></div>
 
-  <!-- Visual buttons only (app.js already binds events) -->
   <footer>
     <button class="start" id="start-call">📞 START CALL</button>
     <button class="stop" id="stop-call">⛔ STOP</button>
   </footer>
 </div>
 
-<!-- 🔴 THIS IS THE MOST IMPORTANT LINE -->
-<script src="./dist/app.js"></script>
+<!-- ✅ CORRECT FILE -->
+<script src="./dist/app.bundle.js"></script>
 
 </body>
 </html>
