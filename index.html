@@ -24,6 +24,7 @@ body {
   background: #fff;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 header {
@@ -36,16 +37,19 @@ header {
   border-bottom: 3px solid #E81F25;
 }
 
+/* Audio visualizer canvas (REQUIRED) */
 #audioCanvas {
   width: 100%;
   height: 60px;
   background: #000;
 }
 
+/* Messages */
 #messages {
   flex: 1;
   padding: 10px;
   overflow-y: auto;
+  font-size: 14px;
 }
 
 .msg {
@@ -53,13 +57,13 @@ header {
   margin-bottom: 6px;
   border-radius: 6px;
   background: #f3f3f3;
-  font-size: 14px;
 }
 
-.ai {
+.msg.ai {
   border-left: 4px solid #E81F25;
 }
 
+/* Search */
 #searchBox {
   padding: 8px;
 }
@@ -72,11 +76,13 @@ header {
   border: 1px solid #ccc;
 }
 
+/* Footer buttons */
 footer {
   display: flex;
   gap: 6px;
   padding: 8px;
   border-top: 1px solid #ddd;
+  background: #fff;
 }
 
 button {
@@ -105,13 +111,13 @@ button {
 <div id="app">
   <header>DRIVEPK VOICE</header>
 
-  <!-- REQUIRED BY audioVisualizer -->
+  <!-- REQUIRED: audio visualizer -->
   <canvas id="audioCanvas"></canvas>
 
-  <!-- REQUIRED BY App -->
+  <!-- REQUIRED: messages container -->
   <div id="messages"></div>
 
-  <!-- REQUIRED BY search -->
+  <!-- REQUIRED: text search input -->
   <div id="searchBox">
     <input id="textSearch" placeholder="Gaari ka model bolain ya likhain…" />
   </div>
@@ -122,10 +128,20 @@ button {
   </footer>
 </div>
 
-<!-- REQUIRED CONFIG -->
-<script src="./dist/config.js"></script>
+<!-- ===============================
+     RUNTIME CONFIG (REQUIRED)
+     =============================== -->
+<script>
+window.__APP_CONFIG__ = {
+  apiBaseUrl: "",        // same origin / proxy
+  customBackendUrl: "", // optional
+  openAIKey: null       // disabled (no cost)
+};
+</script>
 
-<!-- MAIN BUNDLE -->
+<!-- ===============================
+     MAIN COMPILED APP
+     =============================== -->
 <script src="./dist/app.bundle.js"></script>
 
 </body>
