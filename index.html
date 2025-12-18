@@ -40,6 +40,15 @@
             border-bottom: 3px solid #E81F25;
         }
 
+        #transcript {
+            font-size: 14px;
+            color: #757575;
+            padding: 12px;
+            border: 1px solid #ddd;
+            margin: 8px;
+            display: none; /* Initially hidden, will appear after recording starts */
+        }
+
         #visualizer {
             width: 100%;
             height: 60px;
@@ -109,8 +118,11 @@
     <div id="app">
         <header>DRIVEPK VOICE</header>
 
-        <!-- Corrected Canvas ID -->
+        <!-- Visualizer Canvas -->
         <canvas id="visualizer"></canvas>
+
+        <!-- Transcript Display -->
+        <div id="transcript" class="transcript-display"></div>
 
         <div id="messages"></div>
 
@@ -124,6 +136,7 @@
         </footer>
     </div>
 
+    <!-- DrivePK Configuration -->
     <script>
         window.__APP_CONFIG__ = {
             apiBaseUrl: "",
@@ -132,6 +145,7 @@
         };
     </script>
 
+    <!-- Main Application Script -->
     <script src="./dist/app.bundle.js" defer></script>
 </body>
 
