@@ -36,7 +36,7 @@ header {
 
 .main { padding:16px; }
 
-/* HUGE HERO */
+/* VERY LARGE HERO */
 .hero {
   background:#000;
   border-radius:30px;
@@ -86,6 +86,14 @@ button {
   margin-top:12px;
 }
 
+#status {
+  margin-top:14px;
+  font-size:18px;
+  font-weight:bold;
+  color:#E81F25;
+  display:none;
+}
+
 #results {
   background:#fff;
   border-radius:20px;
@@ -118,16 +126,36 @@ button {
     <h2>MG HS</h2>
   </div>
 
-  <input id="query" placeholder="Honda / Toyota / MG / Lahore">
+  <input id="query" placeholder="Type car search here (e.g. Honda in Lahore)">
   <button id="searchBtn">Search</button>
   <button class="call" id="callBtn">📞 CALL</button>
+
+  <div id="status">
+    Reshma: Assalam-o-Alaikum! Main DrivePK hoon. Aap kaunsi gaari dhoondh rahe hain?
+  </div>
 
   <div id="results"></div>
 
 </div>
 
 <script>
-/* ---------------- DATA ---------------- */
+/* ---------------- VOICE (RESHMA) ---------------- */
+function speakReshma() {
+  const text =
+    "Assalam o Alaikum! Main Reshma hoon, DrivePK se. " +
+    "Aap kaunsi gaari dhoondh rahe hain? " +
+    "Aap type bhi kar sakte hain.";
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "ur-PK";   // Urdu (Pakistan)
+  utterance.rate = 0.9;
+  utterance.pitch = 1.1;
+
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+}
+
+/* ---------------- DUMMY DATA ---------------- */
 const cars = [
   { brand:"Honda", model:"Civic 2019", city:"Lahore", price:"45 Lakh" },
   { brand:"Honda", model:"Civic 2018", city:"Lahore", price:"41 Lakh" },
@@ -137,7 +165,7 @@ const cars = [
   { brand:"MG", model:"HS 2021", city:"Lahore", price:"72 Lakh" }
 ];
 
-/* ---------------- SEARCH ---------------- */
+/* ---------------- SEARCH ONLY ON USER INPUT ---------------- */
 function runSearch(text) {
   const q = text.toLowerCase();
   const results = document.getElementById("results");
@@ -148,7 +176,7 @@ function runSearch(text) {
     q.includes(c.city.toLowerCase())
   );
 
-  if (found.length === 0) {
+  if (!found.length) {
     results.innerHTML = "<p>No cars found</p>";
     return;
   }
@@ -163,21 +191,23 @@ function runSearch(text) {
   });
 }
 
-/* ---------------- BUTTONS ---------------- */
+/* ---------------- SEARCH BUTTON ---------------- */
 document.getElementById("searchBtn").onclick = () => {
-  const q = document.getElementById("query").value.trim();
-  if (q) runSearch(q);
+  const text = document.getElementById("query").value.trim();
+  if (text) runSearch(text);
 };
 
+/* ---------------- CALL BUTTON (VOICE GREETING ONLY) ---------------- */
 document.getElementById("callBtn").onclick = () => {
-  document.getElementById("query").value = "Honda in Lahore";
-  runSearch("Honda in Lahore");
+  document.getElementById("status").style.display = "block";
+  speakReshma();
 };
 
+/* ---------------- ENTER KEY ---------------- */
 document.getElementById("query").addEventListener("keydown", e => {
   if (e.key === "Enter") {
-    const q = document.getElementById("query").value.trim();
-    if (q) runSearch(q);
+    const text = document.getElementById("query").value.trim();
+    if (text) runSearch(text);
   }
 });
 </script>
