@@ -36,7 +36,6 @@ header {
 
 .main { padding:16px; }
 
-/* VERY LARGE HERO */
 .hero {
   background:#000;
   border-radius:30px;
@@ -50,16 +49,8 @@ header {
   margin-bottom:20px;
 }
 
-.hero h1 {
-  font-size:64px;
-  margin:0;
-}
-
-.hero h2 {
-  margin-top:14px;
-  font-size:28px;
-  color:#E81F25;
-}
+.hero h1 { font-size:64px; margin:0; }
+.hero h2 { margin-top:14px; font-size:28px; color:#E81F25; }
 
 input, button {
   width:100%;
@@ -130,80 +121,80 @@ button {
   <button id="searchBtn">Search</button>
   <button class="call" id="callBtn">📞 CALL</button>
 
-  <div id="status">
-    Reshma: Assalam-o-Alaikum! Main DrivePK hoon. Aap kaunsi gaari dhoondh rahe hain?
-  </div>
-
+  <div id="status">Reshma: Assalam-o-Alaikum…</div>
   <div id="results"></div>
 
 </div>
 
 <script>
-/* ---------------- VOICE (RESHMA) ---------------- */
-function speakReshma() {
-  const text =
-    "Assalam o Alaikum! Main Reshma hoon, DrivePK se. " +
-    "Aap kaunsi gaari dhoondh rahe hain? " +
-    "Aap type bhi kar sakte hain.";
+/* ===============================
+   CALL → RESHMA VOICE (PHP TTS)
+   =============================== */
+function callReshma() {
+  const status = document.getElementById("status");
+  status.style.display = "block";
 
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "ur-PK";   // Urdu (Pakistan)
-  utterance.rate = 0.9;
-  utterance.pitch = 1.1;
-
-  window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utterance);
-}
-
-/* ---------------- DUMMY DATA ---------------- */
-const cars = [
-  { brand:"Honda", model:"Civic 2019", city:"Lahore", price:"45 Lakh" },
-  { brand:"Honda", model:"Civic 2018", city:"Lahore", price:"41 Lakh" },
-  { brand:"Honda", model:"City 2020", city:"Karachi", price:"38 Lakh" },
-  { brand:"Toyota", model:"Corolla 2019", city:"Lahore", price:"42 Lakh" },
-  { brand:"Toyota", model:"Yaris 2021", city:"Karachi", price:"39 Lakh" },
-  { brand:"MG", model:"HS 2021", city:"Lahore", price:"72 Lakh" }
-];
-
-/* ---------------- SEARCH ONLY ON USER INPUT ---------------- */
-function runSearch(text) {
-  const q = text.toLowerCase();
-  const results = document.getElementById("results");
-  results.innerHTML = "";
-
-  const found = cars.filter(c =>
-    q.includes(c.brand.toLowerCase()) ||
-    q.includes(c.city.toLowerCase())
+  const audio = new Audio(
+    "https://meilibeautyco/voice.php?text=" +
+    encodeURIComponent(
+      "Assalam o Alaikum! Main Reshma hoon, DrivePK se. Aap kaunsi gaari dhoondh rahe hain?"
+    )
   );
 
-  if (!found.length) {
-    results.innerHTML = "<p>No cars found</p>";
-    return;
-  }
-
-  found.forEach(c => {
-    results.innerHTML += `
-      <div class="car">
-        <strong>${c.brand} ${c.model}</strong><br>
-        ${c.city} • PKR ${c.price}
-      </div>
-    `;
-  });
+  audio.play();
 }
 
-/* ---------------- SEARCH BUTTON ---------------- */
+/* ===============================
+   SEARCH → DRIVEPK PHP API
+   =============================== */
+async function runSearch(text) {
+  const results = document.getElementById("results");
+  results.innerHTML = "<p>Searching…</p>";
+
+  try {
+    const res = await fetch(
+      "https://meilibeautyco/search.php",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: "query=" + encodeURIComponent(text)
+      }
+    );
+
+    const data = await res.json();
+    results.innerHTML = "";
+
+    if (!data || data.length === 0) {
+      results.innerHTML = "<p>No cars found</p>";
+      return;
+    }
+
+    data.forEach(c => {
+      results.innerHTML += `
+        <div class="car">
+          <strong>${c.brand} ${c.model}</strong><br>
+          ${c.city} • PKR ${c.price}
+        </div>
+      `;
+    });
+
+  } catch (e) {
+    results.innerHTML = "<p>Error contacting DrivePK</p>";
+  }
+}
+
+/* ===============================
+   BUTTONS
+   =============================== */
+document.getElementById("callBtn").onclick = () => {
+  callReshma();
+};
+
 document.getElementById("searchBtn").onclick = () => {
   const text = document.getElementById("query").value.trim();
   if (text) runSearch(text);
 };
 
-/* ---------------- CALL BUTTON (VOICE GREETING ONLY) ---------------- */
-document.getElementById("callBtn").onclick = () => {
-  document.getElementById("status").style.display = "block";
-  speakReshma();
-};
-
-/* ---------------- ENTER KEY ---------------- */
 document.getElementById("query").addEventListener("keydown", e => {
   if (e.key === "Enter") {
     const text = document.getElementById("query").value.trim();
