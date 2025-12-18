@@ -14,7 +14,6 @@ header { background:#000; color:#fff; padding:16px; display:flex; gap:12px; alig
   font-size:22px; font-weight:bold;
 }
 .main { padding:16px; }
-
 .hero {
   background:#000; border-radius:30px;
   height:70vh; min-height:450px;
@@ -22,9 +21,8 @@ header { background:#000; color:#fff; padding:16px; display:flex; gap:12px; alig
   align-items:center; justify-content:center;
   color:#fff; margin-bottom:20px;
 }
-.hero h1 { font-size:64px; margin:0; }
-.hero h2 { font-size:28px; color:#E81F25; margin-top:12px; }
-
+.hero h1 { font-size:56px; margin:0; }
+.hero h2 { font-size:26px; color:#E81F25; margin-top:12px; }
 input,button {
   width:100%; height:62px;
   border-radius:18px; font-size:18px;
@@ -32,18 +30,13 @@ input,button {
 input { padding:0 20px; border:1px solid #ccc; margin-bottom:12px; }
 button { border:none; background:#000; color:#fff; }
 .call { background:#E81F25; font-size:22px; margin-top:12px; }
-
 #status { margin-top:12px; font-weight:bold; color:#E81F25; }
 #results {
   background:#fff; border-radius:20px;
   padding:16px; margin-top:18px;
 }
-.car {
-  padding:14px 0;
-  border-bottom:1px solid #ddd;
-}
+.car { padding:14px 0; border-bottom:1px solid #ddd; }
 .car:last-child { border-bottom:none; }
-.car small { color:#555; }
 </style>
 </head>
 
@@ -58,7 +51,6 @@ button { border:none; background:#000; color:#fff; }
 </header>
 
 <div class="main">
-
   <div class="hero">
     <h1>DrivePK</h1>
     <h2>Roman Urdu Voice Search</h2>
@@ -70,25 +62,26 @@ button { border:none; background:#000; color:#fff; }
 
   <div id="status"></div>
   <div id="results"></div>
-
 </div>
 
 <script>
 /* ===============================
-   RESHMA VOICE (ROMAN URDU)
+   SERVER TTS (OpenAI via voice.php)
    =============================== */
-function speakReshma() {
-  const text =
-    "Assalam o Alaikum. Main Reshma hoon DrivePK se. " +
-    "Aap kaunsi gaari dhoondh rahe hain?";
-
-  const msg = new SpeechSynthesisUtterance(text);
-  msg.lang = "en-GB";
-  msg.rate = 0.95;
-  msg.pitch = 1.25;
-
-  speechSynthesis.cancel();
-  speechSynthesis.speak(msg);
+async function speakReshma(text) {
+  try {
+    const res = await fetch("https://meilibeauty.co.uk/voice.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    });
+    const blob = await res.blob();
+    const audio = new Audio(URL.createObjectURL(blob));
+    audio.play();
+  } catch {
+    document.getElementById("status").innerText =
+      "Reshma: Voice error, dobara try karein";
+  }
 }
 
 /* ===============================
@@ -98,103 +91,51 @@ let recognition = null;
 if ("webkitSpeechRecognition" in window) {
   recognition = new webkitSpeechRecognition();
   recognition.lang = "en-GB";
-  recognition.continuous = false;
-  recognition.interimResults = false;
-
   recognition.onresult = e => {
     const text = e.results[0][0].transcript;
     document.getElementById("query").value = text;
-    document.getElementById("status").innerText =
-      "Reshma: Aap ne kaha – " + text;
     runSearch(text);
   };
 }
 
 /* ===============================
-   PARAM BUILDER (SAFE)
-   =============================== */
-function buildParams(text) {
-  const q = text.toLowerCase();
-  const p = new URLSearchParams();
-
-  ["toyota","honda","suzuki","kia","hyundai","mg"].forEach(b=>{
-    if(q.includes(b)) p.set("brand", b.charAt(0).toUpperCase()+b.slice(1));
-  });
-
-  ["vitz","corolla","civic","city","yaris","prado","sportage","hs"].forEach(m=>{
-    if(q.includes(m)) p.set("model", m.charAt(0).toUpperCase()+m.slice(1));
-  });
-
-  ["lahore","karachi","islamabad","rawalpindi"].forEach(c=>{
-    if(q.includes(c)) p.set("city", c.charAt(0).toUpperCase()+c.slice(1));
-  });
-
-  const year = q.match(/20\d{2}/);
-  if(year) p.set("year", year[0]);
-
-  const lakh = q.match(/(\d+)\s*lakh/);
-  if(lakh) p.set("maxPrice", parseInt(lakh[1]) * 100000);
-
-  return p.toString();
-}
-
-/* ===============================
-   DRIVEPK SEARCH (FIXED)
+   SEARCH (search.php → DrivePK API)
    =============================== */
 async function runSearch(text) {
-  const results = document.getElementById("results");
-  results.innerHTML = "<p>DrivePK se gaariyan dhoondi ja rahi hain…</p>";
+  const res = await fetch("https://meilibeauty.co.uk/search.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text })
+  });
+  const json = await res.json();
+  const data = json.data || [];
+  const box = document.getElementById("results");
+  box.innerHTML = data.length ? "" : "<p>Koi gaari nahi mili</p>";
 
-  const qs = buildParams(text);
-  const url = "https://api.drivepk.com/cars?" + qs;
-
-  try {
-    const res = await fetch(url);
-    const json = await res.json();
-
-    const data = json.data;   // ✅ FIX HERE
-
-    if (!Array.isArray(data) || data.length === 0) {
-      results.innerHTML = "<p>Koi gaari nahi mili</p>";
-      return;
-    }
-
-    results.innerHTML = "";
-    data.forEach(c => {
-      results.innerHTML += `
-        <div class="car">
-          <strong>${c.title}</strong><br>
-          <small>
-            ${c.year} • ${c.location?.city} • ${c.mileage?.toLocaleString()} km
-          </small><br>
-          <strong>PKR ${c.price?.toLocaleString()}</strong>
-        </div>
-      `;
-    });
-
-  } catch (e) {
-    results.innerHTML = "<p>DrivePK API response error</p>";
-  }
+  data.forEach(c => {
+    box.innerHTML += `
+      <div class="car">
+        <strong>${c.title}</strong><br>
+        ${c.year} • ${c.location?.city || "-"}<br>
+        PKR ${c.price?.toLocaleString() || "Call"}
+      </div>`;
+  });
 }
 
 /* ===============================
    BUTTONS
    =============================== */
 document.getElementById("callBtn").onclick = () => {
-  document.getElementById("status").innerText =
-    "Reshma: Assalam o Alaikum…";
-  speakReshma();
-  setTimeout(()=> recognition && recognition.start(), 1200);
+  speakReshma(
+    "Assalam o Alaikum. Main Reshma hoon DrivePK se. Aap kaunsi gaari dhoondh rahe hain?"
+  );
+  setTimeout(() => recognition && recognition.start(), 1500);
 };
 
 document.getElementById("searchBtn").onclick = () => {
   const q = document.getElementById("query").value.trim();
-  if(q) runSearch(q);
+  if (q) runSearch(q);
 };
-
-document.getElementById("query").addEventListener("keydown", e=>{
-  if(e.key==="Enter") runSearch(e.target.value);
-});
 </script>
 
 </body>
