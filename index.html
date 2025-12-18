@@ -126,26 +126,30 @@ button {
 
 </div>
 
+<audio id="reshmaAudio" preload="none"></audio>
+
 <script>
 /* ===============================
-   CALL → RESHMA VOICE (PHP TTS)
+   CALL → RESHMA VOICE (FIXED)
    =============================== */
 function callReshma() {
   const status = document.getElementById("status");
+  const audio = document.getElementById("reshmaAudio");
+
   status.style.display = "block";
 
-  const audio = new Audio(
+  audio.src =
     "https://meilibeautyco/voice.php?text=" +
     encodeURIComponent(
-      "Assalam o Alaikum! Main Reshma hoon, DrivePK se. Aap kaunsi gaari dhoondh rahe hain?"
-    )
-  );
+      "Assalam o Alaikum! Main Reshma hoon DrivePK se. Aap kaunsi gaari dhoondh rahe hain?"
+    );
 
-  audio.play();
+  audio.currentTime = 0;
+  audio.play().catch(() => {});
 }
 
 /* ===============================
-   SEARCH → DRIVEPK PHP API
+   SEARCH → DRIVEPK PHP (ROBUST)
    =============================== */
 async function runSearch(text) {
   const results = document.getElementById("results");
@@ -153,33 +157,38 @@ async function runSearch(text) {
 
   try {
     const res = await fetch(
-      "https://meilibeautyco/search.php",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: "query=" + encodeURIComponent(text)
-      }
+      "https://meilibeautyco/search.php?query=" +
+      encodeURIComponent(text),
+      { method: "GET" }
     );
 
-    const data = await res.json();
-    results.innerHTML = "";
+    const raw = await res.text();
 
-    if (!data || data.length === 0) {
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      results.innerHTML = "<p>No results found</p>";
+      return;
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
       results.innerHTML = "<p>No cars found</p>";
       return;
     }
 
+    results.innerHTML = "";
     data.forEach(c => {
       results.innerHTML += `
         <div class="car">
-          <strong>${c.brand} ${c.model}</strong><br>
-          ${c.city} • PKR ${c.price}
+          <strong>${c.brand || ""} ${c.model || ""}</strong><br>
+          ${c.city || ""} ${c.price ? "• PKR " + c.price : ""}
         </div>
       `;
     });
 
-  } catch (e) {
-    results.innerHTML = "<p>Error contacting DrivePK</p>";
+  } catch {
+    results.innerHTML = "<p>Search service unavailable</p>";
   }
 }
 
