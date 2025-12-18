@@ -1,136 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-<title>DrivePK Voice</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>DrivePK Voice</title>
 
-<style>
-* { box-sizing: border-box; }
+    <style>
+        * {
+            box-sizing: border-box;
+        }
 
-body {
-  margin: 0;
-  height: 100svh;
-  background: #111;
-  font-family: system-ui, -apple-system, Segoe UI, sans-serif;
-  display: flex;
-  justify-content: center;
-}
+        body {
+            margin: 0;
+            height: 100svh;
+            background: #111;
+            font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+            display: flex;
+            justify-content: center;
+        }
 
-#app {
-  width: 100%;
-  max-width: 420px;
-  height: 100svh;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
+        #app {
+            width: 100%;
+            max-width: 420px;
+            height: 100svh;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-header {
-  background: #000;
-  color: #fff;
-  padding: 8px;
-  text-align: center;
-  font-size: 14px;
-  font-weight: 600;
-  border-bottom: 3px solid #E81F25;
-}
+        header {
+            background: #000;
+            color: #fff;
+            padding: 8px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            border-bottom: 3px solid #E81F25;
+        }
 
-#audioCanvas {
-  width: 100%;
-  height: 60px;
-  background: #000;
-}
+        #audioCanvas {
+            width: 100%;
+            height: 60px;
+            background: #000;
+        }
 
-#messages {
-  flex: 1;
-  padding: 10px;
-  overflow-y: auto;
-  font-size: 14px;
-}
+        #messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            font-size: 14px;
+        }
 
-.msg {
-  padding: 8px;
-  margin-bottom: 6px;
-  border-radius: 6px;
-  background: #f3f3f3;
-}
+        .msg {
+            padding: 8px;
+            margin-bottom: 6px;
+            border-radius: 6px;
+            background: #f3f3f3;
+        }
 
-.msg.ai {
-  border-left: 4px solid #E81F25;
-}
+        .msg.ai {
+            border-left: 4px solid #E81F25;
+        }
 
-#searchBox {
-  padding: 8px;
-}
+        #searchBox {
+            padding: 8px;
+        }
 
-#textSearch {
-  width: 100%;
-  padding: 10px;
-  font-size: 14px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
+        #textSearch {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
 
-footer {
-  display: flex;
-  gap: 6px;
-  padding: 8px;
-  border-top: 1px solid #ddd;
-}
+        footer {
+            display: flex;
+            gap: 6px;
+            padding: 8px;
+            border-top: 1px solid #ddd;
+        }
 
-button {
-  flex: 1;
-  padding: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  border: none;
-  border-radius: 6px;
-}
+        button {
+            flex: 1;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+        }
 
-#startCall {
-  background: #E81F25;
-  color: #fff;
-}
+        #recordButton {
+            background: #E81F25;
+            color: #fff;
+        }
 
-#stopCall {
-  background: #444;
-  color: #fff;
-}
-</style>
+        #stopCall {
+            background: #444;
+            color: #fff;
+        }
+    </style>
 </head>
 
 <body>
 
-<div id="app">
-  <header>DRIVEPK VOICE</header>
+    <div id="app">
+        <header>DRIVEPK VOICE</header>
 
-  <canvas id="audioCanvas"></canvas>
+        <canvas id="audioCanvas"></canvas>
 
-  <div id="messages"></div>
+        <div id="messages"></div>
 
-  <div id="searchBox">
-    <input id="textSearch" placeholder="Gaari ka model bolain ya likhain…" />
-  </div>
+        <div id="searchBox">
+            <input id="textSearch" placeholder="Gaari ka model bolain ya likhain…" />
+        </div>
 
-  <footer>
-    <button id="startCall">📞 START CALL</button>
-    <button id="stopCall">⛔ STOP</button>
-  </footer>
-</div>
+        <footer>
+            <!-- Updated Button ID -->
+            <button id="recordButton">📞 START CALL</button>
+            <button id="stopCall">⛔ STOP</button>
+        </footer>
+    </div>
 
-<!-- ✅ Runtime config MUST be BEFORE bundle -->
-<script>
-window.__APP_CONFIG__ = {
-  apiBaseUrl: "",
-  customBackendUrl: "",
-  openAIKey: null
-};
-</script>
+    <!-- DrivePK Configuration -->
+    <script>
+        window.__APP_CONFIG__ = {
+            apiBaseUrl: "",
+            customBackendUrl: "",
+            openAIKey: null
+        };
+    </script>
 
-<!-- ✅ DEFER IS THE KEY FIX -->
-<script src="./dist/app.bundle.js" defer></script>
-
+    <!-- Main Application Script -->
+    <script src="./dist/app.bundle.js" defer></script>
 </body>
 </html>
