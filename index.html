@@ -6,22 +6,19 @@
 <title>DrivePK Bolo App</title>
 
 <style>
-html { font-size:16px; }
 body {
   margin:0;
   font-family:Arial, sans-serif;
   background:#f2f2f2;
 }
-
 header {
   background:#000;
   color:#fff;
   padding:16px;
   display:flex;
-  align-items:center;
   gap:12px;
+  align-items:center;
 }
-
 .logo {
   background:#E81F25;
   width:52px;
@@ -33,7 +30,6 @@ header {
   font-size:22px;
   font-weight:bold;
 }
-
 .main { padding:16px; }
 
 .hero {
@@ -48,9 +44,8 @@ header {
   color:#fff;
   margin-bottom:20px;
 }
-
 .hero h1 { font-size:64px; margin:0; }
-.hero h2 { margin-top:14px; font-size:28px; color:#E81F25; }
+.hero h2 { font-size:28px; color:#E81F25; margin-top:12px; }
 
 input, button {
   width:100%;
@@ -58,19 +53,16 @@ input, button {
   border-radius:18px;
   font-size:18px;
 }
-
 input {
   padding:0 20px;
   border:1px solid #ccc;
   margin-bottom:12px;
 }
-
 button {
   border:none;
   background:#000;
   color:#fff;
 }
-
 .call {
   background:#E81F25;
   font-size:22px;
@@ -78,11 +70,9 @@ button {
 }
 
 #status {
-  margin-top:14px;
-  font-size:18px;
+  margin-top:12px;
   font-weight:bold;
   color:#E81F25;
-  display:none;
 }
 
 #results {
@@ -117,98 +107,88 @@ button {
     <h2>MG HS</h2>
   </div>
 
-  <input id="query" placeholder="Type car search here (e.g. Honda in Lahore)">
+  <input id="query" placeholder="Honda / Toyota / MG / Lahore">
   <button id="searchBtn">Search</button>
   <button class="call" id="callBtn">📞 CALL</button>
 
-  <div id="status">Reshma: Assalam-o-Alaikum…</div>
+  <div id="status"></div>
   <div id="results"></div>
 
 </div>
 
-<audio id="reshmaAudio" preload="none"></audio>
-
 <script>
 /* ===============================
-   CALL → RESHMA VOICE (FIXED)
+   GUARANTEED VOICE (NO URDU, NO API)
    =============================== */
-function callReshma() {
-  const status = document.getElementById("status");
-  const audio = document.getElementById("reshmaAudio");
+function speakReshma() {
+  const text =
+    "Assalam Alaikum. My name is Reshma from Drive PK. Please tell me which car you are looking for.";
 
-  status.style.display = "block";
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.lang = "en-GB";   // GUARANTEED
+  msg.rate = 0.95;
+  msg.pitch = 1.2;
 
-  audio.src =
-    "https://meilibeautyco/voice.php?text=" +
-    encodeURIComponent(
-      "Assalam o Alaikum! Main Reshma hoon DrivePK se. Aap kaunsi gaari dhoondh rahe hain?"
-    );
-
-  audio.currentTime = 0;
-  audio.play().catch(() => {});
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(msg);
 }
 
 /* ===============================
-   SEARCH → DRIVEPK PHP (ROBUST)
+   LOCAL DATA (ALWAYS WORKS)
    =============================== */
-async function runSearch(text) {
+const cars = [
+  { brand:"Honda", model:"Civic 2019", city:"Lahore", price:"45 Lakh" },
+  { brand:"Honda", model:"Civic 2018", city:"Lahore", price:"41 Lakh" },
+  { brand:"Honda", model:"City 2020", city:"Karachi", price:"38 Lakh" },
+  { brand:"Toyota", model:"Corolla 2019", city:"Lahore", price:"42 Lakh" },
+  { brand:"Toyota", model:"Yaris 2021", city:"Karachi", price:"39 Lakh" },
+  { brand:"MG", model:"HS 2021", city:"Lahore", price:"72 Lakh" }
+];
+
+/* ===============================
+   SEARCH (DEAD SIMPLE)
+   =============================== */
+function runSearch() {
+  const q = document.getElementById("query").value.toLowerCase().trim();
   const results = document.getElementById("results");
-  results.innerHTML = "<p>Searching…</p>";
+  results.innerHTML = "";
 
-  try {
-    const res = await fetch(
-      "https://meilibeautyco/search.php?query=" +
-      encodeURIComponent(text),
-      { method: "GET" }
-    );
+  const found = cars.filter(c =>
+    q === "" ||
+    q.includes(c.brand.toLowerCase()) ||
+    q.includes(c.city.toLowerCase())
+  );
 
-    const raw = await res.text();
-
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      results.innerHTML = "<p>No results found</p>";
-      return;
-    }
-
-    if (!Array.isArray(data) || data.length === 0) {
-      results.innerHTML = "<p>No cars found</p>";
-      return;
-    }
-
-    results.innerHTML = "";
-    data.forEach(c => {
-      results.innerHTML += `
-        <div class="car">
-          <strong>${c.brand || ""} ${c.model || ""}</strong><br>
-          ${c.city || ""} ${c.price ? "• PKR " + c.price : ""}
-        </div>
-      `;
-    });
-
-  } catch {
-    results.innerHTML = "<p>Search service unavailable</p>";
+  if (!found.length) {
+    results.innerHTML = "<p>No cars found</p>";
+    return;
   }
+
+  found.forEach(c => {
+    results.innerHTML += `
+      <div class="car">
+        <strong>${c.brand} ${c.model}</strong><br>
+        ${c.city} • PKR ${c.price}
+      </div>
+    `;
+  });
 }
 
 /* ===============================
    BUTTONS
    =============================== */
 document.getElementById("callBtn").onclick = () => {
-  callReshma();
+  document.getElementById("status").innerText =
+    "Reshma: Assalam Alaikum...";
+  speakReshma();
 };
 
 document.getElementById("searchBtn").onclick = () => {
-  const text = document.getElementById("query").value.trim();
-  if (text) runSearch(text);
+  runSearch();
 };
 
 document.getElementById("query").addEventListener("keydown", e => {
-  if (e.key === "Enter") {
-    const text = document.getElementById("query").value.trim();
-    if (text) runSearch(text);
-  }
+  if (e.key === "Enter") runSearch();
 });
 </script>
 
