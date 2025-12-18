@@ -11,7 +11,6 @@ body {
   margin:0;
   font-family:Arial, sans-serif;
   background:#f2f2f2;
-  -webkit-text-size-adjust:100%;
 }
 
 header {
@@ -35,15 +34,14 @@ header {
   font-weight:bold;
 }
 
-.main {
-  padding:16px;
-}
+.main { padding:16px; }
 
+/* HUGE HERO */
 .hero {
   background:#000;
   border-radius:30px;
-  height:65vh;
-  min-height:420px;
+  height:70vh;
+  min-height:450px;
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -53,13 +51,13 @@ header {
 }
 
 .hero h1 {
-  font-size:60px;
+  font-size:64px;
   margin:0;
 }
 
 .hero h2 {
   margin-top:14px;
-  font-size:26px;
+  font-size:28px;
   color:#E81F25;
 }
 
@@ -120,37 +118,37 @@ button {
     <h2>MG HS</h2>
   </div>
 
-  <input id="query" placeholder="Find Honda in Lahore">
-  <button onclick="searchCars()">Search</button>
-  <button class="call" onclick="callAI()">📞 CALL</button>
+  <input id="query" placeholder="Honda / Toyota / MG / Lahore">
+  <button id="searchBtn">Search</button>
+  <button class="call" id="callBtn">📞 CALL</button>
 
   <div id="results"></div>
 
 </div>
 
 <script>
+/* ---------------- DATA ---------------- */
 const cars = [
   { brand:"Honda", model:"Civic 2019", city:"Lahore", price:"45 Lakh" },
   { brand:"Honda", model:"Civic 2018", city:"Lahore", price:"41 Lakh" },
   { brand:"Honda", model:"City 2020", city:"Karachi", price:"38 Lakh" },
   { brand:"Toyota", model:"Corolla 2019", city:"Lahore", price:"42 Lakh" },
+  { brand:"Toyota", model:"Yaris 2021", city:"Karachi", price:"39 Lakh" },
   { brand:"MG", model:"HS 2021", city:"Lahore", price:"72 Lakh" }
 ];
 
-function searchCars(textOverride) {
-  const input = document.getElementById("query");
+/* ---------------- SEARCH ---------------- */
+function runSearch(text) {
+  const q = text.toLowerCase();
   const results = document.getElementById("results");
-  if (!input || !results) return;
-
-  const q = (textOverride || input.value).toLowerCase().trim();
   results.innerHTML = "";
 
   const found = cars.filter(c =>
-    q.includes(c.brand.toLowerCase()) &&
+    q.includes(c.brand.toLowerCase()) ||
     q.includes(c.city.toLowerCase())
   );
 
-  if (!found.length) {
+  if (found.length === 0) {
     results.innerHTML = "<p>No cars found</p>";
     return;
   }
@@ -165,21 +163,21 @@ function searchCars(textOverride) {
   });
 }
 
-function callAI() {
-  console.log("Resham: Asalam o Alaikum! Welcome to DrivePK.");
-  const input = document.getElementById("query");
-  if (input) {
-    input.value = "Honda in Lahore";
-    searchCars("Honda in Lahore");
-  }
-}
+/* ---------------- BUTTONS ---------------- */
+document.getElementById("searchBtn").onclick = () => {
+  const q = document.getElementById("query").value.trim();
+  if (q) runSearch(q);
+};
 
-document.addEventListener("DOMContentLoaded", () => {
-  const input = document.getElementById("query");
-  if (input) {
-    input.addEventListener("keydown", e => {
-      if (e.key === "Enter") searchCars();
-    });
+document.getElementById("callBtn").onclick = () => {
+  document.getElementById("query").value = "Honda in Lahore";
+  runSearch("Honda in Lahore");
+};
+
+document.getElementById("query").addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    const q = document.getElementById("query").value.trim();
+    if (q) runSearch(q);
   }
 });
 </script>
