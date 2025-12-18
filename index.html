@@ -40,15 +40,6 @@
             border-bottom: 3px solid #E81F25;
         }
 
-        #transcript {
-            font-size: 14px;
-            color: #757575;
-            padding: 12px;
-            border: 1px solid #ddd;
-            margin: 8px;
-            display: none; /* Initially hidden, will appear after recording starts */
-        }
-
         #visualizer {
             width: 100%;
             height: 60px;
@@ -85,6 +76,15 @@
             border: 1px solid #ccc;
         }
 
+        #transcript {
+            font-size: 14px;
+            color: #757575;
+            padding: 12px;
+            border: 1px solid #ddd;
+            margin: 8px;
+            display: none; /* Initially hidden, appears after recording starts */
+        }
+
         footer {
             display: flex;
             gap: 6px;
@@ -110,6 +110,17 @@
             background: #444;
             color: #fff;
         }
+
+        .error-alert {
+            display: none;
+            padding: 10px;
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            margin: 8px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
     </style>
 </head>
 
@@ -122,9 +133,12 @@
         <canvas id="visualizer"></canvas>
 
         <!-- Transcript Display -->
-        <div id="transcript" class="transcript-display"></div>
+        <div id="transcript"></div>
 
-        <div id="messages"></div>
+        <!-- Error Alerts -->
+        <div id="errorAlert" class="error-alert">
+            <span>Error: Something went wrong.</span>
+        </div>
 
         <div id="searchBox">
             <input id="textSearch" placeholder="Gaari ka model bolain ya likhain…" />
@@ -136,7 +150,6 @@
         </footer>
     </div>
 
-    <!-- DrivePK Configuration -->
     <script>
         window.__APP_CONFIG__ = {
             apiBaseUrl: "",
@@ -145,7 +158,6 @@
         };
     </script>
 
-    <!-- Main Application Script -->
     <script src="./dist/app.bundle.js" defer></script>
 </body>
 
