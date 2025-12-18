@@ -60,7 +60,7 @@ button { border:none; background:#000; color:#fff; }
     <h2>MG HS</h2>
   </div>
 
-  <input id="query" placeholder="Honda / Toyota / Lahore">
+  <input id="query" placeholder="Honda Lahore / Corolla Karachi (Roman Urdu)">
   <button id="searchBtn">Search</button>
   <button class="call" id="callBtn">📞 CALL</button>
 
@@ -69,87 +69,79 @@ button { border:none; background:#000; color:#fff; }
 
 </div>
 
+<audio id="reshmaAudio"></audio>
+
 <script>
 /* ===============================
-   RESHMA VOICE (EN + URDU)
+   FEMALE VOICE – SERVER TTS
    =============================== */
-function speakReshma() {
-  const text =
-    "Assalam o Alaikum. " +
-    "Main Reshma hoon DrivePK se. " +
-    "Aap kaunsi gaari dhoondh rahe hain?";
-
-  const msg = new SpeechSynthesisUtterance(text);
-  msg.lang = "ur-PK";
-  msg.rate = 0.95;
-  msg.pitch = 1.2;
-
-  speechSynthesis.cancel();
-  speechSynthesis.speak(msg);
+function playReshmaVoice(text) {
+  const audio = document.getElementById("reshmaAudio");
+  audio.src =
+    "https://meilibeautyco/voice.php?text=" +
+    encodeURIComponent(text);
+  audio.play();
 }
 
 /* ===============================
-   LOCAL FALLBACK DATA
+   STT – MIC (ROMAN URDU)
    =============================== */
-const fallbackCars = [
-  { brand:"Honda", model:"Civic 2019", city:"Lahore", price:"45 Lakh" },
-  { brand:"Honda", model:"Civic 2018", city:"Lahore", price:"41 Lakh" },
-  { brand:"Toyota", model:"Corolla 2019", city:"Lahore", price:"42 Lakh" },
-  { brand:"MG", model:"HS 2021", city:"Lahore", price:"72 Lakh" }
-];
+let recognition = null;
+if ("webkitSpeechRecognition" in window) {
+  recognition = new webkitSpeechRecognition();
+  recognition.lang = "en-GB"; // Roman Urdu
+  recognition.continuous = false;
+  recognition.interimResults = false;
 
-/* ===============================
-   RENDER
-   =============================== */
-function renderResults(data) {
-  const results = document.getElementById("results");
-  results.innerHTML = "";
-  if (!data.length) {
-    results.innerHTML = "<p>No cars found</p>";
-    return;
-  }
-  data.forEach(c => {
-    results.innerHTML += `
-      <div class="car">
-        <strong>${c.brand} ${c.model}</strong><br>
-        ${c.city} • PKR ${c.price}
-      </div>
-    `;
-  });
+  recognition.onresult = e => {
+    const text = e.results[0][0].transcript;
+    document.getElementById("query").value = text;
+    document.getElementById("status").innerText =
+      "Reshma: Aap ne kaha – " + text;
+    runSearch(text);
+  };
+
+  recognition.onerror = () => {
+    document.getElementById("status").innerText =
+      "Reshma: Dobara boliye please";
+  };
 }
 
 /* ===============================
-   SEARCH (DRIVEPK DB FIRST)
+   DRIVEPK SEARCH (NO FALLBACK)
    =============================== */
-async function runSearch() {
-  const q = document.getElementById("query").value.trim();
-  if (!q) return;
-
+async function runSearch(text) {
   const results = document.getElementById("results");
-  results.innerHTML = "<p>Searching…</p>";
+  results.innerHTML = "<p>DrivePK se search ho rahi hai…</p>";
 
   try {
     const res = await fetch(
-      "https://meilibeautyco/search.php?query=" + encodeURIComponent(q)
+      "https://meilibeautyco/search.php?query=" +
+      encodeURIComponent(text)
     );
+
     const raw = await res.text();
     const data = JSON.parse(raw);
 
-    if (Array.isArray(data)) {
-      renderResults(data);
+    if (!Array.isArray(data) || data.length === 0) {
+      results.innerHTML = "<p>DrivePK par koi result nahi mila</p>";
       return;
     }
-  } catch (e) {
-    // fallback
-  }
 
-  // FALLBACK SEARCH
-  const fq = q.toLowerCase();
-  const found = fallbackCars.filter(c =>
-    fq.includes(c.brand.toLowerCase()) ||
-    fq.includes(c.city.toLowerCase())
-  );
-  renderResults(found);
+    results.innerHTML = "";
+    data.forEach(c => {
+      results.innerHTML += `
+        <div class="car">
+          <strong>${c.brand} ${c.model}</strong><br>
+          ${c.city} • PKR ${c.price}
+        </div>
+      `;
+    });
+
+  } catch (e) {
+    results.innerHTML =
+      "<p>DrivePK search API error — check search.php</p>";
+  }
 }
 
 /* ===============================
@@ -157,16 +149,24 @@ async function runSearch() {
    =============================== */
 document.getElementById("callBtn").onclick = () => {
   document.getElementById("status").innerText =
-    "Reshma: Assalam-o-Alaikum…";
-  speakReshma();
+    "Reshma: Assalam o Alaikum…";
+
+  playReshmaVoice(
+    "Assalam o Alaikum. Main Reshma hoon DrivePK se. Aap kaunsi gaari dhoondh rahe hain?"
+  );
+
+  setTimeout(() => {
+    if (recognition) recognition.start();
+  }, 1500);
 };
 
 document.getElementById("searchBtn").onclick = () => {
-  runSearch();
+  const q = document.getElementById("query").value.trim();
+  if (q) runSearch(q);
 };
 
 document.getElementById("query").addEventListener("keydown", e => {
-  if (e.key === "Enter") runSearch();
+  if (e.key === "Enter") runSearch(e.target.value);
 });
 </script>
 
