@@ -56,11 +56,11 @@ button { border:none; background:#000; color:#fff; }
 <div class="main">
 
   <div class="hero">
-    <h1>MG</h1>
-    <h2>MG HS</h2>
+    <h1>DrivePK</h1>
+    <h2>Roman Urdu Voice Search</h2>
   </div>
 
-  <input id="query" placeholder="Honda Lahore / Corolla Karachi (Roman Urdu)">
+  <input id="query" placeholder="Jaise: Toyota Corolla 2020 Lahore 20 lakh">
   <button id="searchBtn">Search</button>
   <button class="call" id="callBtn">📞 CALL</button>
 
@@ -71,7 +71,7 @@ button { border:none; background:#000; color:#fff; }
 
 <script>
 /* ===============================
-   RESHMA VOICE — GUARANTEED
+   RESHMA VOICE (ROMAN URDU)
    =============================== */
 function speakReshma() {
   const text =
@@ -79,43 +79,97 @@ function speakReshma() {
     "Aap kaunsi gaari dhoondh rahe hain?";
 
   const msg = new SpeechSynthesisUtterance(text);
-  msg.lang = "en-GB";       // Roman Urdu works best
+  msg.lang = "en-GB";
   msg.rate = 0.95;
-  msg.pitch = 1.3;
+  msg.pitch = 1.25;
 
   speechSynthesis.cancel();
   speechSynthesis.speak(msg);
 }
 
 /* ===============================
-   DRIVEPK SEARCH — POST ONLY
+   STT (MIC)
+   =============================== */
+let recognition = null;
+if ("webkitSpeechRecognition" in window) {
+  recognition = new webkitSpeechRecognition();
+  recognition.lang = "en-GB";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onresult = e => {
+    const text = e.results[0][0].transcript;
+    document.getElementById("query").value = text;
+    document.getElementById("status").innerText =
+      "Reshma: Aap ne kaha – " + text;
+    runSearch(text);
+  };
+
+  recognition.onerror = () => {
+    document.getElementById("status").innerText =
+      "Reshma: Dobara boliye please";
+  };
+}
+
+/* ===============================
+   INTENT → SINGLE VALUE PARAMS
+   =============================== */
+function buildParams(text) {
+  const q = text.toLowerCase();
+  const params = new URLSearchParams();
+
+  // Brand
+  ["toyota","honda","suzuki","kia","hyundai","mg"].forEach(b => {
+    if (q.includes(b)) params.set("brand", b.charAt(0).toUpperCase()+b.slice(1));
+  });
+
+  // Model (single only)
+  ["corolla","civic","city","yaris","alto","mehran","sportage","hs"].forEach(m => {
+    if (q.includes(m)) params.set("model", m.charAt(0).toUpperCase()+m.slice(1));
+  });
+
+  // City
+  ["lahore","karachi","islamabad","rawalpindi","faisalabad"].forEach(c => {
+    if (q.includes(c)) params.set("city", c.charAt(0).toUpperCase()+c.slice(1));
+  });
+
+  // Condition
+  if (q.includes("new")) params.set("condition", "new");
+  if (q.includes("used")) params.set("condition", "used");
+
+  // Transmission
+  if (q.includes("automatic")) params.set("transmission", "automatic");
+  if (q.includes("manual")) params.set("transmission", "manual");
+
+  // Fuel
+  if (q.includes("petrol")) params.set("fuelType", "petrol");
+  if (q.includes("diesel")) params.set("fuelType", "diesel");
+  if (q.includes("hybrid")) params.set("fuelType", "hybrid");
+
+  // Year
+  const year = q.match(/20\d{2}/);
+  if (year) params.set("year", year[0]);
+
+  // Price (lakh → maxPrice)
+  const lakh = q.match(/(\d+)\s*lakh/);
+  if (lakh) params.set("maxPrice", parseInt(lakh[1]) * 100000);
+
+  return params.toString();
+}
+
+/* ===============================
+   DRIVEPK SEARCH
    =============================== */
 async function runSearch(text) {
   const results = document.getElementById("results");
   results.innerHTML = "<p>DrivePK se search ho rahi hai…</p>";
 
+  const qs = buildParams(text);
+  const url = "https://api.drivepk.com/cars?" + qs;
+
   try {
-    const res = await fetch(
-      "https://meilibeautyco/search.php",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: "query=" + encodeURIComponent(text)
-      }
-    );
-
-    const raw = await res.text();
-    let data;
-
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      results.innerHTML =
-        "<p>DrivePK search.php JSON return nahi kar raha</p>";
-      return;
-    }
+    const res = await fetch(url);
+    const data = await res.json();
 
     if (!Array.isArray(data) || data.length === 0) {
       results.innerHTML = "<p>Koi gaari nahi mili</p>";
@@ -126,15 +180,15 @@ async function runSearch(text) {
     data.forEach(c => {
       results.innerHTML += `
         <div class="car">
-          <strong>${c.brand || ""} ${c.model || ""}</strong><br>
-          ${c.city || ""} ${c.price ? "• PKR " + c.price : ""}
+          <strong>${c.brand} ${c.model} ${c.year || ""}</strong><br>
+          ${c.city} • PKR ${c.price}
         </div>
       `;
     });
 
   } catch (e) {
     results.innerHTML =
-      "<p>DrivePK API reachable nahi hai</p>";
+      "<p>DrivePK API error</p>";
   }
 }
 
@@ -145,6 +199,9 @@ document.getElementById("callBtn").onclick = () => {
   document.getElementById("status").innerText =
     "Reshma: Assalam o Alaikum…";
   speakReshma();
+  setTimeout(() => {
+    if (recognition) recognition.start();
+  }, 1200);
 };
 
 document.getElementById("searchBtn").onclick = () => {
@@ -153,10 +210,7 @@ document.getElementById("searchBtn").onclick = () => {
 };
 
 document.getElementById("query").addEventListener("keydown", e => {
-  if (e.key === "Enter") {
-    const q = e.target.value.trim();
-    if (q) runSearch(q);
-  }
+  if (e.key === "Enter") runSearch(e.target.value);
 });
 </script>
 
