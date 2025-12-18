@@ -38,8 +38,12 @@ button { border:none; background:#000; color:#fff; }
   background:#fff; border-radius:20px;
   padding:16px; margin-top:18px;
 }
-.car { padding:14px 0; border-bottom:1px solid #ddd; }
+.car {
+  padding:14px 0;
+  border-bottom:1px solid #ddd;
+}
 .car:last-child { border-bottom:none; }
+.car small { color:#555; }
 </style>
 </head>
 
@@ -60,7 +64,7 @@ button { border:none; background:#000; color:#fff; }
     <h2>Roman Urdu Voice Search</h2>
   </div>
 
-  <input id="query" placeholder="Jaise: Toyota Corolla 2020 Lahore 20 lakh">
+  <input id="query" placeholder="Jaise: Toyota Vitz 2017 Lahore 35 lakh">
   <button id="searchBtn">Search</button>
   <button class="call" id="callBtn">📞 CALL</button>
 
@@ -104,72 +108,51 @@ if ("webkitSpeechRecognition" in window) {
       "Reshma: Aap ne kaha – " + text;
     runSearch(text);
   };
-
-  recognition.onerror = () => {
-    document.getElementById("status").innerText =
-      "Reshma: Dobara boliye please";
-  };
 }
 
 /* ===============================
-   INTENT → SINGLE VALUE PARAMS
+   PARAM BUILDER (SAFE)
    =============================== */
 function buildParams(text) {
   const q = text.toLowerCase();
-  const params = new URLSearchParams();
+  const p = new URLSearchParams();
 
-  // Brand
-  ["toyota","honda","suzuki","kia","hyundai","mg"].forEach(b => {
-    if (q.includes(b)) params.set("brand", b.charAt(0).toUpperCase()+b.slice(1));
+  ["toyota","honda","suzuki","kia","hyundai","mg"].forEach(b=>{
+    if(q.includes(b)) p.set("brand", b.charAt(0).toUpperCase()+b.slice(1));
   });
 
-  // Model (single only)
-  ["corolla","civic","city","yaris","alto","mehran","sportage","hs"].forEach(m => {
-    if (q.includes(m)) params.set("model", m.charAt(0).toUpperCase()+m.slice(1));
+  ["vitz","corolla","civic","city","yaris","prado","sportage","hs"].forEach(m=>{
+    if(q.includes(m)) p.set("model", m.charAt(0).toUpperCase()+m.slice(1));
   });
 
-  // City
-  ["lahore","karachi","islamabad","rawalpindi","faisalabad"].forEach(c => {
-    if (q.includes(c)) params.set("city", c.charAt(0).toUpperCase()+c.slice(1));
+  ["lahore","karachi","islamabad","rawalpindi"].forEach(c=>{
+    if(q.includes(c)) p.set("city", c.charAt(0).toUpperCase()+c.slice(1));
   });
 
-  // Condition
-  if (q.includes("new")) params.set("condition", "new");
-  if (q.includes("used")) params.set("condition", "used");
-
-  // Transmission
-  if (q.includes("automatic")) params.set("transmission", "automatic");
-  if (q.includes("manual")) params.set("transmission", "manual");
-
-  // Fuel
-  if (q.includes("petrol")) params.set("fuelType", "petrol");
-  if (q.includes("diesel")) params.set("fuelType", "diesel");
-  if (q.includes("hybrid")) params.set("fuelType", "hybrid");
-
-  // Year
   const year = q.match(/20\d{2}/);
-  if (year) params.set("year", year[0]);
+  if(year) p.set("year", year[0]);
 
-  // Price (lakh → maxPrice)
   const lakh = q.match(/(\d+)\s*lakh/);
-  if (lakh) params.set("maxPrice", parseInt(lakh[1]) * 100000);
+  if(lakh) p.set("maxPrice", parseInt(lakh[1]) * 100000);
 
-  return params.toString();
+  return p.toString();
 }
 
 /* ===============================
-   DRIVEPK SEARCH
+   DRIVEPK SEARCH (FIXED)
    =============================== */
 async function runSearch(text) {
   const results = document.getElementById("results");
-  results.innerHTML = "<p>DrivePK se search ho rahi hai…</p>";
+  results.innerHTML = "<p>DrivePK se gaariyan dhoondi ja rahi hain…</p>";
 
   const qs = buildParams(text);
   const url = "https://api.drivepk.com/cars?" + qs;
 
   try {
     const res = await fetch(url);
-    const data = await res.json();
+    const json = await res.json();
+
+    const data = json.data;   // ✅ FIX HERE
 
     if (!Array.isArray(data) || data.length === 0) {
       results.innerHTML = "<p>Koi gaari nahi mili</p>";
@@ -180,15 +163,17 @@ async function runSearch(text) {
     data.forEach(c => {
       results.innerHTML += `
         <div class="car">
-          <strong>${c.brand} ${c.model} ${c.year || ""}</strong><br>
-          ${c.city} • PKR ${c.price}
+          <strong>${c.title}</strong><br>
+          <small>
+            ${c.year} • ${c.location?.city} • ${c.mileage?.toLocaleString()} km
+          </small><br>
+          <strong>PKR ${c.price?.toLocaleString()}</strong>
         </div>
       `;
     });
 
   } catch (e) {
-    results.innerHTML =
-      "<p>DrivePK API error</p>";
+    results.innerHTML = "<p>DrivePK API response error</p>";
   }
 }
 
@@ -199,18 +184,16 @@ document.getElementById("callBtn").onclick = () => {
   document.getElementById("status").innerText =
     "Reshma: Assalam o Alaikum…";
   speakReshma();
-  setTimeout(() => {
-    if (recognition) recognition.start();
-  }, 1200);
+  setTimeout(()=> recognition && recognition.start(), 1200);
 };
 
 document.getElementById("searchBtn").onclick = () => {
   const q = document.getElementById("query").value.trim();
-  if (q) runSearch(q);
+  if(q) runSearch(q);
 };
 
-document.getElementById("query").addEventListener("keydown", e => {
-  if (e.key === "Enter") runSearch(e.target.value);
+document.getElementById("query").addEventListener("keydown", e=>{
+  if(e.key==="Enter") runSearch(e.target.value);
 });
 </script>
 
