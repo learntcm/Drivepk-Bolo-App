@@ -23,6 +23,7 @@ header { background:#000; color:#fff; padding:16px; display:flex; gap:12px; alig
 }
 .hero h1 { font-size:56px; margin:0; }
 .hero h2 { font-size:26px; color:#E81F25; margin-top:12px; }
+
 input,button {
   width:100%; height:62px;
   border-radius:18px; font-size:18px;
@@ -30,13 +31,28 @@ input,button {
 input { padding:0 20px; border:1px solid #ccc; margin-bottom:12px; }
 button { border:none; background:#000; color:#fff; }
 .call { background:#E81F25; font-size:22px; margin-top:12px; }
+
 #status { margin-top:12px; font-weight:bold; color:#E81F25; }
-#results {
-  background:#fff; border-radius:20px;
-  padding:16px; margin-top:18px;
+#results { margin-top:18px; }
+
+.car {
+  background:#fff;
+  border-radius:16px;
+  padding:12px;
+  margin-bottom:16px;
 }
-.car { padding:14px 0; border-bottom:1px solid #ddd; }
-.car:last-child { border-bottom:none; }
+.car img {
+  width:100%;
+  height:200px;
+  object-fit:cover;
+  border-radius:12px;
+}
+.phone {
+  display:block;
+  margin-top:6px;
+  font-weight:bold;
+  color:#E81F25;
+}
 </style>
 </head>
 
@@ -51,74 +67,93 @@ button { border:none; background:#000; color:#fff; }
 </header>
 
 <div class="main">
+
   <div class="hero">
     <h1>DrivePK</h1>
     <h2>Roman Urdu Voice Search</h2>
   </div>
 
-  <input id="query" placeholder="Jaise: Toyota Vitz 2017 Lahore 35 lakh">
+  <input id="query" placeholder="Jaise: Toyota Vitz 2017 Lahore">
   <button id="searchBtn">Search</button>
   <button class="call" id="callBtn">📞 CALL</button>
 
   <div id="status"></div>
   <div id="results"></div>
+
 </div>
 
 <script>
 /* ===============================
-   SERVER TTS (OpenAI via voice.php)
+   OPENAI TTS (voice.php)
    =============================== */
 async function speakReshma(text) {
-  try {
-    const res = await fetch("https://meilibeauty.co.uk/voice.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
-    });
-    const blob = await res.blob();
-    const audio = new Audio(URL.createObjectURL(blob));
-    audio.play();
-  } catch {
-    document.getElementById("status").innerText =
-      "Reshma: Voice error, dobara try karein";
-  }
+  const res = await fetch("https://meilibeauty.co.uk/voice.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text })
+  });
+  const blob = await res.blob();
+  new Audio(URL.createObjectURL(blob)).play();
 }
 
 /* ===============================
-   STT (MIC)
+   STT (MIC → SEARCH)
    =============================== */
-let recognition = null;
+let recognition;
 if ("webkitSpeechRecognition" in window) {
   recognition = new webkitSpeechRecognition();
   recognition.lang = "en-GB";
+  recognition.interimResults = false;
+
   recognition.onresult = e => {
     const text = e.results[0][0].transcript;
     document.getElementById("query").value = text;
-    runSearch(text);
+    document.getElementById("status").innerText =
+      "Reshma: Aap ne kaha – " + text;
+    runSearch(text); // 🔥 FORCE SEARCH
+  };
+
+  recognition.onerror = () => {
+    document.getElementById("status").innerText =
+      "Reshma: Mic error, dobara boliye";
   };
 }
 
 /* ===============================
-   SEARCH (search.php → DrivePK API)
+   SEARCH (search.php)
    =============================== */
 async function runSearch(text) {
+  const box = document.getElementById("results");
+  box.innerHTML = "<p>Gaariyan dhoondi ja rahi hain…</p>";
+
   const res = await fetch("https://meilibeauty.co.uk/search.php", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text })
   });
+
   const json = await res.json();
   const data = json.data || [];
-  const box = document.getElementById("results");
-  box.innerHTML = data.length ? "" : "<p>Koi gaari nahi mili</p>";
 
+  if (!data.length) {
+    box.innerHTML = "<p>Koi gaari nahi mili</p>";
+    return;
+  }
+
+  box.innerHTML = "";
   data.forEach(c => {
+    const img = c.images && c.images.length ? c.images[0] : "";
+    const phone = c.userInfo?.phone || "Phone on request";
+
     box.innerHTML += `
       <div class="car">
-        <strong>${c.title}</strong><br>
-        ${c.year} • ${c.location?.city || "-"}<br>
-        PKR ${c.price?.toLocaleString() || "Call"}
-      </div>`;
+        ${img ? `<img src="${img}">` : ""}
+        <h3>${c.title}</h3>
+        <div>${c.year} • ${c.location?.city || "-"}</div>
+        <div><strong>PKR ${c.price?.toLocaleString() || "Call"}</strong></div>
+        <span class="phone">${phone}</span>
+      </div>
+    `;
   });
 }
 
