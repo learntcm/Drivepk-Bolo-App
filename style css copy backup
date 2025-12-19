@@ -1,0 +1,4 @@
+<div class="gallery-wrapper">
+  <div class="gallery" id="gallery"></div>
+  <div class="swipe-indicator">⇠ Swipe ⇢</div>
+</div>
