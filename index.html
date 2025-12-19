@@ -7,49 +7,39 @@
 
 <style>
 body { margin:0; font-family:Arial,sans-serif; background:#f2f2f2; }
-header {
-  background:#000; color:#fff; padding:14px;
-  display:flex; gap:12px; align-items:center;
+header { background:#000; color:#fff; padding:16px; display:flex; gap:12px; align-items:center; }
+.logo{
+  background:#E81F25; width:52px; height:52px; border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; font-weight:bold;
 }
-.logo {
-  background:#E81F25; width:48px; height:48px;
-  border-radius:12px; display:flex;
+.main { padding:16px; }
+
+/* HERO (the one you liked) */
+.hero{
+  background:#000; border-radius:24px;
+  height:40vh; min-height:260px;
+  display:flex; flex-direction:column;
   align-items:center; justify-content:center;
-  font-size:20px; font-weight:bold;
+  color:#fff; margin-bottom:20px;
 }
-.main { padding:14px; }
+.hero h1 { font-size:44px; margin:0; }
+.hero h2 { font-size:20px; color:#E81F25; margin-top:10px; }
 
-/* HERO */
-.hero {
-  background:#000;
-  border-radius:22px;
-  height:32vh;
-  min-height:220px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  color:#fff;
-  margin-bottom:14px;
+input,button{
+  width:100%; height:60px;
+  border-radius:18px; font-size:18px;
 }
-.hero h1 { font-size:42px; margin:0; }
-.hero h2 { font-size:18px; color:#E81F25; margin-top:6px; }
+input{ padding:0 20px; border:1px solid #ccc; margin-bottom:12px; }
+button{ border:none; background:#000; color:#fff; cursor:pointer; }
+.call{ background:#E81F25; font-size:22px; margin-top:10px; }
+.call.calling{ background:#999; color:#000; transform:scale(0.97); }
 
-input,button {
-  width:100%; height:56px;
-  border-radius:16px;
-  font-size:17px;
-}
-input { padding:0 18px; border:1px solid #ccc; margin-bottom:10px; }
-button { border:none; background:#000; color:#fff; cursor:pointer; }
-.call { background:#E81F25; font-size:20px; margin-top:8px; }
-.call.calling { background:#999; color:#000; transform:scale(0.97); }
+#status{ margin-top:12px; font-weight:bold; color:#E81F25; }
+#results{ margin-top:18px; }
 
-#status { margin-top:10px; font-weight:bold; color:#E81F25; }
-#results { margin-top:14px; }
-
-/* RESULT CARD */
-.car-card {
+/* ANDROID-LIKE RESULT CARD */
+.car-card{
   background:#fff;
   border-radius:14px;
   display:flex;
@@ -58,68 +48,48 @@ button { border:none; background:#000; color:#fff; cursor:pointer; }
   box-shadow:0 2px 8px rgba(0,0,0,0.08);
   cursor:pointer;
 }
-.car-card img {
-  width:120px;
-  object-fit:cover;
-}
-.car-body {
-  padding:10px;
-  flex:1;
-}
-.car-title { font-weight:bold; font-size:15px; }
-.car-meta { font-size:13px; color:#666; margin:4px 0; }
-.car-price { color:#E81F25; font-weight:bold; }
+.car-card img{ width:120px; height:120px; object-fit:cover; background:#ddd; }
+.car-body{ padding:10px; flex:1; min-width:0; }
+.car-title{ font-weight:bold; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.car-meta{ font-size:13px; color:#666; margin:4px 0; }
+.car-price{ color:#E81F25; font-weight:bold; font-size:16px; }
 
-/* DETAIL VIEW */
-#detailView {
-  position:fixed;
-  inset:0;
-  background:#fff;
-  z-index:999;
-  overflow-y:auto;
-  display:none;
+/* DETAIL VIEW (simple gallery, NO separators/NO arrows) */
+#detailView{
+  position:fixed; inset:0;
+  background:#fff; z-index:999;
+  overflow-y:auto; display:none;
 }
-.detail-header {
-  padding:14px;
-  background:#000;
-  color:#fff;
-  display:flex;
-  align-items:center;
-  gap:10px;
+.detail-header{
+  padding:14px; background:#000; color:#fff;
+  display:flex; align-items:center; gap:10px;
+  position:sticky; top:0;
 }
-.detail-header button {
-  width:auto;
-  padding:6px 12px;
-  background:#E81F25;
-  border-radius:10px;
+.detail-header button{
+  width:auto; padding:6px 12px;
+  background:#E81F25; border-radius:10px;
 }
-
-/* GALLERY WITH THICK BLACK SEPARATOR */
-.gallery {
+.gallery{
   display:flex;
   overflow-x:auto;
   scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch;
+  background:#000;
 }
-.gallery-item {
-  flex-shrink:0;
-  width:100%;
-  scroll-snap-align:start;
-  border-right:8px solid #000; /* 🔥 THICK BLACK LINE */
-}
-.gallery-item img {
+.gallery img{
   width:100%;
   height:240px;
   object-fit:cover;
+  scroll-snap-align:start;
+  flex-shrink:0;
+  display:block;
 }
-
-/* DETAIL BODY */
-.detail-body { padding:14px; }
-.spec { font-size:14px; margin-bottom:6px; }
+.detail-body{ padding:14px; }
+.spec{ font-size:14px; margin-bottom:6px; }
 </style>
 </head>
 
 <body>
-
 <header>
   <div class="logo">D</div>
   <div>
@@ -129,7 +99,6 @@ button { border:none; background:#000; color:#fff; cursor:pointer; }
 </header>
 
 <div class="main">
-
   <div class="hero">
     <h1>DrivePK</h1>
     <h2>Roman Urdu Voice Search</h2>
@@ -141,13 +110,12 @@ button { border:none; background:#000; color:#fff; cursor:pointer; }
 
   <div id="status"></div>
   <div id="results"></div>
-
 </div>
 
 <!-- DETAIL VIEW -->
 <div id="detailView">
   <div class="detail-header">
-    <button onclick="closeDetail()">← Back</button>
+    <button id="backBtn">← Back</button>
     <strong id="detailTitle"></strong>
   </div>
 
@@ -156,6 +124,9 @@ button { border:none; background:#000; color:#fff; cursor:pointer; }
 </div>
 
 <script>
+/* ===============================
+   DATA / STATE
+   =============================== */
 const femaleNames = [
   "Reshma","Gul Bahar","Gul Noor","Dil Bahar","Kiran",
   "Shaheen","Chaman","Khushnoor","Mahnoor","Julie","Rosemarie"
@@ -165,46 +136,88 @@ let currentVoiceName = "Reshma";
 let ringing = false;
 let lastResults = [];
 
-/* STT */
+/* Elements */
+const queryEl = document.getElementById("query");
+const searchBtn = document.getElementById("searchBtn");
+const callBtn = document.getElementById("callBtn");
+const statusEl = document.getElementById("status");
+const resultsEl = document.getElementById("results");
+
+const detailView = document.getElementById("detailView");
+const backBtn = document.getElementById("backBtn");
+const detailTitle = document.getElementById("detailTitle");
+const detailGallery = document.getElementById("detailGallery");
+const detailBody = document.getElementById("detailBody");
+
+/* ===============================
+   STT (MIC)
+   =============================== */
 let recognition = null;
 if ("webkitSpeechRecognition" in window) {
   recognition = new webkitSpeechRecognition();
   recognition.lang = "en-GB";
   recognition.interimResults = false;
 
-  recognition.onresult = e => {
+  recognition.onresult = (e) => {
     const text = e.results[0][0].transcript;
-    query.value = text;
-    status.innerText = `${currentVoiceName}: Aap ne kaha – ${text}`;
+    queryEl.value = text;
+    statusEl.innerText = `${currentVoiceName}: Aap ne kaha – ${text}`;
     runSearch(text);
   };
-}
 
-/* TTS */
-async function speakLady(text) {
-  status.innerText = `${currentVoiceName}: ...`;
-
-  const res = await fetch("https://meilibeauty.co.uk/voice.php", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text })
-  });
-
-  const blob = await res.blob();
-  const audio = new Audio(URL.createObjectURL(blob));
-
-  audio.onended = () => {
-    callBtn.classList.remove("calling");
-    callBtn.innerText = "📞 CALL";
-    callBtn.disabled = false;
-    ringing = false;
-    if (recognition) recognition.start();
+  recognition.onerror = () => {
+    statusEl.innerText = `${currentVoiceName}: Mic error, dobara boliye`;
   };
-
-  audio.play();
 }
 
-/* RING → SPEAK (SIMPLE) */
+/* ===============================
+   RESET BUTTON (never go dead)
+   =============================== */
+function unlockCallButtonToTalk() {
+  callBtn.classList.remove("calling");
+  callBtn.innerText = "🎤 TALK";
+  callBtn.disabled = false;
+  ringing = false;
+  if (recognition) recognition.start();
+}
+
+/* ===============================
+   TTS (voice.php)
+   =============================== */
+async function speakLady(text) {
+  statusEl.innerText = `${currentVoiceName}: ...`;
+
+  try {
+    const res = await fetch("https://meilibeauty.co.uk/voice.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    });
+
+    if (!res.ok) throw new Error("voice http " + res.status);
+
+    const blob = await res.blob();
+    const audio = new Audio(URL.createObjectURL(blob));
+
+    // If audio fails, still recover:
+    audio.onended = unlockCallButtonToTalk;
+    audio.onerror = unlockCallButtonToTalk;
+
+    // Safety: recover even if onended doesn't fire
+    const safety = setTimeout(unlockCallButtonToTalk, 9000);
+    audio.onended = () => { clearTimeout(safety); unlockCallButtonToTalk(); };
+    audio.onerror = () => { clearTimeout(safety); unlockCallButtonToTalk(); };
+
+    await audio.play();
+  } catch (e) {
+    unlockCallButtonToTalk();
+  }
+}
+
+/* ===============================
+   RING → SPEAK (single play)
+   IMPORTANT: ringtone.mp4 should be ONE ring only
+   =============================== */
 function playRingtoneThenSpeak() {
   if (ringing) return;
   ringing = true;
@@ -212,19 +225,18 @@ function playRingtoneThenSpeak() {
   const ring = new Audio("ringtone.mp4");
 
   ring.onended = () => {
-    currentVoiceName =
-      femaleNames[Math.floor(Math.random() * femaleNames.length)];
-    speakLady(
-      `Assalam o Alaikum, main ${currentVoiceName} hoon. Aap ki kya madad kar sakti hoon?`
-    );
+    currentVoiceName = femaleNames[Math.floor(Math.random() * femaleNames.length)];
+    speakLady(`Assalam o Alaikum, main ${currentVoiceName} hoon. Aap ki kya madad kar sakti hoon?`);
   };
 
-  ring.play();
+  ring.play().catch(() => ring.onended());
 }
 
-/* SEARCH */
+/* ===============================
+   SEARCH
+   =============================== */
 async function runSearch(text) {
-  results.innerHTML = "<p>Gaariyan dhoondi ja rahi hain…</p>";
+  resultsEl.innerHTML = "<p>Gaariyan dhoondi ja rahi hain…</p>";
 
   const res = await fetch("https://meilibeauty.co.uk/search.php", {
     method: "POST",
@@ -236,51 +248,74 @@ async function runSearch(text) {
   lastResults = json.data || [];
 
   if (!lastResults.length) {
-    results.innerHTML = "<p>Koi gaari nahi mili</p>";
+    resultsEl.innerHTML = "<p>Koi gaari nahi mili</p>";
     return;
   }
 
-  results.innerHTML = "";
-  lastResults.forEach((c,i) => {
-    results.innerHTML += `
-      <div class="car-card" onclick="openDetail(${i})">
-        <img src="${c.images?.[0]||''}">
+  resultsEl.innerHTML = "";
+  lastResults.forEach((c, i) => {
+    const img = c.images?.[0] || "";
+    const city = c.location?.city || "-";
+    const price = (c.price != null) ? `PKR ${Number(c.price).toLocaleString()}` : "Call";
+
+    resultsEl.innerHTML += `
+      <div class="car-card" data-idx="${i}">
+        ${img ? `<img src="${img}" alt="car">` : `<div style="width:120px;height:120px;background:#ddd;"></div>`}
         <div class="car-body">
-          <div class="car-title">${c.title}</div>
-          <div class="car-meta">${c.year} • ${c.location?.city||'-'}</div>
-          <div class="car-price">PKR ${c.price?.toLocaleString()}</div>
+          <div class="car-title">${c.title || "Car"}</div>
+          <div class="car-meta">${c.year || "-"} • ${city}</div>
+          <div class="car-price">${price}</div>
         </div>
-      </div>`;
+      </div>
+    `;
+  });
+
+  document.querySelectorAll(".car-card").forEach(card => {
+    card.onclick = () => openDetail(Number(card.dataset.idx));
   });
 }
 
-/* DETAIL */
-function openDetail(i){
+/* ===============================
+   DETAIL (simple gallery)
+   =============================== */
+function openDetail(i) {
   const c = lastResults[i];
-  detailView.style.display="block";
-  detailTitle.innerText=c.title;
-  detailGallery.innerHTML="";
-  (c.images||[]).forEach(img=>{
-    detailGallery.innerHTML+=`
-      <div class="gallery-item">
-        <img src="${img}">
-      </div>`;
-  });
+  if (!c) return;
 
-  detailBody.innerHTML=`
-    <div class="spec">📍 ${c.location?.city}</div>
-    <div class="spec">🚗 ${c.transmission}</div>
-    <div class="spec">⛽ ${c.fuelType}</div>
-    <div class="spec">📊 ${c.mileage} km</div>
-    <div class="spec">⭐ ${c.condition}</div>
+  detailView.style.display = "block";
+  detailTitle.innerText = c.title || "Car Details";
+
+  const imgs = Array.isArray(c.images) ? c.images : [];
+  detailGallery.innerHTML = "";
+
+  if (imgs.length) {
+    imgs.forEach(url => {
+      detailGallery.innerHTML += `<img src="${url}" alt="photo">`;
+    });
+  } else {
+    detailGallery.innerHTML = `<div style="height:240px;display:flex;align-items:center;justify-content:center;color:#fff;background:#333;width:100%;">No images</div>`;
+  }
+
+  detailBody.innerHTML = `
+    <div class="spec"><strong>PKR ${c.price?.toLocaleString() || "Call"}</strong></div>
+    <div class="spec">📍 ${c.location?.city || "-"}</div>
+    <div class="spec">📅 ${c.year || "-"}</div>
+    <div class="spec">🚗 ${c.transmission || "-"}</div>
+    <div class="spec">⛽ ${c.fuelType || "-"}</div>
+    <div class="spec">📊 ${c.mileage != null ? c.mileage + " km" : "-"}</div>
+    <div class="spec">⭐ ${c.condition || "-"}</div>
   `;
 }
 
-function closeDetail(){
-  detailView.style.display="none";
+function closeDetail() {
+  detailView.style.display = "none";
 }
 
-/* BUTTONS */
+backBtn.onclick = closeDetail;
+
+/* ===============================
+   BUTTONS
+   =============================== */
 callBtn.onclick = () => {
   callBtn.classList.add("calling");
   callBtn.innerText = "📞 CALLING…";
@@ -289,9 +324,16 @@ callBtn.onclick = () => {
 };
 
 searchBtn.onclick = () => {
-  const q = query.value.trim();
+  const q = queryEl.value.trim();
   if (q) runSearch(q);
 };
+
+queryEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    const q = queryEl.value.trim();
+    if (q) runSearch(q);
+  }
+});
 </script>
 
 </body>
