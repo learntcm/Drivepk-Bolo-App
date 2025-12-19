@@ -7,49 +7,114 @@
 
 <style>
 body { margin:0; font-family:Arial,sans-serif; background:#f2f2f2; }
-header { background:#000; color:#fff; padding:16px; display:flex; gap:12px; align-items:center; }
+header {
+  background:#000; color:#fff; padding:14px;
+  display:flex; gap:12px; align-items:center;
+}
 .logo {
-  background:#E81F25; width:52px; height:52px; border-radius:14px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:22px; font-weight:bold;
-}
-.main { padding:16px; }
-
-.hero {
-  background:#000; border-radius:24px;
-  height:40vh; min-height:260px;
-  display:flex; flex-direction:column;
+  background:#E81F25; width:48px; height:48px;
+  border-radius:12px; display:flex;
   align-items:center; justify-content:center;
-  color:#fff; margin-bottom:20px;
+  font-size:20px; font-weight:bold;
 }
-.hero h1 { font-size:44px; margin:0; }
-.hero h2 { font-size:20px; color:#E81F25; margin-top:10px; }
+.main { padding:14px; }
+
+/* HERO */
+.hero {
+  background:#000;
+  border-radius:22px;
+  height:32vh;
+  min-height:220px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  margin-bottom:14px;
+}
+.hero h1 { font-size:42px; margin:0; }
+.hero h2 { font-size:18px; color:#E81F25; margin-top:6px; }
 
 input,button {
-  width:100%; height:60px;
-  border-radius:18px; font-size:18px;
+  width:100%; height:56px;
+  border-radius:16px;
+  font-size:17px;
 }
-input { padding:0 20px; border:1px solid #ccc; margin-bottom:12px; }
+input { padding:0 18px; border:1px solid #ccc; margin-bottom:10px; }
 button { border:none; background:#000; color:#fff; cursor:pointer; }
-
-.call { background:#E81F25; font-size:22px; margin-top:10px; }
+.call { background:#E81F25; font-size:20px; margin-top:8px; }
 .call.calling { background:#999; color:#000; transform:scale(0.97); }
 
-#status { margin-top:12px; font-weight:bold; color:#E81F25; }
-#results { margin-top:18px; }
+#status { margin-top:10px; font-weight:bold; color:#E81F25; }
+#results { margin-top:14px; }
 
-.car {
+/* RESULT CARD */
+.car-card {
   background:#fff;
-  border-radius:16px;
-  padding:12px;
-  margin-bottom:16px;
+  border-radius:14px;
+  display:flex;
+  overflow:hidden;
+  margin-bottom:12px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08);
+  cursor:pointer;
 }
-.car img {
-  width:100%;
-  height:200px;
+.car-card img {
+  width:120px;
   object-fit:cover;
-  border-radius:12px;
 }
+.car-body {
+  padding:10px;
+  flex:1;
+}
+.car-title { font-weight:bold; font-size:15px; }
+.car-meta { font-size:13px; color:#666; margin:4px 0; }
+.car-price { color:#E81F25; font-weight:bold; }
+
+/* DETAIL VIEW */
+#detailView {
+  position:fixed;
+  inset:0;
+  background:#fff;
+  z-index:999;
+  overflow-y:auto;
+  display:none;
+}
+.detail-header {
+  padding:14px;
+  background:#000;
+  color:#fff;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.detail-header button {
+  width:auto;
+  padding:6px 12px;
+  background:#E81F25;
+  border-radius:10px;
+}
+
+/* GALLERY WITH THICK BLACK SEPARATOR */
+.gallery {
+  display:flex;
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
+}
+.gallery-item {
+  flex-shrink:0;
+  width:100%;
+  scroll-snap-align:start;
+  border-right:8px solid #000; /* 🔥 THICK BLACK LINE */
+}
+.gallery-item img {
+  width:100%;
+  height:240px;
+  object-fit:cover;
+}
+
+/* DETAIL BODY */
+.detail-body { padding:14px; }
+.spec { font-size:14px; margin-bottom:6px; }
 </style>
 </head>
 
@@ -79,10 +144,18 @@ button { border:none; background:#000; color:#fff; cursor:pointer; }
 
 </div>
 
+<!-- DETAIL VIEW -->
+<div id="detailView">
+  <div class="detail-header">
+    <button onclick="closeDetail()">← Back</button>
+    <strong id="detailTitle"></strong>
+  </div>
+
+  <div class="gallery" id="detailGallery"></div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
 <script>
-/* ===============================
-   DATA
-   =============================== */
 const femaleNames = [
   "Reshma","Gul Bahar","Gul Noor","Dil Bahar","Kiran",
   "Shaheen","Chaman","Khushnoor","Mahnoor","Julie","Rosemarie"
@@ -90,10 +163,9 @@ const femaleNames = [
 
 let currentVoiceName = "Reshma";
 let ringing = false;
+let lastResults = [];
 
-/* ===============================
-   SPEECH TO TEXT
-   =============================== */
+/* STT */
 let recognition = null;
 if ("webkitSpeechRecognition" in window) {
   recognition = new webkitSpeechRecognition();
@@ -108,9 +180,7 @@ if ("webkitSpeechRecognition" in window) {
   };
 }
 
-/* ===============================
-   TEXT TO SPEECH (OpenAI)
-   =============================== */
+/* TTS */
 async function speakLady(text) {
   status.innerText = `${currentVoiceName}: ...`;
 
@@ -125,7 +195,7 @@ async function speakLady(text) {
 
   audio.onended = () => {
     callBtn.classList.remove("calling");
-    callBtn.innerText = "🎤 TALK";
+    callBtn.innerText = "📞 CALL";
     callBtn.disabled = false;
     ringing = false;
     if (recognition) recognition.start();
@@ -134,9 +204,7 @@ async function speakLady(text) {
   audio.play();
 }
 
-/* ===============================
-   RING → SPEAK (SAFE)
-   =============================== */
+/* RING → SPEAK (SIMPLE) */
 function playRingtoneThenSpeak() {
   if (ringing) return;
   ringing = true;
@@ -146,18 +214,15 @@ function playRingtoneThenSpeak() {
   ring.onended = () => {
     currentVoiceName =
       femaleNames[Math.floor(Math.random() * femaleNames.length)];
-
     speakLady(
       `Assalam o Alaikum, main ${currentVoiceName} hoon. Aap ki kya madad kar sakti hoon?`
     );
   };
 
-  ring.play().catch(() => ring.onended());
+  ring.play();
 }
 
-/* ===============================
-   SEARCH
-   =============================== */
+/* SEARCH */
 async function runSearch(text) {
   results.innerHTML = "<p>Gaariyan dhoondi ja rahi hain…</p>";
 
@@ -168,30 +233,54 @@ async function runSearch(text) {
   });
 
   const json = await res.json();
-  const data = json.data || [];
+  lastResults = json.data || [];
 
-  if (!data.length) {
+  if (!lastResults.length) {
     results.innerHTML = "<p>Koi gaari nahi mili</p>";
     return;
   }
 
   results.innerHTML = "";
-  data.forEach(c => {
-    const img = c.images?.[0] || "";
+  lastResults.forEach((c,i) => {
     results.innerHTML += `
-      <div class="car">
-        ${img ? `<img src="${img}">` : ""}
-        <h3>${c.title}</h3>
-        <div>${c.year} • ${c.location?.city || "-"}</div>
-        <div><strong>PKR ${c.price?.toLocaleString() || "Call"}</strong></div>
-      </div>
-    `;
+      <div class="car-card" onclick="openDetail(${i})">
+        <img src="${c.images?.[0]||''}">
+        <div class="car-body">
+          <div class="car-title">${c.title}</div>
+          <div class="car-meta">${c.year} • ${c.location?.city||'-'}</div>
+          <div class="car-price">PKR ${c.price?.toLocaleString()}</div>
+        </div>
+      </div>`;
   });
 }
 
-/* ===============================
-   BUTTONS
-   =============================== */
+/* DETAIL */
+function openDetail(i){
+  const c = lastResults[i];
+  detailView.style.display="block";
+  detailTitle.innerText=c.title;
+  detailGallery.innerHTML="";
+  (c.images||[]).forEach(img=>{
+    detailGallery.innerHTML+=`
+      <div class="gallery-item">
+        <img src="${img}">
+      </div>`;
+  });
+
+  detailBody.innerHTML=`
+    <div class="spec">📍 ${c.location?.city}</div>
+    <div class="spec">🚗 ${c.transmission}</div>
+    <div class="spec">⛽ ${c.fuelType}</div>
+    <div class="spec">📊 ${c.mileage} km</div>
+    <div class="spec">⭐ ${c.condition}</div>
+  `;
+}
+
+function closeDetail(){
+  detailView.style.display="none";
+}
+
+/* BUTTONS */
 callBtn.onclick = () => {
   callBtn.classList.add("calling");
   callBtn.innerText = "📞 CALLING…";
