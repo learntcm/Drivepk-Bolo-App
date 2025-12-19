@@ -93,53 +93,18 @@ button { border:none; background:#000; color:#fff; cursor:pointer; }
   border-radius:10px;
 }
 
-/* ===============================
-   IMAGE GALLERY (IMPROVED)
-   =============================== */
-.gallery-wrapper {
-  position:relative;
-}
-
+/* IMAGE GALLERY */
 .gallery {
   display:flex;
   overflow-x:auto;
   scroll-snap-type:x mandatory;
 }
-
-/* IMAGE + SEPARATOR */
-.gallery-item {
-  position:relative;
-  flex-shrink:0;
-  width:100%;
-  scroll-snap-align:start;
-  border-right:3px solid #000; /* 🔥 BLACK SEPARATOR */
-}
-
-.gallery-item img {
+.gallery img {
   width:100%;
   height:240px;
   object-fit:cover;
-}
-
-/* ARROW HINT */
-.gallery-arrow {
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-  font-size:32px;
-  color:white;
-  background:rgba(0,0,0,0.5);
-  padding:6px 10px;
-  border-radius:50%;
-  z-index:10;
-}
-
-.gallery-arrow.left {
-  left:10px;
-}
-
-.gallery-arrow.right {
-  right:10px;
+  scroll-snap-align:start;
+  flex-shrink:0;
 }
 
 /* DETAIL BODY */
@@ -187,11 +152,7 @@ button { border:none; background:#000; color:#fff; cursor:pointer; }
   </div>
 
   <!-- GALLERY -->
-  <div class="gallery-wrapper">
-    <div class="gallery-arrow left">‹</div>
-    <div class="gallery-arrow right">›</div>
-    <div class="gallery" id="detailGallery"></div>
-  </div>
+  <div class="gallery" id="detailGallery"></div>
 
   <div class="detail-body" id="detailBody"></div>
 </div>
@@ -228,12 +189,10 @@ function openDetail(i){
   detailView.style.display="block";
   detailTitle.innerText=c.title;
 
+  // BUILD GALLERY
   detailGallery.innerHTML="";
   (c.images || []).forEach(img=>{
-    detailGallery.innerHTML+=`
-      <div class="gallery-item">
-        <img src="${img}">
-      </div>`;
+    detailGallery.innerHTML+=`<img src="${img}">`;
   });
 
   detailBody.innerHTML=`
