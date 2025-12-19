@@ -92,10 +92,19 @@ async function speakReshma(text) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text })
   });
-  const blob = await res.blob();
-  new Audio(URL.createObjectURL(blob)).play();
-}
 
+  const blob = await res.blob();
+  const audio = new Audio(URL.createObjectURL(blob));
+
+  // ✅ THIS IS THE KEY LINE
+  audio.onended = () => {
+    if (recognition) {
+      recognition.start();
+    }
+  };
+
+  audio.play();
+}
 /* ===============================
    STT (MIC → SEARCH)
    =============================== */
