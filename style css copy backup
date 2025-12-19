@@ -1,4 +1,187 @@
-<div class="gallery-wrapper">
-  <div class="gallery" id="gallery"></div>
-  <div class="swipe-indicator">⇠ Swipe ⇢</div>
-</div>
+:root {
+    --primary-color: #D32F2F;
+    --primary-dark: #B71C1C;
+    --text-primary: #212121;
+    --text-secondary: #757575;
+    --bg-color: #f8f9fa;
+    --card-bg: #ffffff;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    padding-bottom: 20px;
+}
+
+/* ===============================
+   HEADER
+   =============================== */
+.app-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 1rem 1rem 3rem 1rem; /* MORE bottom space */
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.hero-text h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.hero-text p {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin: 0;
+}
+
+/* ===============================
+   SEARCH / RECORD AREA
+   =============================== */
+.search-container {
+    padding: 1rem 1.5rem 0 1.5rem;
+    position: relative;
+    z-index: 101;
+}
+
+/* RECORD / CALL BUTTON */
+.record-button {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    border: 4px solid #ffffff;
+    color: white;
+    font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.2rem auto;
+    box-shadow: 0 6px 18px rgba(211, 47, 47, 0.45);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+}
+
+/* PRESS FEEL */
+.record-button:active {
+    transform: scale(0.94);
+    box-shadow: 0 3px 10px rgba(211, 47, 47, 0.4);
+}
+
+/* RECORDING STATE */
+.record-button.recording {
+    animation: pulse 1.4s infinite;
+    background-color: var(--primary-dark);
+    pointer-events: none;
+}
+
+/* ===============================
+   RESULTS
+   =============================== */
+#resultsTitle {
+    font-weight: 600;
+    color: var(--text-primary);
+    border-left: 4px solid var(--primary-color);
+    padding-left: 10px;
+    margin: 1rem 0 0.5rem 0.5rem;
+}
+
+/* CAR CARD */
+.car-card {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+    display: flex;
+    flex-direction: row;
+    height: 125px;
+    border: 1px solid #f0f0f0;
+}
+
+.car-card img {
+    width: 145px;
+    height: 100%;
+    object-fit: cover;
+}
+
+.car-card .card-body {
+    padding: 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+}
+
+.car-card .card-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.car-card .location-text {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.car-card .seller-type {
+    font-size: 0.75rem;
+    color: #999;
+    text-transform: uppercase;
+    margin-bottom: auto;
+}
+
+.car-card .price-badge {
+    color: var(--primary-color);
+    font-weight: 700;
+    font-size: 1.15rem;
+}
+
+/* ===============================
+   UTILS
+   =============================== */
+.d-none {
+    display: none !important;
+}
+
+/* PULSE ANIMATION */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.5);
+    }
+    70% {
+        box-shadow: 0 0 0 18px rgba(211, 47, 47, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(211, 47, 47, 0);
+    }
+}
+
+/* LINE CLAMP */
+.card-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
