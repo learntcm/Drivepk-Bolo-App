@@ -16,24 +16,43 @@ header { background:#000; color:#fff; padding:16px; display:flex; gap:12px; alig
 .main { padding:16px; }
 .hero {
   background:#000; border-radius:30px;
-  height:70vh; min-height:450px;
+  height:60vh; min-height:420px;
   display:flex; flex-direction:column;
   align-items:center; justify-content:center;
   color:#fff; margin-bottom:20px;
 }
-.hero h1 { font-size:56px; margin:0; }
-.hero h2 { font-size:26px; color:#E81F25; margin-top:12px; }
+.hero h1 { font-size:48px; margin:0; }
+.hero h2 { font-size:22px; color:#E81F25; margin-top:12px; }
 
 input,button {
   width:100%; height:62px;
   border-radius:18px; font-size:18px;
 }
 input { padding:0 20px; border:1px solid #ccc; margin-bottom:12px; }
-button { border:none; background:#000; color:#fff; }
+button { border:none; background:#000; color:#fff; cursor:pointer; }
 .call { background:#E81F25; font-size:22px; margin-top:12px; }
+
+.call.calling {
+  background:#999;
+  color:#000;
+  transform: scale(0.97);
+}
 
 #status { margin-top:12px; font-weight:bold; color:#E81F25; }
 #results { margin-top:18px; }
+
+.car {
+  background:#fff;
+  border-radius:16px;
+  padding:12px;
+  margin-bottom:16px;
+}
+.car img {
+  width:100%;
+  height:200px;
+  object-fit:cover;
+  border-radius:12px;
+}
 </style>
 </head>
 
@@ -62,19 +81,19 @@ button { border:none; background:#000; color:#fff; }
 </div>
 
 <script>
-// ===============================
-// VOICE NAMES
-// ===============================
+/* ===============================
+   DATA
+   =============================== */
 const femaleNames = [
   "Reshma","Gul Bahar","Gul Noor","Dil Bahar","Kiran",
   "Shaheen","Chaman","Khushnoor","Mahnoor","Julie","Rosemarie"
 ];
-
 let currentVoiceName = "Reshma";
+let ringing = false;
 
-// ===============================
-// SPEECH RECOGNITION
-// ===============================
+/* ===============================
+   SPEECH RECOGNITION
+   =============================== */
 let recognition = null;
 if ("webkitSpeechRecognition" in window) {
   recognition = new webkitSpeechRecognition();
@@ -86,12 +105,13 @@ if ("webkitSpeechRecognition" in window) {
     document.getElementById("query").value = text;
     document.getElementById("status").innerText =
       `${currentVoiceName}: Aap ne kaha – ${text}`;
+    runSearch(text);
   };
 }
 
-// ===============================
-// OPENAI TTS
-// ===============================
+/* ===============================
+   OPENAI TTS
+   =============================== */
 async function speakLady(text) {
   const res = await fetch("https://meilibeauty.co.uk/voice.php", {
     method: "POST",
@@ -103,30 +123,33 @@ async function speakLady(text) {
   const audio = new Audio(URL.createObjectURL(blob));
 
   audio.onended = () => {
+    document.getElementById("callBtn").classList.remove("calling");
+    document.getElementById("callBtn").innerText = "📞 CALL";
+    document.getElementById("callBtn").disabled = false;
+    ringing = false;
     if (recognition) recognition.start();
   };
 
   audio.play();
 }
 
-// ===============================
-// RINGTONE (2 RINGS ONLY)
-// ===============================
+/* ===============================
+   RINGTONE – EXACTLY 2 RINGS
+   =============================== */
 function playRingtoneThenSpeak() {
+  if (ringing) return;
+  ringing = true;
+
   const ring = new Audio("ringtone.mp4");
-  let rings = 0;
+  let count = 0;
 
   ring.onended = () => {
-    rings++;
-    if (rings < 2) {
+    count++;
+    if (count < 2) {
       ring.play();
     } else {
       currentVoiceName =
         femaleNames[Math.floor(Math.random() * femaleNames.length)];
-
-      document.getElementById("status").innerText =
-        `${currentVoiceName}: Call connected…`;
-
       speakLady(
         `Assalam o Alaikum, main ${currentVoiceName} hoon. Aap ki kya madad kar sakti hoon?`
       );
@@ -136,16 +159,55 @@ function playRingtoneThenSpeak() {
   ring.play();
 }
 
-// ===============================
-// BUTTONS
-// ===============================
+/* ===============================
+   SEARCH
+   =============================== */
+async function runSearch(text) {
+  const box = document.getElementById("results");
+  box.innerHTML = "<p>Gaariyan dhoondi ja rahi hain…</p>";
+
+  const res = await fetch("https://meilibeauty.co.uk/search.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text })
+  });
+
+  const json = await res.json();
+  const data = json.data || [];
+
+  if (!data.length) {
+    box.innerHTML = "<p>Koi gaari nahi mili</p>";
+    return;
+  }
+
+  box.innerHTML = "";
+  data.forEach(c => {
+    const img = c.images?.[0] || "";
+    box.innerHTML += `
+      <div class="car">
+        ${img ? `<img src="${img}">` : ""}
+        <h3>${c.title}</h3>
+        <div>${c.year} • ${c.location?.city || "-"}</div>
+        <div><strong>PKR ${c.price?.toLocaleString() || "Call"}</strong></div>
+      </div>
+    `;
+  });
+}
+
+/* ===============================
+   BUTTONS
+   =============================== */
 document.getElementById("callBtn").onclick = () => {
+  const btn = document.getElementById("callBtn");
+  btn.classList.add("calling");
+  btn.innerText = "📞 CALLING…";
+  btn.disabled = true;
   playRingtoneThenSpeak();
 };
 
 document.getElementById("searchBtn").onclick = () => {
   const q = document.getElementById("query").value.trim();
-  if (q) document.getElementById("query").value = q;
+  if (q) runSearch(q);
 };
 </script>
 
