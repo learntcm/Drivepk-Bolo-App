@@ -10,57 +10,58 @@ body {
   margin:0;
   font-family:Arial,sans-serif;
   background:#f2f2f2;
+  font-size:14px;
 }
 
 /* HEADER */
 header {
   background:#000;
   color:#fff;
-  padding:12px;
+  padding:10px;
   display:flex;
-  gap:12px;
+  gap:10px;
   align-items:center;
 }
 .logo {
   background:#E81F25;
-  width:44px;
-  height:44px;
-  border-radius:12px;
+  width:40px;
+  height:40px;
+  border-radius:10px;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:18px;
+  font-size:16px;
   font-weight:bold;
 }
-.main { padding:12px; }
+.main { padding:10px; }
 
-/* HERO (SMALLER) */
+/* HERO (COMPACT) */
 .hero {
   background:#000;
-  border-radius:20px;
-  height:26vh;
-  min-height:170px;
+  border-radius:18px;
+  height:20vh;
+  min-height:130px;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
   color:#fff;
-  margin-bottom:12px;
+  margin-bottom:10px;
 }
-.hero h1 { font-size:36px; margin:0; }
-.hero h2 { font-size:16px; color:#E81F25; margin-top:6px; }
+.hero h1 { font-size:30px; margin:0; }
+.hero h2 { font-size:14px; color:#E81F25; margin-top:4px; }
 
 /* INPUTS */
 input,button {
   width:100%;
-  height:52px;
-  border-radius:14px;
-  font-size:16px;
+  height:48px;
+  border-radius:12px;
+  font-size:15px;
 }
 input {
-  padding:0 16px;
+  padding:0 14px;
   border:1px solid #ccc;
-  margin-bottom:8px;
+  margin-bottom:6px;
 }
 button {
   border:none;
@@ -70,7 +71,7 @@ button {
 }
 .call {
   background:#E81F25;
-  font-size:18px;
+  font-size:16px;
   margin-top:6px;
 }
 .call.calling {
@@ -80,25 +81,25 @@ button {
 }
 
 #status {
-  margin-top:8px;
+  margin-top:6px;
   font-weight:bold;
   color:#E81F25;
 }
-#results { margin-top:12px; }
+#results { margin-top:10px; }
 
 /* CAR LIST */
 .car {
   background:#fff;
-  border-radius:14px;
-  padding:10px;
-  margin-bottom:12px;
+  border-radius:12px;
+  padding:8px;
+  margin-bottom:10px;
   cursor:pointer;
 }
 .car img {
   width:100%;
-  height:160px;
+  height:140px;
   object-fit:cover;
-  border-radius:10px;
+  border-radius:8px;
 }
 
 /* ===== DETAIL PAGE ===== */
@@ -115,18 +116,19 @@ button {
 .detail-header {
   background:#000;
   color:#fff;
-  padding:10px;
+  padding:8px;
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:8px;
   position:sticky;
   top:0;
 }
 .detail-header button {
   background:#E81F25;
-  border-radius:10px;
+  border-radius:8px;
   padding:6px 10px;
   color:#fff;
+  font-size:13px;
 }
 
 /* GALLERY */
@@ -141,7 +143,7 @@ button {
 }
 .gallery img {
   width:100%;
-  height:220px;
+  height:180px;
   object-fit:cover;
   scroll-snap-align:start;
   flex-shrink:0;
@@ -151,65 +153,66 @@ button {
 /* SWIPE INDICATOR */
 .swipe-indicator {
   position:absolute;
-  bottom:12px;
+  bottom:10px;
   left:50%;
   transform:translateX(-50%);
   background:rgba(0,0,0,0.6);
   color:#fff;
   padding:6px 14px;
   border-radius:20px;
-  font-size:13px;
+  font-size:12px;
   pointer-events:none;
 }
 
 /* DETAIL BODY */
-.detail-body { padding:12px; }
+.detail-body { padding:10px; }
 .price {
-  font-size:22px;
+  font-size:20px;
   font-weight:bold;
-  margin-bottom:10px;
+  margin-bottom:8px;
 }
 
 /* SPEC GRID */
 .spec-grid {
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:8px;
-  margin-bottom:14px;
+  gap:6px;
+  margin-bottom:12px;
 }
 .spec-box {
   background:#111;
   color:#fff;
-  border-radius:12px;
-  padding:10px 6px;
+  border-radius:10px;
+  padding:6px 4px;
   text-align:center;
-  font-size:13px;
+  font-size:11px;
 }
 .spec-box strong {
   display:block;
-  font-size:15px;
-  margin-top:4px;
+  font-size:13px;
+  margin-top:2px;
 }
 
 /* CONTACT */
 .contact-box {
   background:#000;
   color:#fff;
-  border-radius:14px;
-  padding:12px;
+  border-radius:12px;
+  padding:10px;
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
 .lock {
   opacity:0.6;
-  font-size:14px;
+  font-size:12px;
 }
 .contact-btn {
   background:#E81F25;
-  padding:10px 14px;
-  border-radius:12px;
+  padding:8px 10px;
+  border-radius:10px;
   font-weight:bold;
+  font-size:13px;
 }
 </style>
 </head>
@@ -252,7 +255,6 @@ button {
 
   <div class="detail-body">
     <div class="price" id="detailPrice"></div>
-
     <div class="spec-grid" id="specGrid"></div>
 
     <div class="contact-box">
