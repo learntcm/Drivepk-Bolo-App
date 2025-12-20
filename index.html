@@ -6,22 +6,214 @@
 <title>DrivePK Bolo App</title>
 
 <style>
-body{margin:0;font-family:Arial,sans-serif;background:#f2f2f2}
-header{background:#000;color:#fff;padding:12px;display:flex;gap:12px;align-items:center}
-.logo{background:#E81F25;width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:bold}
-.main{padding:12px}
-.hero{background:#000;border-radius:20px;height:26vh;min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;margin-bottom:12px}
-.hero h1{font-size:36px;margin:0}
-.hero h2{font-size:16px;color:#E81F25;margin-top:6px}
-input,button{width:100%;height:52px;border-radius:14px;font-size:16px}
-input{padding:0 16px;border:1px solid #ccc;margin-bottom:8px}
-button{border:none;background:#000;color:#fff;cursor:pointer}
-.call{background:#E81F25;font-size:18px;margin-top:6px}
-.call.calling{background:#999;color:#000;transform:scale(.97)}
-#status{margin-top:8px;font-weight:bold;color:#E81F25}
-#results{margin-top:12px}
-.car{background:#fff;border-radius:14px;padding:10px;margin-bottom:12px}
-.car img{width:100%;height:160px;object-fit:cover;border-radius:10px}
+body {
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#f2f2f2;
+  font-size:14px;
+}
+
+/* HEADER */
+header {
+  background:#000;
+  color:#fff;
+  padding:10px;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+.logo {
+  background:#E81F25;
+  width:40px;
+  height:40px;
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:16px;
+  font-weight:bold;
+}
+.main { padding:10px; }
+
+/* HERO (COMPACT) */
+.hero {
+  background:#000;
+  border-radius:18px;
+  height:20vh;
+  min-height:130px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  margin-bottom:10px;
+}
+.hero h1 { font-size:30px; margin:0; }
+.hero h2 { font-size:14px; color:#E81F25; margin-top:4px; }
+
+/* INPUTS */
+input,button {
+  width:100%;
+  height:48px;
+  border-radius:12px;
+  font-size:15px;
+}
+input {
+  padding:0 14px;
+  border:1px solid #ccc;
+  margin-bottom:6px;
+}
+button {
+  border:none;
+  background:#000;
+  color:#fff;
+  cursor:pointer;
+}
+.call {
+  background:#E81F25;
+  font-size:16px;
+  margin-top:6px;
+}
+.call.calling {
+  background:#999;
+  color:#000;
+  transform:scale(0.97);
+}
+
+#status {
+  margin-top:6px;
+  font-weight:bold;
+  color:#E81F25;
+}
+#results { margin-top:10px; }
+
+/* CAR LIST */
+.car {
+  background:#fff;
+  border-radius:12px;
+  padding:8px;
+  margin-bottom:10px;
+  cursor:pointer;
+}
+.car img {
+  width:100%;
+  height:140px;
+  object-fit:cover;
+  border-radius:8px;
+}
+
+/* ===== DETAIL PAGE ===== */
+#detailPage {
+  position:fixed;
+  inset:0;
+  background:#fff;
+  z-index:999;
+  display:none;
+  overflow-y:auto;
+}
+
+/* DETAIL HEADER */
+.detail-header {
+  background:#000;
+  color:#fff;
+  padding:8px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  position:sticky;
+  top:0;
+}
+.detail-header button {
+  background:#E81F25;
+  border-radius:8px;
+  padding:6px 10px;
+  color:#fff;
+  font-size:13px;
+}
+
+/* GALLERY */
+.gallery-wrapper {
+  position:relative;
+  background:#000;
+}
+.gallery {
+  display:flex;
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
+}
+.gallery img {
+  width:100%;
+  height:180px;
+  object-fit:cover;
+  scroll-snap-align:start;
+  flex-shrink:0;
+  border-right:6px solid #000;
+}
+
+/* SWIPE INDICATOR */
+.swipe-indicator {
+  position:absolute;
+  bottom:10px;
+  left:50%;
+  transform:translateX(-50%);
+  background:rgba(0,0,0,0.6);
+  color:#fff;
+  padding:6px 14px;
+  border-radius:20px;
+  font-size:12px;
+  pointer-events:none;
+}
+
+/* DETAIL BODY */
+.detail-body { padding:10px; }
+.price {
+  font-size:20px;
+  font-weight:bold;
+  margin-bottom:8px;
+}
+
+/* SPEC GRID */
+.spec-grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+  margin-bottom:12px;
+}
+.spec-box {
+  background:#111;
+  color:#fff;
+  border-radius:10px;
+  padding:6px 4px;
+  text-align:center;
+  font-size:11px;
+}
+.spec-box strong {
+  display:block;
+  font-size:13px;
+  margin-top:2px;
+}
+
+/* CONTACT */
+.contact-box {
+  background:#000;
+  color:#fff;
+  border-radius:12px;
+  padding:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.lock {
+  opacity:0.6;
+  font-size:12px;
+}
+.contact-btn {
+  background:#E81F25;
+  padding:8px 10px;
+  border-radius:10px;
+  font-weight:bold;
+  font-size:13px;
+}
 </style>
 </head>
 
@@ -41,7 +233,7 @@ button{border:none;background:#000;color:#fff;cursor:pointer}
     <h2>Roman Urdu Voice Search</h2>
   </div>
 
-  <input id="query" placeholder="Jaise: MG HS under 40 lakh Lahore">
+  <input id="query" placeholder="Jaise: Toyota Vitz 2017 Lahore">
   <button id="searchBtn">Search</button>
   <button class="call" id="callBtn">📞 CALL</button>
 
@@ -49,94 +241,55 @@ button{border:none;background:#000;color:#fff;cursor:pointer}
   <div id="results"></div>
 </div>
 
+<!-- DETAIL PAGE -->
+<div id="detailPage">
+  <div class="detail-header">
+    <button id="backBtn">← Back</button>
+    <strong id="detailTitle"></strong>
+  </div>
+
+  <div class="gallery-wrapper">
+    <div class="gallery" id="gallery"></div>
+    <div class="swipe-indicator">Swipe ⇠ ⇢</div>
+  </div>
+
+  <div class="detail-body">
+    <div class="price" id="detailPrice"></div>
+    <div class="spec-grid" id="specGrid"></div>
+
+    <div class="contact-box">
+      <div class="lock">🔒 Login to view phone number</div>
+      <div class="contact-btn">Contact Seller</div>
+    </div>
+  </div>
+</div>
+
 <script>
-/* ===============================
-   STATE
-=============================== */
 const femaleNames=["Reshma","Gul Bahar","Gul Noor","Dil Bahar","Kiran","Shaheen","Chaman","Khushnoor","Mahnoor","Julie","Rosemarie"];
-let currentVoiceName="Reshma",ringing=false,callConnected=false;
+let currentVoiceName="Reshma",ringing=false,callConnected=false,lastResults=[];
 
-/* ===============================
-   QUERY NORMALIZER (PRICE + CITY)
-=============================== */
-function normalizeQuery(text){
-  let t=text.toLowerCase();
-
-  // --- City detection ---
-  const cities=[
-    "lahore","karachi","islamabad","rawalpindi",
-    "faisalabad","multan","peshawar","gujranwala",
-    "sialkot","quetta"
-  ];
-  let city="";
-  cities.forEach(c=>{
-    if(t.includes(c)){
-      city=c;
-      t=t.replace(c,"");
-    }
-  });
-
-  // --- Word to number ---
-  const wordMap={
-    "ten lakh":1000000,
-    "twenty lakh":2000000,
-    "thirty lakh":3000000,
-    "forty lakh":4000000,
-    "fifty lakh":5000000,
-    "sixty lakh":6000000
-  };
-  for(const k in wordMap){
-    t=t.replace(k,wordMap[k]);
-  }
-
-  // --- Numeric lakh ---
-  t=t.replace(/(\d+)\s*lakh/g,(m,n)=>String(n*100000));
-
-  // --- Price range ---
-  t=t.replace(/under|below|less than/g,"max");
-  t=t.replace(/above|over|more than/g,"min");
-
-  // --- Transmission ---
-  t=t.replace(/\bauto\b/g,"automatic");
-
-  // --- Cleanup ---
-  t=t.replace(/\s+/g," ").trim();
-
-  // Reattach city cleanly
-  if(city) t += " " + city;
-
-  return t;
-}
-
-/* ===============================
-   SPEECH
-=============================== */
+/* SPEECH */
 let recognition=null;
 if("webkitSpeechRecognition"in window){
   recognition=new webkitSpeechRecognition();
   recognition.lang="en-GB";
   recognition.onresult=e=>{
-    const raw=e.results[0][0].transcript;
-    const clean=normalizeQuery(raw);
-    query.value=raw;
-    status.innerText=`${currentVoiceName}: ${raw}`;
-    runSearch(clean);
+    const text=e.results[0][0].transcript;
+    query.value=text;
+    status.innerText=`${currentVoiceName}: Aap ne kaha – ${text}`;
+    runSearch(text);
   };
 }
 
-/* ===============================
-   TTS
-=============================== */
+/* TTS */
 async function speakLady(text){
   const res=await fetch("https://meilibeauty.co.uk/voice.php",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
+    method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({text})
   });
   const audio=new Audio(URL.createObjectURL(await res.blob()));
   audio.onended=()=>{
-    callConnected=true;
-    ringing=false;
+    callConnected=true;ringing=false;
     callBtn.classList.remove("calling");
     callBtn.innerText="🎤 TALK";
     callBtn.disabled=false;
@@ -145,9 +298,7 @@ async function speakLady(text){
   audio.play();
 }
 
-/* ===============================
-   RING
-=============================== */
+/* RING */
 function playRingtoneThenSpeak(){
   if(ringing)return;
   ringing=true;
@@ -159,27 +310,21 @@ function playRingtoneThenSpeak(){
   ring.play();
 }
 
-/* ===============================
-   SEARCH
-=============================== */
+/* SEARCH */
 async function runSearch(text){
   results.innerHTML="<p>Gaariyan dhoondi ja rahi hain…</p>";
   const res=await fetch("https://meilibeauty.co.uk/search.php",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
+    method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({text})
   });
   const json=await res.json();
-  const data=json.data||[];
-  if(!data.length){
-    results.innerHTML="<p>Koi gaari nahi mili</p>";
-    return;
-  }
+  lastResults=json.data||[];
+  if(!lastResults.length){results.innerHTML="<p>Koi gaari nahi mili</p>";return;}
   results.innerHTML="";
-  data.forEach(c=>{
+  lastResults.forEach((c,i)=>{
     const img=c.images?.[0]||"";
     results.innerHTML+=`
-      <div class="car">
+      <div class="car" onclick="openDetail(${i})">
         ${img?`<img src="${img}">`:""}
         <h3>${c.title}</h3>
         <div>${c.year} • ${c.location?.city||"-"}</div>
@@ -188,9 +333,26 @@ async function runSearch(text){
   });
 }
 
-/* ===============================
-   BUTTONS
-=============================== */
+/* DETAIL */
+function openDetail(i){
+  const c=lastResults[i];
+  detailPage.style.display="block";
+  detailTitle.innerText=c.title;
+  detailPrice.innerText=`PKR ${c.price?.toLocaleString()||"Call"}`;
+  gallery.innerHTML="";
+  (c.images||[]).forEach(u=>gallery.innerHTML+=`<img src="${u}">`);
+  specGrid.innerHTML=`
+    <div class="spec-box">Seats<strong>${c.seatingCapacity||"-"}</strong></div>
+    <div class="spec-box">Mileage<strong>${c.mileage||"-"} km</strong></div>
+    <div class="spec-box">Transmission<strong>${c.transmission||"-"}</strong></div>
+    <div class="spec-box">Fuel<strong>${c.fuelType||"-"}</strong></div>
+    <div class="spec-box">Year<strong>${c.year||"-"}</strong></div>
+    <div class="spec-box">Condition<strong>${c.condition||"-"}</strong></div>
+  `;
+}
+backBtn.onclick=()=>detailPage.style.display="none";
+
+/* BUTTONS */
 callBtn.onclick=()=>{
   if(!callConnected){
     callBtn.classList.add("calling");
@@ -202,10 +364,7 @@ callBtn.onclick=()=>{
     recognition&&recognition.start();
   }
 };
-searchBtn.onclick=()=>{
-  const raw=query.value.trim();
-  if(raw)runSearch(normalizeQuery(raw));
-};
+searchBtn.onclick=()=>query.value.trim()&&runSearch(query.value.trim());
 </script>
 
 </body>
