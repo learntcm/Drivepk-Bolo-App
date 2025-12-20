@@ -6,7 +6,7 @@
 <title>DrivePK Bolo App</title>
 
 <style>
-* { box-sizing:border-box; }
+* { box-sizing: border-box; }
 
 body {
   margin:0;
@@ -20,49 +20,49 @@ body {
 header {
   background:#000;
   color:#fff;
-  padding:8px;
+  padding:10px;
   display:flex;
-  gap:8px;
+  gap:10px;
   align-items:center;
 }
 .logo {
   background:#E81F25;
-  width:36px;
-  height:36px;
-  border-radius:8px;
+  width:40px;
+  height:40px;
+  border-radius:10px;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:15px;
+  font-size:16px;
   font-weight:bold;
 }
-.main { padding:8px; }
+.main { padding:10px; }
 
-/* HERO */
+/* HERO – slightly bigger again */
 .hero {
   background:#000;
-  border-radius:16px;
-  height:18vh;
-  min-height:110px;
+  border-radius:18px;
+  height:24vh;          /* ⬅ bigger */
+  min-height:150px;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
   color:#fff;
-  margin-bottom:8px;
+  margin-bottom:10px;
 }
-.hero h1 { font-size:26px; margin:0; }
-.hero h2 { font-size:13px; color:#E81F25; margin-top:4px; }
+.hero h1 { font-size:32px; margin:0; }
+.hero h2 { font-size:15px; color:#E81F25; margin-top:6px; }
 
 /* INPUTS */
 input,button {
   width:100%;
-  height:44px;
-  border-radius:10px;
+  height:46px;
+  border-radius:12px;
   font-size:14px;
 }
 input {
-  padding:0 12px;
+  padding:0 14px;
   border:1px solid #ccc;
   margin-bottom:6px;
 }
@@ -88,51 +88,29 @@ button {
   font-weight:bold;
   color:#E81F25;
 }
-#results { margin-top:8px; }
-
-/* 🔥 SEARCH CHIPS */
-.chips {
-  display:flex;
-  gap:6px;
-  overflow-x:auto;
-  margin:6px 0 8px;
-}
-.chip {
-  background:#fff;
-  border:1px solid #ddd;
-  border-radius:20px;
-  padding:6px 12px;
-  font-size:12px;
-  white-space:nowrap;
-  cursor:pointer;
-}
-.chip:active {
-  background:#E81F25;
-  color:#fff;
-  border-color:#E81F25;
-}
+#results { margin-top:10px; }
 
 /* CAR LIST */
 .car {
   background:#fff;
-  border-radius:10px;
-  padding:6px;
-  margin-bottom:8px;
+  border-radius:12px;
+  padding:8px;
+  margin-bottom:10px;
   cursor:pointer;
 }
 .car-img-wrap { position:relative; }
 .car-img-wrap img {
   width:100%;
-  height:120px;
+  height:160px;        /* ⬅ bigger images */
   object-fit:cover;
-  border-radius:8px;
+  border-radius:10px;
 }
 
 /* BADGE */
 .badge {
   position:absolute;
-  top:6px;
-  right:6px;
+  top:8px;
+  right:8px;
   padding:4px 8px;
   font-size:11px;
   font-weight:bold;
@@ -151,26 +129,28 @@ button {
   display:none;
   overflow-y:auto;
 }
+
+/* DETAIL HEADER */
 .detail-header {
   background:#000;
   color:#fff;
-  padding:6px;
+  padding:8px;
   display:flex;
-  gap:6px;
   align-items:center;
+  gap:8px;
   position:sticky;
   top:0;
 }
 .detail-header button {
   background:#E81F25;
   border-radius:8px;
-  padding:5px 8px;
+  padding:6px 10px;
   color:#fff;
   font-size:12px;
 }
 
 /* GALLERY */
-.gallery-wrapper { background:#000; position:relative; }
+.gallery-wrapper { position:relative; background:#000; }
 .gallery {
   display:flex;
   overflow-x:auto;
@@ -178,7 +158,7 @@ button {
 }
 .gallery img {
   width:100%;
-  height:160px;
+  height:200px;
   object-fit:cover;
   scroll-snap-align:start;
   flex-shrink:0;
@@ -186,36 +166,42 @@ button {
 }
 .swipe-indicator {
   position:absolute;
-  bottom:8px;
+  bottom:10px;
   left:50%;
   transform:translateX(-50%);
   background:rgba(0,0,0,0.6);
   color:#fff;
-  padding:4px 10px;
+  padding:5px 12px;
   border-radius:16px;
-  font-size:11px;
+  font-size:12px;
 }
 
 /* DETAIL BODY */
-.detail-body { padding:8px; }
-.price { font-size:18px; font-weight:bold; margin-bottom:6px; }
+.detail-body { padding:10px; }
+.price {
+  font-size:20px;
+  font-weight:bold;
+  margin-bottom:8px;
+}
+
+/* SPEC GRID */
 .spec-grid {
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:6px;
+  gap:8px;
 }
 .spec-box {
   background:#111;
   color:#fff;
-  border-radius:8px;
-  padding:6px;
+  border-radius:10px;
+  padding:8px 4px;
   text-align:center;
-  font-size:11px;
+  font-size:12px;
 }
 .spec-box strong {
   display:block;
-  font-size:13px;
-  margin-top:2px;
+  font-size:14px;
+  margin-top:3px;
 }
 </style>
 </head>
@@ -236,49 +222,20 @@ button {
     <h2>Roman Urdu Voice Search</h2>
   </div>
 
-  <input id="query" placeholder="Jaise: Toyota Vitz 2017 Lahore">
+  <input id="query" placeholder="Jaise: MG HS 2021 under 40 lakh Peshawar">
   <button id="searchBtn">Search</button>
-
-  <!-- 🔥 CHIPS -->
-  <div class="chips">
-    <div class="chip" onclick="chipSearch('Toyota')">Toyota</div>
-    <div class="chip" onclick="chipSearch('Honda')">Honda</div>
-    <div class="chip" onclick="chipSearch('Suzuki')">Suzuki</div>
-    <div class="chip" onclick="chipSearch('Lahore')">Lahore</div>
-    <div class="chip" onclick="chipSearch('Karachi')">Karachi</div>
-    <div class="chip" onclick="chipSearch('Under 20 Lakh')">Under 20 Lakh</div>
-  </div>
-
   <button class="call" id="callBtn">📞 CALL</button>
 
   <div id="status"></div>
   <div id="results"></div>
 </div>
 
-<!-- DETAIL PAGE -->
-<div id="detailPage">
-  <div class="detail-header">
-    <button id="backBtn">← Back</button>
-    <strong id="detailTitle"></strong>
-  </div>
-
-  <div class="gallery-wrapper">
-    <div class="gallery" id="gallery"></div>
-    <div class="swipe-indicator">Swipe ⇠ ⇢</div>
-  </div>
-
-  <div class="detail-body">
-    <div class="price" id="detailPrice"></div>
-    <div class="spec-grid" id="specGrid"></div>
-  </div>
-</div>
-
 <script>
-/* 🔒 VOICE + SEARCH LOGIC UNCHANGED */
+/* ===== STATE ===== */
 const femaleNames=["Reshma","Gul Bahar","Gul Noor","Dil Bahar","Kiran","Shaheen","Chaman","Khushnoor","Mahnoor","Julie","Rosemarie"];
 let currentVoiceName="Reshma",ringing=false,callConnected=false,lastResults=[];
 
-/* SPEECH */
+/* ===== SPEECH ===== */
 let recognition=null;
 if("webkitSpeechRecognition"in window){
   recognition=new webkitSpeechRecognition();
@@ -291,57 +248,65 @@ if("webkitSpeechRecognition"in window){
   };
 }
 
-/* TTS */
-async function speakLady(text){
+/* ===== TTS ===== */
+async function speakLady(text, afterSpeak=null){
   const res=await fetch("https://meilibeauty.co.uk/voice.php",{
-    method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({text})
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ text })
   });
   const audio=new Audio(URL.createObjectURL(await res.blob()));
   audio.onended=()=>{
-    callConnected=true;ringing=false;
-    callBtn.classList.remove("calling");
-    callBtn.innerText="🎤 TALK";
-    callBtn.disabled=false;
-    recognition&&recognition.start();
+    if(afterSpeak) afterSpeak();
   };
   audio.play();
 }
 
-/* RING */
+/* ===== RING ===== */
 function playRingtoneThenSpeak(){
-  if(ringing)return;
+  if(ringing) return;
   ringing=true;
   const ring=new Audio("ringtone.mp4");
   ring.onended=()=>{
     currentVoiceName=femaleNames[Math.floor(Math.random()*femaleNames.length)];
-    speakLady(`Assalam o Alaikum, main ${currentVoiceName} hoon. Aap ki kya madad kar sakti hoon?`);
+    speakLady(
+      `Assalam o Alaikum, main ${currentVoiceName} hoon. Aap ki kya madad kar sakti hoon?`,
+      ()=>{
+        callConnected=true;
+        ringing=false;
+        callBtn.classList.remove("calling");
+        callBtn.innerText="🎤 TALK";
+        callBtn.disabled=false;
+        recognition && recognition.start();
+      }
+    );
   };
   ring.play();
 }
 
-/* 🔥 CHIP SEARCH */
-function chipSearch(text){
-  query.value=text;
-  runSearch(text);
-}
-
-/* SEARCH */
+/* ===== SEARCH ===== */
 async function runSearch(text){
   results.innerHTML="<p>Gaariyan dhoondi ja rahi hain…</p>";
   const res=await fetch("https://meilibeauty.co.uk/search.php",{
-    method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({text})
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ text })
   });
   const json=await res.json();
   lastResults=json.data||[];
-  if(!lastResults.length){results.innerHTML="<p>Koi gaari nahi mili</p>";return;}
+
+  if(!lastResults.length){
+    results.innerHTML="<p>Koi gaari nahi mili</p>";
+    speakLady("Is criteria mein gaari nahi mili. Dobara boliye.");
+    return;
+  }
+
   results.innerHTML="";
   lastResults.forEach((c,i)=>{
     const img=c.images?.[0]||"";
     const isDealer=c.isDealer===true;
     results.innerHTML+=`
-      <div class="car" onclick="openDetail(${i})">
+      <div class="car">
         <div class="car-img-wrap">
           ${img?`<img src="${img}">`:""}
           <div class="badge ${isDealer?'dealer':'private'}">${isDealer?'DEALER':'PRIVATE'}</div>
@@ -351,40 +316,27 @@ async function runSearch(text){
         <strong>PKR ${c.price?.toLocaleString()||"Call"}</strong>
       </div>`;
   });
+
+  /* 🔥 CONTINUOUS VOICE */
+  speakLady(
+    "Aur koi gaari dekhni ho to boliye.",
+    ()=> recognition && recognition.start()
+  );
 }
 
-/* DETAIL */
-function openDetail(i){
-  const c=lastResults[i];
-  detailPage.style.display="block";
-  detailTitle.innerText=c.title;
-  detailPrice.innerText=`PKR ${c.price?.toLocaleString()||"Call"}`;
-  gallery.innerHTML="";
-  (c.images||[]).forEach(u=>gallery.innerHTML+=`<img src="${u}">`);
-  specGrid.innerHTML=`
-    <div class="spec-box">Seats<strong>${c.seatingCapacity||"-"}</strong></div>
-    <div class="spec-box">Mileage<strong>${c.mileage||"-"} km</strong></div>
-    <div class="spec-box">Transmission<strong>${c.transmission||"-"}</strong></div>
-    <div class="spec-box">Fuel<strong>${c.fuelType||"-"}</strong></div>
-    <div class="spec-box">Year<strong>${c.year||"-"}</strong></div>
-    <div class="spec-box">Condition<strong>${c.condition||"-"}</strong></div>
-  `;
-}
-backBtn.onclick=()=>detailPage.style.display="none";
-
-/* BUTTONS */
+/* ===== BUTTONS ===== */
 callBtn.onclick=()=>{
   if(!callConnected){
     callBtn.classList.add("calling");
     callBtn.innerText="📞 CALLING…";
     callBtn.disabled=true;
     playRingtoneThenSpeak();
-  }else{
+  } else {
     status.innerText=`${currentVoiceName}: Sun rahi hoon…`;
-    recognition&&recognition.start();
+    recognition && recognition.start();
   }
 };
-searchBtn.onclick=()=>query.value.trim()&&runSearch(query.value.trim());
+searchBtn.onclick=()=>query.value.trim() && runSearch(query.value.trim());
 </script>
 
 </body>
