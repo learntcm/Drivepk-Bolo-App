@@ -6,7 +6,7 @@
 <title>DrivePK Bolo App</title>
 
 <style>
-* { box-sizing: border-box; }
+* { box-sizing:border-box; }
 
 body {
   margin:0;
@@ -90,6 +90,28 @@ button {
 }
 #results { margin-top:8px; }
 
+/* 🔥 SEARCH CHIPS */
+.chips {
+  display:flex;
+  gap:6px;
+  overflow-x:auto;
+  margin:6px 0 8px;
+}
+.chip {
+  background:#fff;
+  border:1px solid #ddd;
+  border-radius:20px;
+  padding:6px 12px;
+  font-size:12px;
+  white-space:nowrap;
+  cursor:pointer;
+}
+.chip:active {
+  background:#E81F25;
+  color:#fff;
+  border-color:#E81F25;
+}
+
 /* CAR LIST */
 .car {
   background:#fff;
@@ -98,12 +120,7 @@ button {
   margin-bottom:8px;
   cursor:pointer;
 }
-
-/* IMAGE WRAPPER */
-.car-img-wrap {
-  position:relative;
-}
-
+.car-img-wrap { position:relative; }
 .car-img-wrap img {
   width:100%;
   height:120px;
@@ -114,8 +131,8 @@ button {
 /* BADGE */
 .badge {
   position:absolute;
-  top:8px;
-  right:8px;
+  top:6px;
+  right:6px;
   padding:4px 8px;
   font-size:11px;
   font-weight:bold;
@@ -134,15 +151,13 @@ button {
   display:none;
   overflow-y:auto;
 }
-
-/* DETAIL HEADER */
 .detail-header {
   background:#000;
   color:#fff;
   padding:6px;
   display:flex;
-  align-items:center;
   gap:6px;
+  align-items:center;
   position:sticky;
   top:0;
 }
@@ -155,10 +170,7 @@ button {
 }
 
 /* GALLERY */
-.gallery-wrapper {
-  position:relative;
-  background:#000;
-}
+.gallery-wrapper { background:#000; position:relative; }
 .gallery {
   display:flex;
   overflow-x:auto;
@@ -172,8 +184,6 @@ button {
   flex-shrink:0;
   border-right:4px solid #000;
 }
-
-/* SWIPE INDICATOR */
 .swipe-indicator {
   position:absolute;
   bottom:8px;
@@ -184,29 +194,21 @@ button {
   padding:4px 10px;
   border-radius:16px;
   font-size:11px;
-  pointer-events:none;
 }
 
 /* DETAIL BODY */
 .detail-body { padding:8px; }
-.price {
-  font-size:18px;
-  font-weight:bold;
-  margin-bottom:6px;
-}
-
-/* SPEC GRID */
+.price { font-size:18px; font-weight:bold; margin-bottom:6px; }
 .spec-grid {
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:6px;
-  margin-bottom:10px;
 }
 .spec-box {
   background:#111;
   color:#fff;
   border-radius:8px;
-  padding:6px 4px;
+  padding:6px;
   text-align:center;
   font-size:11px;
 }
@@ -214,28 +216,6 @@ button {
   display:block;
   font-size:13px;
   margin-top:2px;
-}
-
-/* CONTACT */
-.contact-box {
-  background:#000;
-  color:#fff;
-  border-radius:10px;
-  padding:8px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-.lock {
-  opacity:0.6;
-  font-size:11px;
-}
-.contact-btn {
-  background:#E81F25;
-  padding:6px 10px;
-  border-radius:8px;
-  font-weight:bold;
-  font-size:12px;
 }
 </style>
 </head>
@@ -258,6 +238,17 @@ button {
 
   <input id="query" placeholder="Jaise: Toyota Vitz 2017 Lahore">
   <button id="searchBtn">Search</button>
+
+  <!-- 🔥 CHIPS -->
+  <div class="chips">
+    <div class="chip" onclick="chipSearch('Toyota')">Toyota</div>
+    <div class="chip" onclick="chipSearch('Honda')">Honda</div>
+    <div class="chip" onclick="chipSearch('Suzuki')">Suzuki</div>
+    <div class="chip" onclick="chipSearch('Lahore')">Lahore</div>
+    <div class="chip" onclick="chipSearch('Karachi')">Karachi</div>
+    <div class="chip" onclick="chipSearch('Under 20 Lakh')">Under 20 Lakh</div>
+  </div>
+
   <button class="call" id="callBtn">📞 CALL</button>
 
   <div id="status"></div>
@@ -279,16 +270,11 @@ button {
   <div class="detail-body">
     <div class="price" id="detailPrice"></div>
     <div class="spec-grid" id="specGrid"></div>
-
-    <div class="contact-box">
-      <div class="lock">🔒 Login to view phone number</div>
-      <div class="contact-btn">Contact Seller</div>
-    </div>
   </div>
 </div>
 
 <script>
-/* 🔒 VOICE & SEARCH LOGIC — UNCHANGED */
+/* 🔒 VOICE + SEARCH LOGIC UNCHANGED */
 const femaleNames=["Reshma","Gul Bahar","Gul Noor","Dil Bahar","Kiran","Shaheen","Chaman","Khushnoor","Mahnoor","Julie","Rosemarie"];
 let currentVoiceName="Reshma",ringing=false,callConnected=false,lastResults=[];
 
@@ -334,6 +320,12 @@ function playRingtoneThenSpeak(){
   ring.play();
 }
 
+/* 🔥 CHIP SEARCH */
+function chipSearch(text){
+  query.value=text;
+  runSearch(text);
+}
+
 /* SEARCH */
 async function runSearch(text){
   results.innerHTML="<p>Gaariyan dhoondi ja rahi hain…</p>";
@@ -352,9 +344,7 @@ async function runSearch(text){
       <div class="car" onclick="openDetail(${i})">
         <div class="car-img-wrap">
           ${img?`<img src="${img}">`:""}
-          <div class="badge ${isDealer?'dealer':'private'}">
-            ${isDealer?'DEALER':'PRIVATE'}
-          </div>
+          <div class="badge ${isDealer?'dealer':'private'}">${isDealer?'DEALER':'PRIVATE'}</div>
         </div>
         <h3>${c.title}</h3>
         <div>${c.year} • ${c.location?.city||"-"}</div>
