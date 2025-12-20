@@ -38,7 +38,7 @@ header {
 }
 .main { padding:8px; }
 
-/* HERO (SMALLER) */
+/* HERO */
 .hero {
   background:#000;
   border-radius:16px;
@@ -96,13 +96,34 @@ button {
   border-radius:10px;
   padding:6px;
   margin-bottom:8px;
+  cursor:pointer;
 }
-.car img {
+
+/* IMAGE WRAPPER */
+.car-img-wrap {
+  position:relative;
+}
+
+.car-img-wrap img {
   width:100%;
   height:120px;
   object-fit:cover;
   border-radius:8px;
 }
+
+/* BADGE */
+.badge {
+  position:absolute;
+  top:8px;
+  right:8px;
+  padding:4px 8px;
+  font-size:11px;
+  font-weight:bold;
+  border-radius:12px;
+  color:#fff;
+}
+.badge.dealer { background:#E81F25; }
+.badge.private { background:#000; }
 
 /* ===== DETAIL PAGE ===== */
 #detailPage {
@@ -267,7 +288,7 @@ button {
 </div>
 
 <script>
-/* 🔒 JS LOGIC UNCHANGED — COPIED FROM STABLE VERSION */
+/* 🔒 VOICE & SEARCH LOGIC — UNCHANGED */
 const femaleNames=["Reshma","Gul Bahar","Gul Noor","Dil Bahar","Kiran","Shaheen","Chaman","Khushnoor","Mahnoor","Julie","Rosemarie"];
 let currentVoiceName="Reshma",ringing=false,callConnected=false,lastResults=[];
 
@@ -326,9 +347,15 @@ async function runSearch(text){
   results.innerHTML="";
   lastResults.forEach((c,i)=>{
     const img=c.images?.[0]||"";
+    const isDealer=c.isDealer===true;
     results.innerHTML+=`
       <div class="car" onclick="openDetail(${i})">
-        ${img?`<img src="${img}">`:""}
+        <div class="car-img-wrap">
+          ${img?`<img src="${img}">`:""}
+          <div class="badge ${isDealer?'dealer':'private'}">
+            ${isDealer?'DEALER':'PRIVATE'}
+          </div>
+        </div>
         <h3>${c.title}</h3>
         <div>${c.year} • ${c.location?.city||"-"}</div>
         <strong>PKR ${c.price?.toLocaleString()||"Call"}</strong>
