@@ -7,35 +7,78 @@
 
 <style>
 body { margin:0; font-family:Arial,sans-serif; background:#f2f2f2; }
-header { background:#000; color:#fff; padding:14px; display:flex; gap:12px; align-items:center; }
+header {
+  background:#000;
+  color:#fff;
+  padding:14px;
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
 .logo {
-  background:#E81F25; width:48px; height:48px; border-radius:12px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:20px; font-weight:bold;
+  background:#E81F25;
+  width:48px;
+  height:48px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  font-weight:bold;
 }
 .main { padding:14px; }
 
-/* HERO */
+/* 🔽 SHORTER HERO */
 .hero {
-  background:#000; border-radius:24px;
-  height:32vh; min-height:200px;
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  color:#fff; margin-bottom:14px;
+  background:#000;
+  border-radius:24px;
+  height:32vh;        /* SHORT */
+  min-height:200px;   /* MOBILE SAFE */
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  margin-bottom:14px;
 }
 .hero h1 { font-size:42px; margin:0; }
 .hero h2 { font-size:18px; color:#E81F25; margin-top:8px; }
 
 input,button {
-  width:100%; height:56px;
-  border-radius:16px; font-size:17px;
+  width:100%;
+  height:56px;
+  border-radius:16px;
+  font-size:17px;
 }
-input { padding:0 18px; border:1px solid #ccc; margin-bottom:10px; }
-button { border:none; background:#000; color:#fff; cursor:pointer; }
-.call { background:#E81F25; font-size:20px; margin-top:8px; }
-.call.calling { background:#999; color:#000; transform:scale(0.97); }
+input {
+  padding:0 18px;
+  border:1px solid #ccc;
+  margin-bottom:10px;
+}
+button {
+  border:none;
+  background:#000;
+  color:#fff;
+  cursor:pointer;
+}
+.call {
+  background:#E81F25;
+  font-size:20px;
+  margin-top:8px;
+}
 
-#status { margin-top:10px; font-weight:bold; color:#E81F25; }
+/* BUTTON FEEDBACK */
+.call.calling {
+  background:#999;
+  color:#000;
+  transform:scale(0.97);
+}
+
+#status {
+  margin-top:10px;
+  font-weight:bold;
+  color:#E81F25;
+}
 #results { margin-top:14px; }
 
 .car {
@@ -43,7 +86,6 @@ button { border:none; background:#000; color:#fff; cursor:pointer; }
   border-radius:14px;
   padding:12px;
   margin-bottom:14px;
-  cursor:pointer;
 }
 .car img {
   width:100%;
@@ -83,7 +125,7 @@ button { border:none; background:#000; color:#fff; cursor:pointer; }
 <script>
 /* ===============================
    STATE
-=============================== */
+   =============================== */
 const femaleNames = [
   "Reshma","Gul Bahar","Gul Noor","Dil Bahar","Kiran",
   "Shaheen","Chaman","Khushnoor","Mahnoor","Julie","Rosemarie"
@@ -95,7 +137,7 @@ let callConnected = false;
 
 /* ===============================
    SPEECH RECOGNITION
-=============================== */
+   =============================== */
 let recognition = null;
 if ("webkitSpeechRecognition" in window) {
   recognition = new webkitSpeechRecognition();
@@ -104,14 +146,16 @@ if ("webkitSpeechRecognition" in window) {
 
   recognition.onresult = e => {
     const text = e.results[0][0].transcript;
-    query.value = text;
-    handleUserText(text);
+    document.getElementById("query").value = text;
+    document.getElementById("status").innerText =
+      `${currentVoiceName}: Aap ne kaha – ${text}`;
+    runSearch(text);
   };
 }
 
 /* ===============================
-   TEXT TO SPEECH
-=============================== */
+   OPENAI TTS
+   =============================== */
 async function speakLady(text) {
   const res = await fetch("https://meilibeauty.co.uk/voice.php", {
     method:"POST",
@@ -125,9 +169,12 @@ async function speakLady(text) {
   audio.onended = () => {
     callConnected = true;
     ringing = false;
-    callBtn.classList.remove("calling");
-    callBtn.innerText = "🎤 TALK";
-    callBtn.disabled = false;
+
+    const btn = document.getElementById("callBtn");
+    btn.classList.remove("calling");
+    btn.innerText = "🎤 TALK";
+    btn.disabled = false;
+
     if (recognition) recognition.start();
   };
 
@@ -135,8 +182,8 @@ async function speakLady(text) {
 }
 
 /* ===============================
-   RING
-=============================== */
+   RING → SPEAK (1 RING FILE)
+   =============================== */
 function playRingtoneThenSpeak() {
   if (ringing) return;
   ringing = true;
@@ -145,7 +192,8 @@ function playRingtoneThenSpeak() {
 
   ring.onended = () => {
     currentVoiceName =
-      femaleNames[Math.floor(Math.random()*femaleNames.length)];
+      femaleNames[Math.floor(Math.random() * femaleNames.length)];
+
     speakLady(
       `Assalam o Alaikum, main ${currentVoiceName} hoon. Aap ki kya madad kar sakti hoon?`
     );
@@ -155,56 +203,11 @@ function playRingtoneThenSpeak() {
 }
 
 /* ===============================
-   DECIDE: SEARCH or AI
-=============================== */
-function looksLikeCarSearch(text) {
-  const keywords = [
-    "toyota","honda","suzuki","kia","corolla","civic",
-    "vitz","city","lahore","karachi","islamabad","model",
-    "price","under","above","lakh","lac"
-  ];
-  text = text.toLowerCase();
-  return keywords.some(k => text.includes(k));
-}
-
-/* ===============================
-   HANDLE USER TEXT
-=============================== */
-function handleUserText(text) {
-  status.innerText = `${currentVoiceName}: Aap ne kaha – ${text}`;
-
-  if (looksLikeCarSearch(text)) {
-    runSearch(text);
-  } else {
-    askDrivePK(text);
-  }
-}
-
-/* ===============================
-   AI CHAT
-=============================== */
-async function askDrivePK(text) {
-  const res = await fetch("https://meilibeauty.co.uk/ai-chat.php", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ text })
-  });
-
-  const json = await res.json();
-  if (!json.reply) return;
-
-  speakLady(json.reply);
-
-  if (json.end) {
-    recognition && recognition.stop();
-  }
-}
-
-/* ===============================
    SEARCH
-=============================== */
+   =============================== */
 async function runSearch(text) {
-  results.innerHTML = "<p>Gaariyan dhoondi ja rahi hain…</p>";
+  const box = document.getElementById("results");
+  box.innerHTML = "<p>Gaariyan dhoondi ja rahi hain…</p>";
 
   const res = await fetch("https://meilibeauty.co.uk/search.php", {
     method:"POST",
@@ -216,14 +219,14 @@ async function runSearch(text) {
   const data = json.data || [];
 
   if (!data.length) {
-    results.innerHTML = "<p>Koi gaari nahi mili</p>";
+    box.innerHTML = "<p>Koi gaari nahi mili</p>";
     return;
   }
 
-  results.innerHTML = "";
+  box.innerHTML = "";
   data.forEach(c => {
     const img = c.images?.[0] || "";
-    results.innerHTML += `
+    box.innerHTML += `
       <div class="car">
         ${img ? `<img src="${img}">` : ""}
         <h3>${c.title}</h3>
@@ -236,21 +239,24 @@ async function runSearch(text) {
 
 /* ===============================
    BUTTONS
-=============================== */
-callBtn.onclick = () => {
+   =============================== */
+document.getElementById("callBtn").onclick = () => {
+  const btn = document.getElementById("callBtn");
+
   if (!callConnected) {
-    callBtn.classList.add("calling");
-    callBtn.innerText = "📞 CALLING…";
-    callBtn.disabled = true;
+    btn.classList.add("calling");
+    btn.innerText = "📞 CALLING…";
+    btn.disabled = true;
     playRingtoneThenSpeak();
   } else {
-    status.innerText = `${currentVoiceName}: Sun rahi hoon…`;
-    recognition && recognition.start();
+    document.getElementById("status").innerText =
+      `${currentVoiceName}: Sun rahi hoon…`;
+    if (recognition) recognition.start();
   }
 };
 
-searchBtn.onclick = () => {
-  const q = query.value.trim();
+document.getElementById("searchBtn").onclick = () => {
+  const q = document.getElementById("query").value.trim();
   if (q) runSearch(q);
 };
 </script>
