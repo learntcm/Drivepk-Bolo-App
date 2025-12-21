@@ -2,202 +2,53 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>DrivePK Bolo App</title>
 
 <style>
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:#f2f2f2;
-  font-size:14px;
-  overflow-x:hidden;
-}
+body{margin:0;font-family:Arial,sans-serif;background:#f2f2f2;font-size:14px;overflow-x:hidden}
 
 /* HEADER */
-header{
-  background:#000;
-  color:#fff;
-  padding:12px;
-  display:flex;
-  gap:12px;
-  align-items:center;
-}
-.logo{
-  background:#E81F25;
-  width:44px;
-  height:44px;
-  border-radius:12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:18px;
-  font-weight:bold;
-}
-.main{padding:12px}
+header{background:#000;color:#fff;padding:10px;display:flex;gap:10px;align-items:center}
+.logo{background:#E81F25;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold}
+.main{padding:10px}
 
-/* HERO – BIGGER BLACK BOX */
-.hero{
-  background:#000;
-  border-radius:22px;
-  height:30vh;
-  min-height:190px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  color:#fff;
-  margin-bottom:14px;
-}
-.hero h1{font-size:36px;margin:0}
-.hero h2{font-size:16px;color:#E81F25;margin-top:8px}
+/* HERO */
+.hero{background:#000;border-radius:18px;height:20vh;min-height:130px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;margin-bottom:10px}
+.hero h1{font-size:30px;margin:0}
+.hero h2{font-size:14px;color:#E81F25;margin-top:4px}
 
 /* INPUTS */
-input,button{
-  width:100%;
-  height:52px;
-  border-radius:14px;
-  font-size:16px;
-}
-input{
-  padding:0 16px;
-  border:1px solid #ccc;
-  margin-bottom:8px;
-}
-button{
-  border:none;
-  background:#000;
-  color:#fff;
-  cursor:pointer;
-}
-.call{
-  background:#E81F25;
-  font-size:18px;
-  margin-top:8px;
-}
-.call.calling{
-  background:#999;
-  color:#000;
-  transform:scale(.97);
-}
+input,button{width:100%;height:48px;border-radius:12px;font-size:15px}
+input{padding:0 14px;border:1px solid #ccc;margin-bottom:6px}
+button{border:none;background:#000;color:#fff;cursor:pointer}
+.call{background:#E81F25;font-size:16px;margin-top:6px}
+.call.calling{background:#999;color:#000;transform:scale(.97)}
 
-#status{
-  margin-top:8px;
-  font-weight:bold;
-  color:#E81F25;
-}
-#results{margin-top:14px}
+#status{margin-top:6px;font-weight:bold;color:#E81F25}
+#results{margin-top:10px}
 
 /* CAR LIST */
-.car{
-  background:#fff;
-  border-radius:14px;
-  padding:10px;
-  margin-bottom:14px;
-  cursor:pointer;
-}
-.car-img-wrap{position:relative}
-.car-img-wrap img{
-  width:100%;
-  height:200px;   /* 🔥 BIGGER IMAGES */
-  object-fit:cover;
-  border-radius:12px;
-}
-
-/* BADGE */
-.badge{
-  position:absolute;
-  top:10px;
-  right:10px;
-  padding:5px 10px;
-  font-size:12px;
-  font-weight:bold;
-  border-radius:14px;
-  color:#fff;
-}
-.badge.dealer{background:#E81F25}
-.badge.private{background:#000}
+.car{background:#fff;border-radius:12px;padding:8px;margin-bottom:10px;cursor:pointer}
+.car img{width:100%;height:140px;object-fit:cover;border-radius:8px}
 
 /* DETAIL PAGE */
-#detailPage{
-  position:fixed;
-  inset:0;
-  background:#fff;
-  z-index:999;
-  display:none;
-  overflow-y:auto;
-}
-.detail-header{
-  background:#000;
-  color:#fff;
-  padding:10px;
-  display:flex;
-  gap:10px;
-  align-items:center;
-  position:sticky;
-  top:0;
-}
-.detail-header button{
-  background:#E81F25;
-  border-radius:10px;
-  padding:8px 12px;
-  color:#fff;
-  font-size:14px;
-}
+#detailPage{position:fixed;inset:0;background:#fff;z-index:999;display:none;overflow-y:auto}
+.detail-header{background:#000;color:#fff;padding:8px;display:flex;align-items:center;gap:8px;position:sticky;top:0}
+.detail-header button{background:#E81F25;border-radius:8px;padding:6px 10px;color:#fff;font-size:13px}
 
 /* GALLERY */
-.gallery-wrapper{background:#000;position:relative}
-.gallery{
-  display:flex;
-  overflow-x:auto;
-  scroll-snap-type:x mandatory;
-}
-.gallery img{
-  width:100%;
-  height:260px;   /* 🔥 BIGGER GALLERY */
-  object-fit:cover;
-  scroll-snap-align:start;
-  flex-shrink:0;
-  border-right:6px solid #000;
-}
-.swipe-indicator{
-  position:absolute;
-  bottom:12px;
-  left:50%;
-  transform:translateX(-50%);
-  background:rgba(0,0,0,0.6);
-  color:#fff;
-  padding:6px 16px;
-  border-radius:20px;
-  font-size:13px;
-}
+.gallery-wrapper{position:relative;background:#000}
+.gallery{display:flex;overflow-x:auto;scroll-snap-type:x mandatory}
+.gallery img{width:100%;height:180px;object-fit:cover;scroll-snap-align:start;flex-shrink:0;border-right:6px solid #000}
+.swipe-indicator{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);color:#fff;padding:6px 14px;border-radius:20px;font-size:12px}
 
 /* DETAIL BODY */
-.detail-body{padding:14px}
-.price{
-  font-size:24px;
-  font-weight:bold;
-  margin-bottom:12px;
-}
-.spec-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-}
-.spec-box{
-  background:#111;
-  color:#fff;
-  border-radius:12px;
-  padding:10px 6px;
-  text-align:center;
-  font-size:13px;
-}
-.spec-box strong{
-  display:block;
-  font-size:15px;
-  margin-top:4px;
-}
+.detail-body{padding:10px}
+.price{font-size:20px;font-weight:bold;margin-bottom:8px}
+.spec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+.spec-box{background:#111;color:#fff;border-radius:10px;padding:6px 4px;text-align:center;font-size:11px}
+.spec-box strong{display:block;font-size:13px;margin-top:2px}
 </style>
 </head>
 
@@ -225,8 +76,26 @@ button{
   <div id="results"></div>
 </div>
 
+<!-- DETAIL PAGE -->
+<div id="detailPage">
+  <div class="detail-header">
+    <button id="backBtn">← Back</button>
+    <strong id="detailTitle"></strong>
+  </div>
+
+  <div class="gallery-wrapper">
+    <div class="gallery" id="gallery"></div>
+    <div class="swipe-indicator">Swipe ⇠ ⇢</div>
+  </div>
+
+  <div class="detail-body">
+    <div class="price" id="detailPrice"></div>
+    <div class="spec-grid" id="specGrid"></div>
+  </div>
+</div>
+
 <script>
-/* 🔒 VOICE & SEARCH LOGIC — UNCHANGED (SAFE) */
+/* STATE */
 const femaleNames=["Reshma","Gul Bahar","Gul Noor","Dil Bahar","Kiran","Shaheen","Chaman","Khushnoor","Mahnoor","Julie","Rosemarie"];
 let currentVoiceName="Reshma",ringing=false,callConnected=false,lastResults=[];
 
@@ -251,10 +120,9 @@ async function speakLady(text){
   });
   const audio=new Audio(URL.createObjectURL(await res.blob()));
   audio.onended=()=>{
-    callConnected=true;
-    ringing=false;
+    callConnected=true;ringing=false;
     callBtn.classList.remove("calling");
-    callBtn.innerText="🎤 BOLO";
+    callBtn.innerText="🎤 TALK";
     callBtn.disabled=false;
     recognition&&recognition.start();
   };
@@ -282,26 +150,38 @@ async function runSearch(text){
   });
   const json=await res.json();
   lastResults=json.data||[];
-  if(!lastResults.length){
-    results.innerHTML="<p>Koi gaari nahi mili</p>";
-    return;
-  }
+  if(!lastResults.length){results.innerHTML="<p>Koi gaari nahi mili</p>";return;}
   results.innerHTML="";
   lastResults.forEach((c,i)=>{
     const img=c.images?.[0]||"";
-    const isDealer=c.isDealer===true;
     results.innerHTML+=`
-      <div class="car">
-        <div class="car-img-wrap">
-          ${img?`<img src="${img}">`:""}
-          <div class="badge ${isDealer?'dealer':'private'}">${isDealer?'DEALER':'PRIVATE'}</div>
-        </div>
+      <div class="car" onclick="openDetail(${i})">
+        ${img?`<img src="${img}">`:""}
         <h3>${c.title}</h3>
         <div>${c.year} • ${c.location?.city||"-"}</div>
         <strong>PKR ${c.price?.toLocaleString()||"Call"}</strong>
       </div>`;
   });
 }
+
+/* DETAIL */
+function openDetail(i){
+  const c=lastResults[i];
+  detailPage.style.display="block";
+  detailTitle.innerText=c.title||"Car Details";
+  detailPrice.innerText=`PKR ${c.price?.toLocaleString()||"Call"}`;
+  gallery.innerHTML="";
+  (c.images||[]).forEach(u=>gallery.innerHTML+=`<img src="${u}">`);
+  specGrid.innerHTML=`
+    <div class="spec-box">Seats<strong>${c.seatingCapacity||"-"}</strong></div>
+    <div class="spec-box">Mileage<strong>${c.mileage||"-"} km</strong></div>
+    <div class="spec-box">Transmission<strong>${c.transmission||"-"}</strong></div>
+    <div class="spec-box">Fuel<strong>${c.fuelType||"-"}</strong></div>
+    <div class="spec-box">Year<strong>${c.year||"-"}</strong></div>
+    <div class="spec-box">Condition<strong>${c.condition||"-"}</strong></div>
+  `;
+}
+backBtn.onclick=()=>detailPage.style.display="none";
 
 /* BUTTONS */
 callBtn.onclick=()=>{
