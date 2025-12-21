@@ -6,127 +6,121 @@
 <title>DrivePK Bolo App</title>
 
 <style>
-* { box-sizing: border-box; }
-
-body {
+*{box-sizing:border-box}
+body{
   margin:0;
   font-family:Arial,sans-serif;
   background:#f2f2f2;
-  font-size:13px;
+  font-size:14px;
   overflow-x:hidden;
 }
 
 /* HEADER */
-header {
+header{
   background:#000;
   color:#fff;
-  padding:8px;
+  padding:12px;
   display:flex;
-  gap:8px;
+  gap:12px;
   align-items:center;
 }
-.logo {
+.logo{
   background:#E81F25;
-  width:36px;
-  height:36px;
-  border-radius:8px;
+  width:44px;
+  height:44px;
+  border-radius:12px;
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:15px;
+  font-size:18px;
   font-weight:bold;
 }
-.main { padding:8px; }
+.main{padding:12px}
 
-/* HERO */
-.hero {
+/* HERO – BIGGER BLACK BOX */
+.hero{
   background:#000;
-  border-radius:16px;
-  height:18vh;
-  min-height:110px;
+  border-radius:22px;
+  height:30vh;
+  min-height:190px;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
   color:#fff;
-  margin-bottom:8px;
+  margin-bottom:14px;
 }
-.hero h1 { font-size:26px; margin:0; }
-.hero h2 { font-size:13px; color:#E81F25; margin-top:4px; }
+.hero h1{font-size:36px;margin:0}
+.hero h2{font-size:16px;color:#E81F25;margin-top:8px}
 
 /* INPUTS */
-input,button {
+input,button{
   width:100%;
-  height:44px;
-  border-radius:10px;
-  font-size:14px;
+  height:52px;
+  border-radius:14px;
+  font-size:16px;
 }
-input {
-  padding:0 12px;
+input{
+  padding:0 16px;
   border:1px solid #ccc;
-  margin-bottom:6px;
+  margin-bottom:8px;
 }
-button {
+button{
   border:none;
   background:#000;
   color:#fff;
   cursor:pointer;
 }
-.call {
+.call{
   background:#E81F25;
-  font-size:15px;
-  margin-top:6px;
+  font-size:18px;
+  margin-top:8px;
 }
-.call.calling {
+.call.calling{
   background:#999;
   color:#000;
-  transform:scale(0.97);
+  transform:scale(.97);
 }
 
-#status {
-  margin-top:6px;
+#status{
+  margin-top:8px;
   font-weight:bold;
   color:#E81F25;
 }
-#results { margin-top:8px; }
+#results{margin-top:14px}
 
 /* CAR LIST */
-.car {
+.car{
   background:#fff;
-  border-radius:10px;
-  padding:6px;
-  margin-bottom:8px;
+  border-radius:14px;
+  padding:10px;
+  margin-bottom:14px;
   cursor:pointer;
 }
-
-/* IMAGE WRAPPER */
-.car-img-wrap {
-  position:relative;
-}
-
-.car-img-wrap img {
+.car-img-wrap{position:relative}
+.car-img-wrap img{
   width:100%;
-  height:120px;
+  height:200px;   /* 🔥 BIGGER IMAGES */
   object-fit:cover;
-  border-radius:8px;
+  border-radius:12px;
 }
 
 /* BADGE */
-.badge {
+.badge{
   position:absolute;
-  top:8px;
-  right:8px;
-  padding:4px 8px;
-  font-size:11px;
+  top:10px;
+  right:10px;
+  padding:5px 10px;
+  font-size:12px;
   font-weight:bold;
-  border-radius:12px;
+  border-radius:14px;
   color:#fff;
 }
-.badge.dealer { background:#E81F25; }
-.badge.private { background:#000; }
+.badge.dealer{background:#E81F25}
+.badge.private{background:#000}
 
-/* ===== DETAIL PAGE ===== */
-#detailPage {
+/* DETAIL PAGE */
+#detailPage{
   position:fixed;
   inset:0;
   background:#fff;
@@ -134,108 +128,75 @@ button {
   display:none;
   overflow-y:auto;
 }
-
-/* DETAIL HEADER */
-.detail-header {
+.detail-header{
   background:#000;
   color:#fff;
-  padding:6px;
+  padding:10px;
   display:flex;
+  gap:10px;
   align-items:center;
-  gap:6px;
   position:sticky;
   top:0;
 }
-.detail-header button {
+.detail-header button{
   background:#E81F25;
-  border-radius:8px;
-  padding:5px 8px;
+  border-radius:10px;
+  padding:8px 12px;
   color:#fff;
-  font-size:12px;
+  font-size:14px;
 }
 
 /* GALLERY */
-.gallery-wrapper {
-  position:relative;
-  background:#000;
-}
-.gallery {
+.gallery-wrapper{background:#000;position:relative}
+.gallery{
   display:flex;
   overflow-x:auto;
   scroll-snap-type:x mandatory;
 }
-.gallery img {
+.gallery img{
   width:100%;
-  height:160px;
+  height:260px;   /* 🔥 BIGGER GALLERY */
   object-fit:cover;
   scroll-snap-align:start;
   flex-shrink:0;
-  border-right:4px solid #000;
+  border-right:6px solid #000;
 }
-
-/* SWIPE INDICATOR */
-.swipe-indicator {
+.swipe-indicator{
   position:absolute;
-  bottom:8px;
+  bottom:12px;
   left:50%;
   transform:translateX(-50%);
   background:rgba(0,0,0,0.6);
   color:#fff;
-  padding:4px 10px;
-  border-radius:16px;
-  font-size:11px;
-  pointer-events:none;
+  padding:6px 16px;
+  border-radius:20px;
+  font-size:13px;
 }
 
 /* DETAIL BODY */
-.detail-body { padding:8px; }
-.price {
-  font-size:18px;
+.detail-body{padding:14px}
+.price{
+  font-size:24px;
   font-weight:bold;
-  margin-bottom:6px;
+  margin-bottom:12px;
 }
-
-/* SPEC GRID */
-.spec-grid {
+.spec-grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:6px;
-  margin-bottom:10px;
+  gap:10px;
 }
-.spec-box {
+.spec-box{
   background:#111;
   color:#fff;
-  border-radius:8px;
-  padding:6px 4px;
+  border-radius:12px;
+  padding:10px 6px;
   text-align:center;
-  font-size:11px;
-}
-.spec-box strong {
-  display:block;
   font-size:13px;
-  margin-top:2px;
 }
-
-/* CONTACT */
-.contact-box {
-  background:#000;
-  color:#fff;
-  border-radius:10px;
-  padding:8px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-.lock {
-  opacity:0.6;
-  font-size:11px;
-}
-.contact-btn {
-  background:#E81F25;
-  padding:6px 10px;
-  border-radius:8px;
-  font-weight:bold;
-  font-size:12px;
+.spec-box strong{
+  display:block;
+  font-size:15px;
+  margin-top:4px;
 }
 </style>
 </head>
@@ -256,7 +217,7 @@ button {
     <h2>Roman Urdu Voice Search</h2>
   </div>
 
-  <input id="query" placeholder="Jaise: Toyota Vitz 2017 Lahore">
+  <input id="query" placeholder="Jaise: MG HS 2021 under 40 lakh Peshawar">
   <button id="searchBtn">Search</button>
   <button class="call" id="callBtn">📞 CALL</button>
 
@@ -264,31 +225,8 @@ button {
   <div id="results"></div>
 </div>
 
-<!-- DETAIL PAGE -->
-<div id="detailPage">
-  <div class="detail-header">
-    <button id="backBtn">← Back</button>
-    <strong id="detailTitle"></strong>
-  </div>
-
-  <div class="gallery-wrapper">
-    <div class="gallery" id="gallery"></div>
-    <div class="swipe-indicator">Swipe ⇠ ⇢</div>
-  </div>
-
-  <div class="detail-body">
-    <div class="price" id="detailPrice"></div>
-    <div class="spec-grid" id="specGrid"></div>
-
-    <div class="contact-box">
-      <div class="lock">🔒 Login to view phone number</div>
-      <div class="contact-btn">Contact Seller</div>
-    </div>
-  </div>
-</div>
-
 <script>
-/* 🔒 VOICE & SEARCH LOGIC — UNCHANGED */
+/* 🔒 VOICE & SEARCH LOGIC — UNCHANGED (SAFE) */
 const femaleNames=["Reshma","Gul Bahar","Gul Noor","Dil Bahar","Kiran","Shaheen","Chaman","Khushnoor","Mahnoor","Julie","Rosemarie"];
 let currentVoiceName="Reshma",ringing=false,callConnected=false,lastResults=[];
 
@@ -313,9 +251,10 @@ async function speakLady(text){
   });
   const audio=new Audio(URL.createObjectURL(await res.blob()));
   audio.onended=()=>{
-    callConnected=true;ringing=false;
+    callConnected=true;
+    ringing=false;
     callBtn.classList.remove("calling");
-    callBtn.innerText="🎤 TALK";
+    callBtn.innerText="🎤 BOLO";
     callBtn.disabled=false;
     recognition&&recognition.start();
   };
@@ -343,18 +282,19 @@ async function runSearch(text){
   });
   const json=await res.json();
   lastResults=json.data||[];
-  if(!lastResults.length){results.innerHTML="<p>Koi gaari nahi mili</p>";return;}
+  if(!lastResults.length){
+    results.innerHTML="<p>Koi gaari nahi mili</p>";
+    return;
+  }
   results.innerHTML="";
   lastResults.forEach((c,i)=>{
     const img=c.images?.[0]||"";
     const isDealer=c.isDealer===true;
     results.innerHTML+=`
-      <div class="car" onclick="openDetail(${i})">
+      <div class="car">
         <div class="car-img-wrap">
           ${img?`<img src="${img}">`:""}
-          <div class="badge ${isDealer?'dealer':'private'}">
-            ${isDealer?'DEALER':'PRIVATE'}
-          </div>
+          <div class="badge ${isDealer?'dealer':'private'}">${isDealer?'DEALER':'PRIVATE'}</div>
         </div>
         <h3>${c.title}</h3>
         <div>${c.year} • ${c.location?.city||"-"}</div>
@@ -362,25 +302,6 @@ async function runSearch(text){
       </div>`;
   });
 }
-
-/* DETAIL */
-function openDetail(i){
-  const c=lastResults[i];
-  detailPage.style.display="block";
-  detailTitle.innerText=c.title;
-  detailPrice.innerText=`PKR ${c.price?.toLocaleString()||"Call"}`;
-  gallery.innerHTML="";
-  (c.images||[]).forEach(u=>gallery.innerHTML+=`<img src="${u}">`);
-  specGrid.innerHTML=`
-    <div class="spec-box">Seats<strong>${c.seatingCapacity||"-"}</strong></div>
-    <div class="spec-box">Mileage<strong>${c.mileage||"-"} km</strong></div>
-    <div class="spec-box">Transmission<strong>${c.transmission||"-"}</strong></div>
-    <div class="spec-box">Fuel<strong>${c.fuelType||"-"}</strong></div>
-    <div class="spec-box">Year<strong>${c.year||"-"}</strong></div>
-    <div class="spec-box">Condition<strong>${c.condition||"-"}</strong></div>
-  `;
-}
-backBtn.onclick=()=>detailPage.style.display="none";
 
 /* BUTTONS */
 callBtn.onclick=()=>{
