@@ -2,21 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DrivePK Bolo App</title>
 
 <style>
-*{box-sizing:border-box}
-body{
+body {
   margin:0;
   font-family:Arial,sans-serif;
   background:#f2f2f2;
-  font-size:14px;
-  overflow-x:hidden;
 }
 
 /* HEADER */
-header{
+header {
   background:#000;
   color:#fff;
   padding:12px;
@@ -24,7 +21,7 @@ header{
   gap:12px;
   align-items:center;
 }
-.logo{
+.logo {
   background:#E81F25;
   width:44px;
   height:44px;
@@ -35,86 +32,77 @@ header{
   font-size:18px;
   font-weight:bold;
 }
-.main{padding:12px}
+.main { padding:12px; }
 
-/* HERO – RESTORED SIZE */
-.hero{
+/* HERO (SMALLER) */
+.hero {
   background:#000;
-  border-radius:22px;
-  height:30vh;
-  min-height:190px;
+  border-radius:20px;
+  height:26vh;
+  min-height:170px;
   display:flex;
   flex-direction:column;
   align-items:center;
   justify-content:center;
   color:#fff;
-  margin-bottom:14px;
+  margin-bottom:12px;
 }
-.hero h1{
-  font-size:36px;
-  margin:0;
-}
-.hero h2{
-  font-size:16px;
-  color:#E81F25;
-  margin-top:8px;
-}
+.hero h1 { font-size:36px; margin:0; }
+.hero h2 { font-size:16px; color:#E81F25; margin-top:6px; }
 
 /* INPUTS */
-input,button{
+input,button {
   width:100%;
   height:52px;
   border-radius:14px;
   font-size:16px;
 }
-input{
+input {
   padding:0 16px;
   border:1px solid #ccc;
   margin-bottom:8px;
 }
-button{
+button {
   border:none;
   background:#000;
   color:#fff;
   cursor:pointer;
 }
-.call{
+.call {
   background:#E81F25;
   font-size:18px;
-  margin-top:8px;
+  margin-top:6px;
 }
-.call.calling{
+.call.calling {
   background:#999;
   color:#000;
-  transform:scale(.97);
+  transform:scale(0.97);
 }
 
-#status{
+#status {
   margin-top:8px;
   font-weight:bold;
   color:#E81F25;
 }
-#results{
-  margin-top:14px;
-}
+#results { margin-top:12px; }
 
-/* CAR LIST – BIGGER IMAGES */
-.car{
+/* CAR LIST */
+.car {
   background:#fff;
   border-radius:14px;
   padding:10px;
-  margin-bottom:14px;
+  margin-bottom:12px;
   cursor:pointer;
 }
-.car img{
+.car img {
   width:100%;
-  height:200px;
+  height:160px;
   object-fit:cover;
-  border-radius:12px;
+  border-radius:10px;
 }
 
-/* DETAIL PAGE */
-#detailPage{
+/* ===== DETAIL PAGE ===== */
+#detailPage {
   position:fixed;
   inset:0;
   background:#fff;
@@ -124,7 +112,7 @@ button{
 }
 
 /* DETAIL HEADER */
-.detail-header{
+.detail-header {
   background:#000;
   color:#fff;
   padding:10px;
@@ -134,60 +122,62 @@ button{
   position:sticky;
   top:0;
 }
-.detail-header button{
+.detail-header button {
   background:#E81F25;
   border-radius:10px;
-  padding:8px 12px;
+  padding:6px 10px;
   color:#fff;
-  font-size:14px;
 }
 
-/* GALLERY – BIGGER */
-.gallery-wrapper{
-  background:#000;
+/* GALLERY */
+.gallery-wrapper {
   position:relative;
+  background:#000;
 }
-.gallery{
+.gallery {
   display:flex;
   overflow-x:auto;
   scroll-snap-type:x mandatory;
 }
-.gallery img{
+.gallery img {
   width:100%;
-  height:260px;
+  height:220px;
   object-fit:cover;
   scroll-snap-align:start;
   flex-shrink:0;
   border-right:6px solid #000;
 }
-.swipe-indicator{
+
+/* SWIPE INDICATOR */
+.swipe-indicator {
   position:absolute;
   bottom:12px;
   left:50%;
   transform:translateX(-50%);
   background:rgba(0,0,0,0.6);
   color:#fff;
-  padding:6px 16px;
+  padding:6px 14px;
   border-radius:20px;
   font-size:13px;
   pointer-events:none;
 }
 
 /* DETAIL BODY */
-.detail-body{
-  padding:14px;
-}
-.price{
-  font-size:24px;
+.detail-body { padding:12px; }
+.price {
+  font-size:22px;
   font-weight:bold;
-  margin-bottom:12px;
+  margin-bottom:10px;
 }
-.spec-grid{
+
+/* SPEC GRID */
+.spec-grid {
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:10px;
+  gap:8px;
+  margin-bottom:14px;
 }
-.spec-box{
+.spec-box {
   background:#111;
   color:#fff;
   border-radius:12px;
@@ -195,10 +185,31 @@ button{
   text-align:center;
   font-size:13px;
 }
-.spec-box strong{
+.spec-box strong {
   display:block;
   font-size:15px;
   margin-top:4px;
+}
+
+/* CONTACT */
+.contact-box {
+  background:#000;
+  color:#fff;
+  border-radius:14px;
+  padding:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.lock {
+  opacity:0.6;
+  font-size:14px;
+}
+.contact-btn {
+  background:#E81F25;
+  padding:10px 14px;
+  border-radius:12px;
+  font-weight:bold;
 }
 </style>
 </head>
@@ -214,19 +225,17 @@ button{
 </header>
 
 <div class="main">
-
   <div class="hero">
     <h1>DrivePK</h1>
     <h2>Roman Urdu Voice Search</h2>
   </div>
 
-  <input id="query" placeholder="Jaise: Toyota Vitz 2019 Lahore">
+  <input id="query" placeholder="Jaise: Toyota Vitz 2017 Lahore">
   <button id="searchBtn">Search</button>
   <button class="call" id="callBtn">📞 CALL</button>
 
   <div id="status"></div>
   <div id="results"></div>
-
 </div>
 
 <!-- DETAIL PAGE -->
@@ -243,20 +252,19 @@ button{
 
   <div class="detail-body">
     <div class="price" id="detailPrice"></div>
+
     <div class="spec-grid" id="specGrid"></div>
+
+    <div class="contact-box">
+      <div class="lock">🔒 Login to view phone number</div>
+      <div class="contact-btn">Contact Seller</div>
+    </div>
   </div>
 </div>
 
 <script>
-/* ===== STATE ===== */
-const femaleNames=[
-  "Reshma","Gul Bahar","Gul Noor","Dil Bahar","Kiran",
-  "Shaheen","Chaman","Khushnoor","Mahnoor","Julie","Rosemarie"
-];
-let currentVoiceName="Reshma";
-let ringing=false;
-let callConnected=false;
-let lastResults=[];
+const femaleNames=["Reshma","Gul Bahar","Gul Noor","Dil Bahar","Kiran","Shaheen","Chaman","Khushnoor","Mahnoor","Julie","Rosemarie"];
+let currentVoiceName="Reshma",ringing=false,callConnected=false,lastResults=[];
 
 /* SPEECH */
 let recognition=null;
@@ -274,14 +282,12 @@ if("webkitSpeechRecognition"in window){
 /* TTS */
 async function speakLady(text){
   const res=await fetch("https://meilibeauty.co.uk/voice.php",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
+    method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({text})
   });
   const audio=new Audio(URL.createObjectURL(await res.blob()));
   audio.onended=()=>{
-    callConnected=true;
-    ringing=false;
+    callConnected=true;ringing=false;
     callBtn.classList.remove("calling");
     callBtn.innerText="🎤 TALK";
     callBtn.disabled=false;
@@ -306,16 +312,12 @@ function playRingtoneThenSpeak(){
 async function runSearch(text){
   results.innerHTML="<p>Gaariyan dhoondi ja rahi hain…</p>";
   const res=await fetch("https://meilibeauty.co.uk/search.php",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
+    method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({text})
   });
   const json=await res.json();
   lastResults=json.data||[];
-  if(!lastResults.length){
-    results.innerHTML="<p>Koi gaari nahi mili</p>";
-    return;
-  }
+  if(!lastResults.length){results.innerHTML="<p>Koi gaari nahi mili</p>";return;}
   results.innerHTML="";
   lastResults.forEach((c,i)=>{
     const img=c.images?.[0]||"";
@@ -333,7 +335,7 @@ async function runSearch(text){
 function openDetail(i){
   const c=lastResults[i];
   detailPage.style.display="block";
-  detailTitle.innerText=c.title||"Car Details";
+  detailTitle.innerText=c.title;
   detailPrice.innerText=`PKR ${c.price?.toLocaleString()||"Call"}`;
   gallery.innerHTML="";
   (c.images||[]).forEach(u=>gallery.innerHTML+=`<img src="${u}">`);
