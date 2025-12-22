@@ -311,7 +311,7 @@ function playRingtoneThenSpeak(){
 /* SEARCH */
 async function runSearch(text){
   results.innerHTML="<p>Gaariyan dhoondi ja rahi hain…</p>";
-  const res=await fetch("https://meilibeauty.co.uk/search.php",{
+  const res=await fetch("https://bolo-app-env.eba-gauj8f23.ap-south-1.elasticbeanstalk.com/search.php",{
     method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({text})
   });
