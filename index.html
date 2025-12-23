@@ -263,10 +263,31 @@ button {
 </div>
 
 <script>
+/**
+ * IMPORTANT:
+ * This MUST match your Elastic Beanstalk Node.js environment base URL.
+ * Your old code was calling search.php (PHP) which doesn't exist on Node.
+ */
+const BASE_URL = "https://bolo-app-env.eba-gauj8f23.ap-south-1.elasticbeanstalk.com";
+
 const femaleNames=["Reshma","Gul Bahar","Gul Noor","Dil Bahar","Kiran","Shaheen","Chaman","Khushnoor","Mahnoor","Julie","Rosemarie"];
 let currentVoiceName="Reshma",ringing=false,callConnected=false,lastResults=[];
 
-/* SPEECH */
+/* DOM */
+const query = document.getElementById("query");
+const status = document.getElementById("status");
+const results = document.getElementById("results");
+const searchBtn = document.getElementById("searchBtn");
+const callBtn = document.getElementById("callBtn");
+
+const detailPage = document.getElementById("detailPage");
+const backBtn = document.getElementById("backBtn");
+const detailTitle = document.getElementById("detailTitle");
+const detailPrice = document.getElementById("detailPrice");
+const gallery = document.getElementById("gallery");
+const specGrid = document.getElementById("specGrid");
+
+/* SPEECH (Browser) */
 let recognition=null;
 if("webkitSpeechRecognition"in window){
   recognition=new webkitSpeechRecognition();
@@ -277,29 +298,54 @@ if("webkitSpeechRecognition"in window){
     status.innerText=`${currentVoiceName}: Aap ne kaha – ${text}`;
     runSearch(text);
   };
+} else {
+  status.innerText = "Voice not supported in this browser (use Chrome).";
 }
 
-/* TTS */
+/**
+ * VOICE (Server TTS)
+ * This expects: POST /voice on your Node backend and returns audio (mp3/wav).
+ * If you don't have /voice backend, it will show an error but app still works.
+ */
 async function speakLady(text){
-  const res=await fetch("https://meilibeauty.co.uk/voice.php",{
-    method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({text})
-  });
-  const audio=new Audio(URL.createObjectURL(await res.blob()));
-  audio.onended=()=>{
-    callConnected=true;ringing=false;
+  try{
+    const res=await fetch(`${BASE_URL}/voice`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({text})
+    });
+
+    if(!res.ok){
+      throw new Error(`Voice API error: ${res.status}`);
+    }
+
+    const blob = await res.blob();
+    const audio=new Audio(URL.createObjectURL(blob));
+
+    audio.onended=()=>{
+      callConnected=true;ringing=false;
+      callBtn.classList.remove("calling");
+      callBtn.innerText="🎤 TALK";
+      callBtn.disabled=false;
+      recognition && recognition.start();
+    };
+    audio.play();
+  }catch(err){
     callBtn.classList.remove("calling");
     callBtn.innerText="🎤 TALK";
     callBtn.disabled=false;
-    recognition&&recognition.start();
-  };
-  audio.play();
+    status.innerText = `Voice error: ${err.message}`;
+    // Still allow speech recognition (client side)
+    callConnected=true;
+    recognition && recognition.start();
+  }
 }
 
 /* RING */
 function playRingtoneThenSpeak(){
   if(ringing)return;
   ringing=true;
+
   const ring=new Audio("ringtone.mp4");
   ring.onended=()=>{
     currentVoiceName=femaleNames[Math.floor(Math.random()*femaleNames.length)];
@@ -311,34 +357,53 @@ function playRingtoneThenSpeak(){
 /* SEARCH */
 async function runSearch(text){
   results.innerHTML="<p>Gaariyan dhoondi ja rahi hain…</p>";
-  const res=await fetch("https://bolo-app-env.eba-gauj8f23.ap-south-1.elasticbeanstalk.com/search.php",{
-    method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({text})
-  });
-  const json=await res.json();
-  lastResults=json.data||[];
-  if(!lastResults.length){results.innerHTML="<p>Koi gaari nahi mili</p>";return;}
-  results.innerHTML="";
-  lastResults.forEach((c,i)=>{
-    const img=c.images?.[0]||"";
-    results.innerHTML+=`
-      <div class="car" onclick="openDetail(${i})">
-        ${img?`<img src="${img}">`:""}
-        <h3>${c.title}</h3>
-        <div>${c.year} • ${c.location?.city||"-"}</div>
-        <strong>PKR ${c.price?.toLocaleString()||"Call"}</strong>
-      </div>`;
-  });
+
+  try{
+    const res=await fetch(`${BASE_URL}/search`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({text})
+    });
+
+    if(!res.ok){
+      throw new Error(`Search API error: ${res.status}`);
+    }
+
+    const json=await res.json();
+    lastResults=json.data||[];
+
+    if(!lastResults.length){
+      results.innerHTML="<p>Koi gaari nahi mili</p>";
+      return;
+    }
+
+    results.innerHTML="";
+    lastResults.forEach((c,i)=>{
+      const img=c.images?.[0]||"";
+      results.innerHTML+=`
+        <div class="car" onclick="openDetail(${i})">
+          ${img?`<img src="${img}">`:""}
+          <h3>${c.title || "Untitled"}</h3>
+          <div>${c.year || "-"} • ${(c.location && c.location.city) ? c.location.city : "-"}</div>
+          <strong>PKR ${c.price ? Number(c.price).toLocaleString() : "Call"}</strong>
+        </div>`;
+    });
+
+  }catch(err){
+    results.innerHTML = `<p><strong>Search failed:</strong> ${err.message}<br>Check your backend route <code>POST /search</code> is deployed.</p>`;
+  }
 }
 
 /* DETAIL */
 function openDetail(i){
   const c=lastResults[i];
   detailPage.style.display="block";
-  detailTitle.innerText=c.title;
-  detailPrice.innerText=`PKR ${c.price?.toLocaleString()||"Call"}`;
+  detailTitle.innerText=c.title || "Car Detail";
+  detailPrice.innerText=`PKR ${c.price ? Number(c.price).toLocaleString() : "Call"}`;
+
   gallery.innerHTML="";
   (c.images||[]).forEach(u=>gallery.innerHTML+=`<img src="${u}">`);
+
   specGrid.innerHTML=`
     <div class="spec-box">Seats<strong>${c.seatingCapacity||"-"}</strong></div>
     <div class="spec-box">Mileage<strong>${c.mileage||"-"} km</strong></div>
@@ -359,10 +424,19 @@ callBtn.onclick=()=>{
     playRingtoneThenSpeak();
   }else{
     status.innerText=`${currentVoiceName}: Sun rahi hoon…`;
-    recognition&&recognition.start();
+    recognition && recognition.start();
   }
 };
-searchBtn.onclick=()=>query.value.trim()&&runSearch(query.value.trim());
+
+searchBtn.onclick=()=>query.value.trim() && runSearch(query.value.trim());
+
+/* ENTER key support */
+query.addEventListener("keydown",(e)=>{
+  if(e.key==="Enter"){
+    const t=query.value.trim();
+    if(t) runSearch(t);
+  }
+});
 </script>
 
 </body>
