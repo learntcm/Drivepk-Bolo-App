@@ -1,216 +1,224 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DrivePK Bolo App</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DrivePK Bolo</title>
 
 <style>
-body {
+:root{
+  --bg:#0b0c0f;
+  --card:#12141a;
+  --stroke:#1f2330;
+  --muted:#9aa3ad;
+  --red:#ef1d1d;
+}
+
+body{
   margin:0;
-  font-family:Arial,sans-serif;
-  background:#f2f2f2;
-}
-
-/* HEADER */
-header {
-  background:#000;
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
   color:#fff;
-  padding:12px;
-  display:flex;
-  gap:12px;
-  align-items:center;
 }
-.logo {
-  background:#E81F25;
-  width:44px;
-  height:44px;
-  border-radius:12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:18px;
-  font-weight:bold;
-}
-.main { padding:12px; }
 
-/* HERO (SMALLER) */
-.hero {
+header{
   background:#000;
-  border-radius:20px;
-  height:26vh;
-  min-height:170px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  color:#fff;
-  margin-bottom:12px;
-}
-.hero h1 { font-size:36px; margin:0; }
-.hero h2 { font-size:16px; color:#E81F25; margin-top:6px; }
-
-/* INPUTS */
-input,button {
-  width:100%;
-  height:52px;
-  border-radius:14px;
-  font-size:16px;
-}
-input {
-  padding:0 16px;
-  border:1px solid #ccc;
-  margin-bottom:8px;
-}
-button {
-  border:none;
-  background:#000;
-  color:#fff;
-  cursor:pointer;
-}
-.call {
-  background:#E81F25;
-  font-size:18px;
-  margin-top:6px;
-}
-.call.calling {
-  background:#999;
-  color:#000;
-  transform:scale(0.97);
-}
-
-#status {
-  margin-top:8px;
-  font-weight:bold;
-  color:#E81F25;
-}
-#results { margin-top:12px; }
-
-/* CAR LIST */
-.car {
-  background:#fff;
-  border-radius:14px;
-  padding:10px;
-  margin-bottom:12px;
-  cursor:pointer;
-}
-.car img {
-  width:100%;
-  height:160px;
-  object-fit:cover;
-  border-radius:10px;
-}
-
-/* ===== DETAIL PAGE ===== */
-#detailPage {
-  position:fixed;
-  inset:0;
-  background:#fff;
-  z-index:999;
-  display:none;
-  overflow-y:auto;
-}
-
-/* DETAIL HEADER */
-.detail-header {
-  background:#000;
-  color:#fff;
-  padding:10px;
+  padding:14px;
   display:flex;
   align-items:center;
   gap:10px;
-  position:sticky;
-  top:0;
 }
-.detail-header button {
-  background:#E81F25;
+
+.logo{
+  width:36px;height:36px;
   border-radius:10px;
-  padding:6px 10px;
-  color:#fff;
-}
-
-/* GALLERY */
-.gallery-wrapper {
-  position:relative;
-  background:#000;
-}
-.gallery {
+  background:var(--red);
   display:flex;
-  overflow-x:auto;
-  scroll-snap-type:x mandatory;
-}
-.gallery img {
-  width:100%;
-  height:220px;
-  object-fit:cover;
-  scroll-snap-align:start;
-  flex-shrink:0;
-  border-right:6px solid #000;
+  align-items:center;
+  justify-content:center;
+  font-weight:800;
 }
 
-/* SWIPE INDICATOR */
-.swipe-indicator {
-  position:absolute;
-  bottom:12px;
-  left:50%;
-  transform:translateX(-50%);
-  background:rgba(0,0,0,0.6);
+.wrap{
+  max-width:1100px;
+  margin:auto;
+  padding:14px;
+}
+
+/* ---------- SEARCH ---------- */
+.searchBox{
+  background:#000;
+  border-radius:18px;
+  padding:26px 14px;
+  text-align:center;
+}
+
+.searchBox h1{margin:0;font-size:38px;}
+.searchBox p{margin:6px 0 0;color:var(--red);font-weight:700;}
+
+.panel{
+  background:var(--card);
+  border:1px solid var(--stroke);
+  border-radius:18px;
+  padding:14px;
+  margin-top:14px;
+}
+
+.row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+input{
+  flex:1;
+  padding:12px;
+  border-radius:12px;
+  border:1px solid var(--stroke);
+  background:#0f1116;
   color:#fff;
-  padding:6px 14px;
-  border-radius:20px;
-  font-size:13px;
-  pointer-events:none;
 }
 
-/* DETAIL BODY */
-.detail-body { padding:12px; }
-.price {
-  font-size:22px;
-  font-weight:bold;
-  margin-bottom:10px;
+button{
+  padding:12px 14px;
+  border-radius:12px;
+  border:none;
+  cursor:pointer;
+  font-weight:700;
 }
 
-/* SPEC GRID */
-.spec-grid {
+.btn-red{background:var(--red);color:#fff;}
+.btn-dark{background:#0f1116;color:#fff;border:1px solid var(--stroke);}
+
+.status{margin-top:10px;font-size:13px;color:#ddd;}
+
+.grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:8px;
-  margin-bottom:14px;
+  gap:12px;
+  margin-top:14px;
 }
-.spec-box {
-  background:#111;
-  color:#fff;
-  border-radius:12px;
-  padding:10px 6px;
-  text-align:center;
-  font-size:13px;
-}
-.spec-box strong {
-  display:block;
-  font-size:15px;
-  margin-top:4px;
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.grid{grid-template-columns:1fr;}}
+
+.card{
+  background:#0f1116;
+  border:1px solid var(--stroke);
+  border-radius:16px;
+  overflow:hidden;
+  cursor:pointer;
 }
 
-/* CONTACT */
-.contact-box {
-  background:#000;
+.card img{
+  width:100%;
+  height:160px;
+  object-fit:cover;
+}
+
+.card .body{padding:12px;}
+.card .title{font-weight:900;}
+.card .meta{font-size:13px;color:var(--muted);margin-top:6px;}
+
+/* ---------- DETAIL ---------- */
+.detail{display:none;}
+.detail.show{display:block;}
+
+.back{
+  margin-bottom:12px;
+  display:inline-block;
+  padding:10px 12px;
+  border-radius:12px;
+  background:#0f1116;
+  border:1px solid var(--stroke);
+  cursor:pointer;
+  font-weight:700;
+}
+
+.gallery{
+  position:relative;
+  border-radius:18px;
+  overflow:hidden;
+  border:1px solid var(--stroke);
+}
+
+.gallery img{
+  width:100%;
+  height:260px;
+  object-fit:cover;
+}
+
+.gbtn{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  background:rgba(0,0,0,.6);
   color:#fff;
+  border:none;
+  width:40px;height:40px;
+  border-radius:50%;
+  cursor:pointer;
+}
+.gprev{left:10px;}
+.gnext{right:10px;}
+
+.section{
+  background:#0f1116;
+  border:1px solid var(--stroke);
+  border-radius:18px;
+  padding:14px;
+  margin-top:14px;
+}
+
+.section h3{margin:0 0 10px;}
+
+.overview{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+@media(max-width:700px){.overview{grid-template-columns:repeat(2,1fr);}}
+
+.ov{
+  background:#121622;
+  border:1px solid var(--stroke);
   border-radius:14px;
   padding:12px;
+}
+.ov .k{font-size:12px;color:var(--muted);}
+.ov .v{margin-top:6px;font-weight:800;}
+
+.features{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+@media(max-width:560px){.features{grid-template-columns:1fr;}}
+
+.feature{
+  background:#121622;
+  border:1px solid var(--stroke);
+  border-radius:14px;
+  padding:10px;
+}
+
+.priceBar{
+  position:sticky;
+  bottom:0;
+  background:#0b0c0f;
+  padding:10px 0;
+}
+
+.priceWrap{
   display:flex;
   justify-content:space-between;
   align-items:center;
+  background:#0f1116;
+  border:1px solid var(--stroke);
+  border-radius:18px;
+  padding:12px 14px;
 }
-.lock {
-  opacity:0.6;
-  font-size:14px;
-}
-.contact-btn {
-  background:#E81F25;
-  padding:10px 14px;
-  border-radius:12px;
-  font-weight:bold;
-}
+
+.price{font-size:22px;font-weight:900;}
 </style>
 </head>
 
@@ -219,224 +227,139 @@ button {
 <header>
   <div class="logo">D</div>
   <div>
-    <strong>DrivePK</strong><br>
-    <small>Bolo aur gaari dhoondo</small>
+    <div style="font-weight:800;">DrivePK</div>
+    <div style="font-size:12px;color:#bbb;">Bolo aur gaari dhoondo</div>
   </div>
 </header>
 
-<div class="main">
-  <div class="hero">
+<div class="wrap">
+
+<!-- SEARCH VIEW -->
+<div id="searchView">
+  <div class="searchBox">
     <h1>DrivePK</h1>
-    <h2>Roman Urdu Voice Search</h2>
+    <p>Roman Urdu Voice Search</p>
   </div>
 
-  <input id="query" placeholder="Jaise: Toyota Vitz 2017 Lahore">
-  <button id="searchBtn">Search</button>
-  <button class="call" id="callBtn">📞 CALL</button>
+  <div class="panel">
+    <div class="row">
+      <input id="q" placeholder="Jaise: Toyota Hiace 2011 Rawalpindi">
+      <button class="btn-dark" onclick="search()">Search</button>
+    </div>
 
-  <div id="status"></div>
-  <div id="results"></div>
+    <div class="status" id="status"></div>
+    <div class="grid" id="results"></div>
+  </div>
 </div>
 
-<!-- DETAIL PAGE -->
-<div id="detailPage">
-  <div class="detail-header">
-    <button id="backBtn">← Back</button>
-    <strong id="detailTitle"></strong>
+<!-- DETAIL VIEW -->
+<div id="detailView" class="detail">
+  <div class="back" onclick="back()">← Back</div>
+
+  <h2 id="dTitle"></h2>
+  <div style="color:var(--muted);" id="dLoc"></div>
+
+  <div class="gallery">
+    <img id="gImg">
+    <button class="gbtn gprev" onclick="prev()">‹</button>
+    <button class="gbtn gnext" onclick="next()">›</button>
   </div>
 
-  <div class="gallery-wrapper">
-    <div class="gallery" id="gallery"></div>
-    <div class="swipe-indicator">Swipe ⇠ ⇢</div>
+  <div class="section">
+    <h3>Overview</h3>
+    <div class="overview" id="overview"></div>
   </div>
 
-  <div class="detail-body">
-    <div class="price" id="detailPrice"></div>
+  <div class="section">
+    <h3>Features</h3>
+    <div class="features" id="features"></div>
+  </div>
 
-    <div class="spec-grid" id="specGrid"></div>
+  <div class="section">
+    <h3>Description</h3>
+    <ul id="desc"></ul>
+  </div>
 
-    <div class="contact-box">
-      <div class="lock">🔒 Login to view phone number</div>
-      <div class="contact-btn">Contact Seller</div>
+  <div class="priceBar">
+    <div class="priceWrap">
+      <div>
+        <div style="font-size:12px;color:var(--muted);">Price</div>
+        <div class="price" id="price"></div>
+      </div>
+      <button class="btn-red" id="callBtn">Contact Seller</button>
     </div>
   </div>
 </div>
 
+</div>
+
 <script>
-/**
- * IMPORTANT:
- * This MUST match your Elastic Beanstalk Node.js environment base URL.
- * Your old code was calling search.php (PHP) which doesn't exist on Node.
- */
-const BASE_URL = "https://bolo-app-env.eba-gauj8f23.ap-south-1.elasticbeanstalk.com";
+let cars=[],gallery=[],gi=0,current=null;
 
-const femaleNames=["Reshma","Gul Bahar","Gul Noor","Dil Bahar","Kiran","Shaheen","Chaman","Khushnoor","Mahnoor","Julie","Rosemarie"];
-let currentVoiceName="Reshma",ringing=false,callConnected=false,lastResults=[];
-
-/* DOM */
-const query = document.getElementById("query");
-const status = document.getElementById("status");
-const results = document.getElementById("results");
-const searchBtn = document.getElementById("searchBtn");
-const callBtn = document.getElementById("callBtn");
-
-const detailPage = document.getElementById("detailPage");
-const backBtn = document.getElementById("backBtn");
-const detailTitle = document.getElementById("detailTitle");
-const detailPrice = document.getElementById("detailPrice");
-const gallery = document.getElementById("gallery");
-const specGrid = document.getElementById("specGrid");
-
-/* SPEECH (Browser) */
-let recognition=null;
-if("webkitSpeechRecognition"in window){
-  recognition=new webkitSpeechRecognition();
-  recognition.lang="en-GB";
-  recognition.onresult=e=>{
-    const text=e.results[0][0].transcript;
-    query.value=text;
-    status.innerText=`${currentVoiceName}: Aap ne kaha – ${text}`;
-    runSearch(text);
-  };
-} else {
-  status.innerText = "Voice not supported in this browser (use Chrome).";
-}
-
-/**
- * VOICE (Server TTS)
- * This expects: POST /voice on your Node backend and returns audio (mp3/wav).
- * If you don't have /voice backend, it will show an error but app still works.
- */
-async function speakLady(text){
-  try{
-    const res=await fetch(`${BASE_URL}/voice`,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({text})
+function search(){
+  let q=document.getElementById("q").value;
+  document.getElementById("status").innerText="Searching...";
+  fetch("/search",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q})})
+  .then(r=>r.json())
+  .then(j=>{
+    cars=j.cars||[];
+    let h="";
+    cars.forEach((c,i)=>{
+      let img=(c.images&&c.images[0])||c.image||"";
+      h+=`<div class="card" onclick="openCar(${i})">
+            ${img?`<img src="${img}">`:""}
+            <div class="body">
+              <div class="title">${c.title||"Car"}</div>
+              <div class="meta">${c.city||""} • ${c.price||""}</div>
+            </div>
+          </div>`;
     });
-
-    if(!res.ok){
-      throw new Error(`Voice API error: ${res.status}`);
-    }
-
-    const blob = await res.blob();
-    const audio=new Audio(URL.createObjectURL(blob));
-
-    audio.onended=()=>{
-      callConnected=true;ringing=false;
-      callBtn.classList.remove("calling");
-      callBtn.innerText="🎤 TALK";
-      callBtn.disabled=false;
-      recognition && recognition.start();
-    };
-    audio.play();
-  }catch(err){
-    callBtn.classList.remove("calling");
-    callBtn.innerText="🎤 TALK";
-    callBtn.disabled=false;
-    status.innerText = `Voice error: ${err.message}`;
-    // Still allow speech recognition (client side)
-    callConnected=true;
-    recognition && recognition.start();
-  }
+    document.getElementById("results").innerHTML=h;
+    document.getElementById("status").innerText="";
+  });
 }
 
-/* RING */
-function playRingtoneThenSpeak(){
-  if(ringing)return;
-  ringing=true;
+function openCar(i){
+  current=cars[i];
+  document.getElementById("searchView").style.display="none";
+  document.getElementById("detailView").classList.add("show");
 
-  const ring=new Audio("ringtone.mp4");
-  ring.onended=()=>{
-    currentVoiceName=femaleNames[Math.floor(Math.random()*femaleNames.length)];
-    speakLady(`Assalam o Alaikum, main ${currentVoiceName} hoon. Aap ki kya madad kar sakti hoon?`);
-  };
-  ring.play();
+  document.getElementById("dTitle").innerText=current.title;
+  document.getElementById("dLoc").innerText=current.city;
+  document.getElementById("price").innerText=current.price;
+
+  gallery=current.images||[];
+  gi=0;
+  showImg();
+
+  let o=[
+    ["Mileage",current.mileage],
+    ["Registration",current.registration],
+    ["Owners",current.owners],
+    ["Fuel",current.fuel],
+    ["Body",current.body_type],
+    ["Engine",current.engine],
+    ["Transmission",current.transmission],
+    ["Color",current.color],
+    ["Seats",current.seats],
+    ["Assembly",current.assembly]
+  ];
+  document.getElementById("overview").innerHTML=o.map(x=>`<div class="ov"><div class="k">${x[0]}</div><div class="v">${x[1]||"-"}</div></div>`).join("");
+
+  document.getElementById("features").innerHTML=(current.features||[]).map(f=>`<div class="feature">${f}</div>`).join("");
+  document.getElementById("desc").innerHTML=(current.description||[]).map(d=>`<li>${d}</li>`).join("");
+
+  document.getElementById("callBtn").onclick=()=>alert("Contact via app");
 }
 
-/* SEARCH */
-async function runSearch(text){
-  results.innerHTML="<p>Gaariyan dhoondi ja rahi hain…</p>";
-
-  try{
-    const res=await fetch(`${BASE_URL}/search`,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({text})
-    });
-
-    if(!res.ok){
-      throw new Error(`Search API error: ${res.status}`);
-    }
-
-    const json=await res.json();
-    lastResults=json.data||[];
-
-    if(!lastResults.length){
-      results.innerHTML="<p>Koi gaari nahi mili</p>";
-      return;
-    }
-
-    results.innerHTML="";
-    lastResults.forEach((c,i)=>{
-      const img=c.images?.[0]||"";
-      results.innerHTML+=`
-        <div class="car" onclick="openDetail(${i})">
-          ${img?`<img src="${img}">`:""}
-          <h3>${c.title || "Untitled"}</h3>
-          <div>${c.year || "-"} • ${(c.location && c.location.city) ? c.location.city : "-"}</div>
-          <strong>PKR ${c.price ? Number(c.price).toLocaleString() : "Call"}</strong>
-        </div>`;
-    });
-
-  }catch(err){
-    results.innerHTML = `<p><strong>Search failed:</strong> ${err.message}<br>Check your backend route <code>POST /search</code> is deployed.</p>`;
-  }
+function back(){
+  document.getElementById("detailView").classList.remove("show");
+  document.getElementById("searchView").style.display="block";
 }
 
-/* DETAIL */
-function openDetail(i){
-  const c=lastResults[i];
-  detailPage.style.display="block";
-  detailTitle.innerText=c.title || "Car Detail";
-  detailPrice.innerText=`PKR ${c.price ? Number(c.price).toLocaleString() : "Call"}`;
-
-  gallery.innerHTML="";
-  (c.images||[]).forEach(u=>gallery.innerHTML+=`<img src="${u}">`);
-
-  specGrid.innerHTML=`
-    <div class="spec-box">Seats<strong>${c.seatingCapacity||"-"}</strong></div>
-    <div class="spec-box">Mileage<strong>${c.mileage||"-"} km</strong></div>
-    <div class="spec-box">Transmission<strong>${c.transmission||"-"}</strong></div>
-    <div class="spec-box">Fuel<strong>${c.fuelType||"-"}</strong></div>
-    <div class="spec-box">Year<strong>${c.year||"-"}</strong></div>
-    <div class="spec-box">Condition<strong>${c.condition||"-"}</strong></div>
-  `;
-}
-backBtn.onclick=()=>detailPage.style.display="none";
-
-/* BUTTONS */
-callBtn.onclick=()=>{
-  if(!callConnected){
-    callBtn.classList.add("calling");
-    callBtn.innerText="📞 CALLING…";
-    callBtn.disabled=true;
-    playRingtoneThenSpeak();
-  }else{
-    status.innerText=`${currentVoiceName}: Sun rahi hoon…`;
-    recognition && recognition.start();
-  }
-};
-
-searchBtn.onclick=()=>query.value.trim() && runSearch(query.value.trim());
-
-/* ENTER key support */
-query.addEventListener("keydown",(e)=>{
-  if(e.key==="Enter"){
-    const t=query.value.trim();
-    if(t) runSearch(t);
-  }
-});
+function showImg(){document.getElementById("gImg").src=gallery[gi]||"";}
+function prev(){gi=(gi-1+gallery.length)%gallery.length;showImg();}
+function next(){gi=(gi+1)%gallery.length;showImg();}
 </script>
 
 </body>
