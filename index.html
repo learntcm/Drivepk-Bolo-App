@@ -1,365 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>DrivePK Bolo</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DrivePK Login Demo</title>
 
 <style>
-:root{
-  --bg:#0b0c0f;
-  --card:#12141a;
-  --stroke:#1f2330;
-  --muted:#9aa3ad;
-  --red:#ef1d1d;
-}
-
-body{
+body {
   margin:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:var(--bg);
-  color:#fff;
+  font-family:Arial,sans-serif;
+  background:#f2f2f2;
 }
 
-header{
-  background:#000;
-  padding:14px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-
-.logo{
-  width:36px;height:36px;
-  border-radius:10px;
-  background:var(--red);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:800;
-}
-
-.wrap{
-  max-width:1100px;
-  margin:auto;
-  padding:14px;
-}
-
-/* ---------- SEARCH ---------- */
-.searchBox{
-  background:#000;
-  border-radius:18px;
-  padding:26px 14px;
-  text-align:center;
-}
-
-.searchBox h1{margin:0;font-size:38px;}
-.searchBox p{margin:6px 0 0;color:var(--red);font-weight:700;}
-
-.panel{
-  background:var(--card);
-  border:1px solid var(--stroke);
-  border-radius:18px;
-  padding:14px;
-  margin-top:14px;
-}
-
-.row{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-}
-
-input{
-  flex:1;
-  padding:12px;
-  border-radius:12px;
-  border:1px solid var(--stroke);
-  background:#0f1116;
-  color:#fff;
-}
-
-button{
-  padding:12px 14px;
-  border-radius:12px;
-  border:none;
-  cursor:pointer;
-  font-weight:700;
-}
-
-.btn-red{background:var(--red);color:#fff;}
-.btn-dark{background:#0f1116;color:#fff;border:1px solid var(--stroke);}
-
-.status{margin-top:10px;font-size:13px;color:#ddd;}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:12px;
-  margin-top:14px;
-}
-@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr);}}
-@media(max-width:560px){.grid{grid-template-columns:1fr;}}
-
-.card{
-  background:#0f1116;
-  border:1px solid var(--stroke);
-  border-radius:16px;
-  overflow:hidden;
-  cursor:pointer;
-}
-
-.card img{
-  width:100%;
-  height:160px;
-  object-fit:cover;
-}
-
-.card .body{padding:12px;}
-.card .title{font-weight:900;}
-.card .meta{font-size:13px;color:var(--muted);margin-top:6px;}
-
-/* ---------- DETAIL ---------- */
-.detail{display:none;}
-.detail.show{display:block;}
-
-.back{
-  margin-bottom:12px;
-  display:inline-block;
-  padding:10px 12px;
-  border-radius:12px;
-  background:#0f1116;
-  border:1px solid var(--stroke);
-  cursor:pointer;
-  font-weight:700;
-}
-
-.gallery{
-  position:relative;
-  border-radius:18px;
-  overflow:hidden;
-  border:1px solid var(--stroke);
-}
-
-.gallery img{
-  width:100%;
-  height:260px;
-  object-fit:cover;
-}
-
-.gbtn{
-  position:absolute;
-  top:50%;
-  transform:translateY(-50%);
-  background:rgba(0,0,0,.6);
+/* BUTTON */
+.open-btn {
+  margin:40px;
+  padding:16px;
+  background:#E81F25;
   color:#fff;
   border:none;
-  width:40px;height:40px;
-  border-radius:50%;
-  cursor:pointer;
-}
-.gprev{left:10px;}
-.gnext{right:10px;}
-
-.section{
-  background:#0f1116;
-  border:1px solid var(--stroke);
-  border-radius:18px;
-  padding:14px;
-  margin-top:14px;
-}
-
-.section h3{margin:0 0 10px;}
-
-.overview{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-}
-@media(max-width:700px){.overview{grid-template-columns:repeat(2,1fr);}}
-
-.ov{
-  background:#121622;
-  border:1px solid var(--stroke);
   border-radius:14px;
-  padding:12px;
-}
-.ov .k{font-size:12px;color:var(--muted);}
-.ov .v{margin-top:6px;font-weight:800;}
-
-.features{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:10px;
-}
-@media(max-width:560px){.features{grid-template-columns:1fr;}}
-
-.feature{
-  background:#121622;
-  border:1px solid var(--stroke);
-  border-radius:14px;
-  padding:10px;
+  font-size:18px;
+  width:calc(100% - 80px);
 }
 
-.priceBar{
-  position:sticky;
+/* LOGIN SHEET */
+#loginSheet {
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:-100%;
+  background:#fff;
+  border-radius:20px 20px 0 0;
+  padding:16px;
+  z-index:999;
+  transition:bottom .3s ease;
+  box-shadow:0 -4px 20px rgba(0,0,0,.2);
+}
+#loginSheet.show {
   bottom:0;
-  background:#0b0c0f;
-  padding:10px 0;
 }
 
-.priceWrap{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  background:#0f1116;
-  border:1px solid var(--stroke);
-  border-radius:18px;
-  padding:12px 14px;
+.login-title {
+  font-size:20px;
+  font-weight:bold;
+  margin-bottom:10px;
+}
+.login-info {
+  font-size:14px;
+  margin-bottom:12px;
+  color:#555;
+}
+.login-close {
+  position:absolute;
+  right:16px;
+  top:16px;
+  font-size:18px;
+  cursor:pointer;
 }
 
-.price{font-size:22px;font-weight:900;}
+input {
+  width:100%;
+  height:52px;
+  border-radius:14px;
+  border:1px solid #ccc;
+  padding:0 16px;
+  font-size:16px;
+  margin-bottom:10px;
+}
+
+button {
+  width:100%;
+  height:52px;
+  border-radius:14px;
+  border:none;
+  background:#000;
+  color:#fff;
+  font-size:16px;
+}
+
+#otpStatus {
+  margin-top:10px;
+  font-weight:bold;
+  color:#E81F25;
+}
 </style>
 </head>
 
 <body>
 
-<header>
-  <div class="logo">D</div>
-  <div>
-    <div style="font-weight:800;">DrivePK</div>
-    <div style="font-size:12px;color:#bbb;">Bolo aur gaari dhoondo</div>
-  </div>
-</header>
+<button class="open-btn" onclick="openLogin()">
+  Contact Seller (Login Required)
+</button>
 
-<div class="wrap">
+<!-- LOGIN SHEET -->
+<div id="loginSheet">
+  <div class="login-close" onclick="closeLogin()">✕</div>
 
-<!-- SEARCH VIEW -->
-<div id="searchView">
-  <div class="searchBox">
-    <h1>DrivePK</h1>
-    <p>Roman Urdu Voice Search</p>
+  <div class="login-title">Login to DrivePK</div>
+  <div class="login-info">
+    Enter your phone number. We’ll send you an OTP on WhatsApp or SMS.
   </div>
 
-  <div class="panel">
-    <div class="row">
-      <input id="q" placeholder="Jaise: Toyota Hiace 2011 Rawalpindi">
-      <button class="btn-dark" onclick="search()">Search</button>
-    </div>
+  <input id="phoneInput" placeholder="03XXXXXXXXX">
+  <button onclick="sendOTP()">Send OTP</button>
 
-    <div class="status" id="status"></div>
-    <div class="grid" id="results"></div>
-  </div>
-</div>
-
-<!-- DETAIL VIEW -->
-<div id="detailView" class="detail">
-  <div class="back" onclick="back()">← Back</div>
-
-  <h2 id="dTitle"></h2>
-  <div style="color:var(--muted);" id="dLoc"></div>
-
-  <div class="gallery">
-    <img id="gImg">
-    <button class="gbtn gprev" onclick="prev()">‹</button>
-    <button class="gbtn gnext" onclick="next()">›</button>
-  </div>
-
-  <div class="section">
-    <h3>Overview</h3>
-    <div class="overview" id="overview"></div>
-  </div>
-
-  <div class="section">
-    <h3>Features</h3>
-    <div class="features" id="features"></div>
-  </div>
-
-  <div class="section">
-    <h3>Description</h3>
-    <ul id="desc"></ul>
-  </div>
-
-  <div class="priceBar">
-    <div class="priceWrap">
-      <div>
-        <div style="font-size:12px;color:var(--muted);">Price</div>
-        <div class="price" id="price"></div>
-      </div>
-      <button class="btn-red" id="callBtn">Contact Seller</button>
-    </div>
-  </div>
-</div>
-
+  <div id="otpStatus"></div>
 </div>
 
 <script>
-let cars=[],gallery=[],gi=0,current=null;
-
-function search(){
-  let q=document.getElementById("q").value;
-  document.getElementById("status").innerText="Searching...";
-  fetch("/search",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({query:q})})
-  .then(r=>r.json())
-  .then(j=>{
-    cars=j.cars||[];
-    let h="";
-    cars.forEach((c,i)=>{
-      let img=(c.images&&c.images[0])||c.image||"";
-      h+=`<div class="card" onclick="openCar(${i})">
-            ${img?`<img src="${img}">`:""}
-            <div class="body">
-              <div class="title">${c.title||"Car"}</div>
-              <div class="meta">${c.city||""} • ${c.price||""}</div>
-            </div>
-          </div>`;
-    });
-    document.getElementById("results").innerHTML=h;
-    document.getElementById("status").innerText="";
-  });
+function openLogin() {
+  document.getElementById("loginSheet").classList.add("show");
 }
 
-function openCar(i){
-  current=cars[i];
-  document.getElementById("searchView").style.display="none";
-  document.getElementById("detailView").classList.add("show");
-
-  document.getElementById("dTitle").innerText=current.title;
-  document.getElementById("dLoc").innerText=current.city;
-  document.getElementById("price").innerText=current.price;
-
-  gallery=current.images||[];
-  gi=0;
-  showImg();
-
-  let o=[
-    ["Mileage",current.mileage],
-    ["Registration",current.registration],
-    ["Owners",current.owners],
-    ["Fuel",current.fuel],
-    ["Body",current.body_type],
-    ["Engine",current.engine],
-    ["Transmission",current.transmission],
-    ["Color",current.color],
-    ["Seats",current.seats],
-    ["Assembly",current.assembly]
-  ];
-  document.getElementById("overview").innerHTML=o.map(x=>`<div class="ov"><div class="k">${x[0]}</div><div class="v">${x[1]||"-"}</div></div>`).join("");
-
-  document.getElementById("features").innerHTML=(current.features||[]).map(f=>`<div class="feature">${f}</div>`).join("");
-  document.getElementById("desc").innerHTML=(current.description||[]).map(d=>`<li>${d}</li>`).join("");
-
-  document.getElementById("callBtn").onclick=()=>alert("Contact via app");
+function closeLogin() {
+  document.getElementById("loginSheet").classList.remove("show");
 }
 
-function back(){
-  document.getElementById("detailView").classList.remove("show");
-  document.getElementById("searchView").style.display="block";
-}
+function sendOTP() {
+  const phone = document.getElementById("phoneInput").value.trim();
+  if (!phone) {
+    document.getElementById("otpStatus").innerText =
+      "Please enter phone number";
+    return;
+  }
 
-function showImg(){document.getElementById("gImg").src=gallery[gi]||"";}
-function prev(){gi=(gi-1+gallery.length)%gallery.length;showImg();}
-function next(){gi=(gi+1)%gallery.length;showImg();}
+  // DEMO ONLY
+  document.getElementById("otpStatus").innerText =
+    "OTP sent (demo mode)";
+}
 </script>
 
 </body>
