@@ -14,7 +14,7 @@
   .hero h1 { font-size:30px; margin:0; }
   .hero h2 { font-size:14px; color:#E81F25; margin-top:4px; }
 
-  input, button { width:100%; height:46px; border-radius:12px; font-size:15px; box-sizing:border-box; }
+  input,button { width:100%; height:46px; border-radius:12px; font-size:15px; box-sizing:border-box; }
   input { padding:0 14px; border:1px solid #ccc; margin-bottom:6px; }
   button { border:none; background:#000; color:#fff; cursor:pointer; }
 
@@ -72,7 +72,12 @@
 </div>
 
 <script>
-/* Single-file BOLO app (clean ASCII) */
+/* Fixes in this version:
+  1) Dr bhai -> Dr sahib (also if saved name is "Doctor ...")
+  2) Lady line: "connect kar rahi hoon" (female)
+  3) After boss request: phone rings again, then Umar answers
+  4) Umar speaks in MAN voice (onyx) by forcing voice pack on BOTH speak() calls
+*/
 
 const VOICE_API  = "https://meilibeauty.co.uk/voice.php";
 const SEARCH_API = "https://meilibeauty.co.uk/search.php";
@@ -88,6 +93,8 @@ const VOICE_BY_LADY = {
   "Dil Bahar":{ voice:"nova",   speed:0.98 },
   "Shaheen":  { voice:"sage",   speed:0.95 }
 };
+
+// Boss voice pack (male)
 const BOSS_UMAR = { voice:"onyx", speed:0.95 };
 
 const RESULT_LINES = [
@@ -106,7 +113,8 @@ const NO_RESULT_LINES = [
 ];
 
 const SILENCE_MS = 5000;
-const END_WAIT_MS = 700;
+const END_WAIT_MS = 900;
+const MIN_HOLD_MS = 400;
 
 let callConnected = false;
 let recognition = null;
@@ -117,7 +125,10 @@ let micReady = false;
 
 let currentAudio = null;
 let speakSeq = 0;
+
 let holding = false;
+let holdStartTs = 0;
+let micFailCount = 0;
 
 /* storage */
 function getProfile(){ return JSON.parse(localStorage.getItem("boloProfile") || "{}"); }
@@ -143,10 +154,17 @@ function normalize(t){
   return (t||"").toLowerCase().replace(/[^\w\s]/g," ").replace(/\s+/g," ").trim();
 }
 
+// ✅ Dr detection improved (dr / doctor anywhere at start)
+function isDoctorName(nm){
+  const s = (nm||"").toLowerCase().trim();
+  if(!s) return false;
+  return s.startsWith("dr") || s.startsWith("doctor") || s.includes(" dr ") || s.includes("doctor ");
+}
+
 function respectfulName(profile){
   if(!profile || !profile.name) return "bhai";
   const nm = (profile.name || "").trim();
-  if(nm.toLowerCase().startsWith("dr")) return "Dr sahib";
+  if(isDoctorName(nm)) return "Dr sahib";
   return nm.split(" ")[0] + " bhai";
 }
 
@@ -250,8 +268,8 @@ async function ring(){
 if("webkitSpeechRecognition" in window){
   recognition = new webkitSpeechRecognition();
   recognition.lang = "en-IN";
-  recognition.interimResults = false;
-  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.continuous = true;
 }
 
 /* hold-to-talk */
@@ -259,6 +277,7 @@ async function startListening(){
   if(!callConnected) return;
   if(holding) return;
   holding = true;
+  holdStartTs = Date.now();
 
   stopAllVoiceEngines();
   hideSupport();
@@ -294,8 +313,23 @@ async function startListening(){
   }, SILENCE_MS);
 
   recognition.onresult = function(e){
-    transcript = (e && e.results && e.results[0] && e.results[0][0] && e.results[0][0].transcript) ? e.results[0][0].transcript : "";
+    try{
+      let last = "";
+      for(let i=0;i<e.results.length;i++){
+        const r = e.results[i];
+        if(r && r[0] && r[0].transcript){
+          last = r[0].transcript;
+        }
+      }
+      if(last) transcript = last;
+    }catch(err){}
   };
+
+  recognition.onerror = function(){
+    isRecognizing = false;
+    clearSilence();
+  };
+
   recognition.onend = function(){
     isRecognizing = false;
     clearSilence();
@@ -318,6 +352,11 @@ async function stopListening(){
 
   if(!recognition || !isRecognizing) return;
 
+  const heldMs = Date.now() - holdStartTs;
+  if(heldMs < MIN_HOLD_MS){
+    await new Promise(r=>setTimeout(r, MIN_HOLD_MS - heldMs));
+  }
+
   clearSilence();
   try{ recognition.stop(); }catch(e){}
 
@@ -325,9 +364,16 @@ async function stopListening(){
 
   const spoken = (transcript || "").trim();
   if(!spoken){
-    await speak("Awaaz clear nahi aayi. Dobara bolen ya type karein.");
+    micFailCount++;
+    if(micFailCount === 1){
+      await speak("Awaaz clear nahi aayi. Button ko press karke hold rakhein, phir bol kar release karein.");
+    } else {
+      await speak("Lagta hai mic record nahi kar raha. Aap type karke bhi search kar sakte hain.");
+    }
     return;
   }
+
+  micFailCount = 0;
   await handleSpoken(spoken);
 }
 
@@ -379,8 +425,10 @@ async function handleSpoken(text){
     hideSupport();
   }
 
+  // ✅ Boss flow: lady says (female grammar) + ring again + Umar answers in male voice
   if(wantsBoss(text)){
-    await speak(who + ", theek hai. Main aap ko Umar se connect kar raha hoon.", BOSS_UMAR);
+    await speak(who + ", theek hai. Main aap ko Umar se connect kar rahi hoon.");
+    await ring(); // ring again to feel real
     await speak(who + ", Assalam o Alaikum. Main Umar hoon. Aap ka masla kya hai?", BOSS_UMAR);
     return;
   }
@@ -393,7 +441,7 @@ async function handleSpoken(text){
 
     const newLady = p.lady;
     await speak(who + ", theek hai. Ab " + newLady + " baat karegi.");
-    await speak("Assalam o Alaikum " + who + ". Main " + newLady + " hoon. Kia main aap ka naam pooch sakti hoon?");
+    await speak("Assalam o Alaikum " + who + ". Main " + newLady + " hoon.");
     return;
   }
 
@@ -524,3 +572,4 @@ document.getElementById("searchBtn").addEventListener("click", async function(){
 </script>
 </body>
 </html>
+```0
