@@ -2,204 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>DrivePK Bolo App</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DrivePK BOLO</title>
 
 <style>
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:#f2f2f2;
-  font-size:14px;
-  overflow-x:hidden;
-}
+body { margin:0; font-family:Arial,sans-serif; background:#f2f2f2; }
+header { background:#000; color:#fff; padding:12px; display:flex; gap:12px; align-items:center; }
+.logo { background:#E81F25; width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:bold; }
+.main { padding:12px; }
 
-/* HEADER */
-header{
-  background:#000;
-  color:#fff;
-  padding:12px;
-  display:flex;
-  gap:12px;
-  align-items:center;
-}
-.logo{
-  background:#E81F25;
-  width:44px;
-  height:44px;
-  border-radius:12px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:18px;
-  font-weight:bold;
-}
-.main{padding:12px}
+.hero { background:#000; border-radius:20px; height:26vh; min-height:170px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; margin-bottom:12px; }
+.hero h1 { font-size:36px; margin:0; }
+.hero h2 { font-size:16px; color:#E81F25; margin-top:6px; }
 
-/* HERO – RESTORED SIZE */
-.hero{
-  background:#000;
-  border-radius:22px;
-  height:30vh;
-  min-height:190px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  color:#fff;
-  margin-bottom:14px;
-}
-.hero h1{
-  font-size:36px;
-  margin:0;
-}
-.hero h2{
-  font-size:16px;
-  color:#E81F25;
-  margin-top:8px;
-}
+input,button { width:100%; height:52px; border-radius:14px; font-size:16px; }
+input { padding:0 16px; border:1px solid #ccc; margin-bottom:8px; }
+button { border:none; background:#000; color:#fff; cursor:pointer; }
+.call { background:#E81F25; font-size:18px; margin-top:6px; }
+.call.calling { background:#999; color:#000; }
 
-/* INPUTS */
-input,button{
-  width:100%;
-  height:52px;
-  border-radius:14px;
-  font-size:16px;
-}
-input{
-  padding:0 16px;
-  border:1px solid #ccc;
-  margin-bottom:8px;
-}
-button{
-  border:none;
-  background:#000;
-  color:#fff;
-  cursor:pointer;
-}
-.call{
-  background:#E81F25;
-  font-size:18px;
-  margin-top:8px;
-}
-.call.calling{
-  background:#999;
-  color:#000;
-  transform:scale(.97);
-}
+#status { margin-top:8px; font-weight:bold; color:#E81F25; }
+#results { margin-top:12px; }
 
-#status{
-  margin-top:8px;
-  font-weight:bold;
-  color:#E81F25;
-}
-#results{
-  margin-top:14px;
-}
-
-/* CAR LIST – BIGGER IMAGES */
-.car{
-  background:#fff;
-  border-radius:14px;
-  padding:10px;
-  margin-bottom:14px;
-  cursor:pointer;
-}
-.car img{
-  width:100%;
-  height:200px;
-  object-fit:cover;
-  border-radius:12px;
-}
-
-/* DETAIL PAGE */
-#detailPage{
-  position:fixed;
-  inset:0;
-  background:#fff;
-  z-index:999;
-  display:none;
-  overflow-y:auto;
-}
-
-/* DETAIL HEADER */
-.detail-header{
-  background:#000;
-  color:#fff;
-  padding:10px;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  position:sticky;
-  top:0;
-}
-.detail-header button{
-  background:#E81F25;
-  border-radius:10px;
-  padding:8px 12px;
-  color:#fff;
-  font-size:14px;
-}
-
-/* GALLERY – BIGGER */
-.gallery-wrapper{
-  background:#000;
-  position:relative;
-}
-.gallery{
-  display:flex;
-  overflow-x:auto;
-  scroll-snap-type:x mandatory;
-}
-.gallery img{
-  width:100%;
-  height:260px;
-  object-fit:cover;
-  scroll-snap-align:start;
-  flex-shrink:0;
-  border-right:6px solid #000;
-}
-.swipe-indicator{
-  position:absolute;
-  bottom:12px;
-  left:50%;
-  transform:translateX(-50%);
-  background:rgba(0,0,0,0.6);
-  color:#fff;
-  padding:6px 16px;
-  border-radius:20px;
-  font-size:13px;
-  pointer-events:none;
-}
-
-/* DETAIL BODY */
-.detail-body{
-  padding:14px;
-}
-.price{
-  font-size:24px;
-  font-weight:bold;
-  margin-bottom:12px;
-}
-.spec-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-}
-.spec-box{
-  background:#111;
-  color:#fff;
-  border-radius:12px;
-  padding:10px 6px;
-  text-align:center;
-  font-size:13px;
-}
-.spec-box strong{
-  display:block;
-  font-size:15px;
-  margin-top:4px;
-}
+.car { background:#fff; border-radius:14px; padding:10px; margin-bottom:12px; cursor:pointer; }
+.car img { width:100%; height:160px; object-fit:cover; border-radius:10px; }
 </style>
 </head>
 
@@ -214,153 +40,179 @@ button{
 </header>
 
 <div class="main">
-
   <div class="hero">
     <h1>DrivePK</h1>
-    <h2>Roman Urdu Voice Search</h2>
+    <h2>Pakistani Voice Assistant</h2>
   </div>
 
-  <input id="query" placeholder="Jaise: Toyota Vitz 2019 Lahore">
+  <input id="query" placeholder="Jaise: Toyota Corolla 2019 Lahore">
   <button id="searchBtn">Search</button>
   <button class="call" id="callBtn">📞 CALL</button>
 
   <div id="status"></div>
   <div id="results"></div>
-
-</div>
-
-<!-- DETAIL PAGE -->
-<div id="detailPage">
-  <div class="detail-header">
-    <button id="backBtn">← Back</button>
-    <strong id="detailTitle"></strong>
-  </div>
-
-  <div class="gallery-wrapper">
-    <div class="gallery" id="gallery"></div>
-    <div class="swipe-indicator">Swipe ⇠ ⇢</div>
-  </div>
-
-  <div class="detail-body">
-    <div class="price" id="detailPrice"></div>
-    <div class="spec-grid" id="specGrid"></div>
-  </div>
 </div>
 
 <script>
-/* ===== STATE ===== */
-const femaleNames=[
-  "Reshma","Gul Bahar","Gul Noor","Dil Bahar","Kiran",
-  "Shaheen","Chaman","Khushnoor","Mahnoor","Julie","Rosemarie"
-];
-let currentVoiceName="Reshma";
-let ringing=false;
-let callConnected=false;
-let lastResults=[];
+/* =====================================================
+   CONFIG
+===================================================== */
+const VOICE_API = "https://meilibeauty.co.uk/voice.php";
+const SEARCH_API = "https://meilibeauty.co.uk/search.php";
 
-/* SPEECH */
-let recognition=null;
-if("webkitSpeechRecognition"in window){
-  recognition=new webkitSpeechRecognition();
-  recognition.lang="en-GB";
-  recognition.onresult=e=>{
-    const text=e.results[0][0].transcript;
-    query.value=text;
-    status.innerText=`${currentVoiceName}: Aap ne kaha – ${text}`;
+const LADIES = ["Kiran","Reshma","Mahnoor","Gul Noor","Dil Bahar","Shaheen"];
+
+/* =====================================================
+   USER MEMORY (PERMANENT)
+===================================================== */
+function getProfile() {
+  return JSON.parse(localStorage.getItem("boloProfile") || "{}");
+}
+function saveProfile(p) {
+  localStorage.setItem("boloProfile", JSON.stringify(p));
+}
+function getLady() {
+  let p = getProfile();
+  if (!p.lady) {
+    p.lady = LADIES[Math.floor(Math.random() * LADIES.length)];
+    saveProfile(p);
+  }
+  return p.lady;
+}
+
+/* =====================================================
+   SPEECH RECOGNITION
+===================================================== */
+let recognition = null;
+if ("webkitSpeechRecognition" in window) {
+  recognition = new webkitSpeechRecognition();
+  recognition.lang = "en-GB";
+  recognition.interimResults = false;
+}
+
+function startListening(handler) {
+  recognition.onresult = e => handler(e.results[0][0].transcript);
+  recognition.start();
+}
+
+/* =====================================================
+   TEXT TO SPEECH
+===================================================== */
+async function speak(text) {
+  status.innerText = text;
+  const res = await fetch(VOICE_API, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ text })
+  });
+  const audio = new Audio(URL.createObjectURL(await res.blob()));
+  return audio.play();
+}
+
+/* =====================================================
+   REAL PHONE RING (1–3 TIMES)
+===================================================== */
+function ringPhone(done) {
+  const rings = Math.floor(Math.random() * 3) + 1;
+  let count = 0;
+
+  function ring() {
+    const r = new Audio("ringtone.mp4");
+    r.onended = () => {
+      count++;
+      if (count < rings) setTimeout(ring, 600);
+      else done();
+    };
+    r.play();
+  }
+  ring();
+}
+
+/* =====================================================
+   NAME CAPTURE & LOCK
+===================================================== */
+async function askName(lady) {
+  await speak(`Welcome to DrivePK. Mera naam ${lady} hai. May I ask your name?`);
+  startListening(async text => {
+    const m = text.match(/(my name is|mera naam)\s+(\w+)/i);
+    if (!m) {
+      await speak("Maaf kijiye, naam samajh nahi aaya. Dobara bataiye.");
+      askName(lady);
+      return;
+    }
+    const name = m[2];
+    let p = getProfile();
+    p.name = name;
+    p.lady = lady;
+    saveProfile(p);
+    await speak(`Shukriya ${name} bhai. Aap kaunsi gaari dhoondhna chahte hain?`);
+    startSearchFlow();
+  });
+}
+
+/* =====================================================
+   SEARCH FLOW + MEMORY
+===================================================== */
+async function startSearchFlow() {
+  startListening(async text => {
+    query.value = text;
+    let p = getProfile();
+    p.lastSearch = text;
+    saveProfile(p);
     runSearch(text);
-  };
-}
-
-/* TTS */
-async function speakLady(text){
-  const res=await fetch("https://meilibeauty.co.uk/voice.php",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({text})
   });
-  const audio=new Audio(URL.createObjectURL(await res.blob()));
-  audio.onended=()=>{
-    callConnected=true;
-    ringing=false;
-    callBtn.classList.remove("calling");
-    callBtn.innerText="🎤 TALK";
-    callBtn.disabled=false;
-    recognition&&recognition.start();
-  };
-  audio.play();
 }
 
-/* RING */
-function playRingtoneThenSpeak(){
-  if(ringing)return;
-  ringing=true;
-  const ring=new Audio("ringtone.mp4");
-  ring.onended=()=>{
-    currentVoiceName=femaleNames[Math.floor(Math.random()*femaleNames.length)];
-    speakLady(`Assalam o Alaikum, main ${currentVoiceName} hoon. Aap ki kya madad kar sakti hoon?`);
-  };
-  ring.play();
-}
-
-/* SEARCH */
-async function runSearch(text){
-  results.innerHTML="<p>Gaariyan dhoondi ja rahi hain…</p>";
-  const res=await fetch("https://meilibeauty.co.uk/search.php",{
+async function runSearch(text) {
+  results.innerHTML = "<p>Gaariyan dhoondi ja rahi hain…</p>";
+  const res = await fetch(SEARCH_API, {
     method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({text})
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ text })
   });
-  const json=await res.json();
-  lastResults=json.data||[];
-  if(!lastResults.length){
-    results.innerHTML="<p>Koi gaari nahi mili</p>";
+  const json = await res.json();
+  results.innerHTML = "";
+  if (!json.data?.length) {
+    results.innerHTML = "<p>Koi gaari nahi mili</p>";
     return;
   }
-  results.innerHTML="";
-  lastResults.forEach((c,i)=>{
-    const img=c.images?.[0]||"";
-    results.innerHTML+=`
-      <div class="car" onclick="openDetail(${i})">
-        ${img?`<img src="${img}">`:""}
+  json.data.forEach(c => {
+    results.innerHTML += `
+      <div class="car">
+        ${c.images?.[0] ? `<img src="${c.images[0]}">` : ""}
         <h3>${c.title}</h3>
-        <div>${c.year} • ${c.location?.city||"-"}</div>
-        <strong>PKR ${c.price?.toLocaleString()||"Call"}</strong>
+        <div>${c.year} • ${c.location?.city || ""}</div>
+        <strong>PKR ${c.price?.toLocaleString() || "Call"}</strong>
       </div>`;
   });
 }
 
-/* DETAIL */
-function openDetail(i){
-  const c=lastResults[i];
-  detailPage.style.display="block";
-  detailTitle.innerText=c.title||"Car Details";
-  detailPrice.innerText=`PKR ${c.price?.toLocaleString()||"Call"}`;
-  gallery.innerHTML="";
-  (c.images||[]).forEach(u=>gallery.innerHTML+=`<img src="${u}">`);
-  specGrid.innerHTML=`
-    <div class="spec-box">Seats<strong>${c.seatingCapacity||"-"}</strong></div>
-    <div class="spec-box">Mileage<strong>${c.mileage||"-"} km</strong></div>
-    <div class="spec-box">Transmission<strong>${c.transmission||"-"}</strong></div>
-    <div class="spec-box">Fuel<strong>${c.fuelType||"-"}</strong></div>
-    <div class="spec-box">Year<strong>${c.year||"-"}</strong></div>
-    <div class="spec-box">Condition<strong>${c.condition||"-"}</strong></div>
-  `;
-}
-backBtn.onclick=()=>detailPage.style.display="none";
+/* =====================================================
+   CALL BUTTON (MASTER FLOW)
+===================================================== */
+callBtn.onclick = () => {
+  callBtn.classList.add("calling");
+  callBtn.innerText = "📞 CALLING…";
+  ringPhone(async () => {
+    callBtn.classList.remove("calling");
+    callBtn.innerText = "🎤 TALK";
 
-/* BUTTONS */
-callBtn.onclick=()=>{
-  if(!callConnected){
-    callBtn.classList.add("calling");
-    callBtn.innerText="📞 CALLING…";
-    callBtn.disabled=true;
-    playRingtoneThenSpeak();
-  }else{
-    status.innerText=`${currentVoiceName}: Sun rahi hoon…`;
-    recognition&&recognition.start();
-  }
+    const p = getProfile();
+    const lady = getLady();
+
+    if (!p.name) {
+      askName(lady);
+    } else {
+      await speak(`${p.name} bhai, welcome back. Main ${lady} hoon. Aap ki kya madad kar sakti hoon?`);
+      if (p.lastSearch) {
+        await speak(`Aakhri dafa aap ne kaha tha: ${p.lastSearch}. Kya aaj bhi wahi dekhni hai?`);
+      }
+      startSearchFlow();
+    }
+  });
 };
-searchBtn.onclick=()=>query.value.trim()&&runSearch(query.value.trim());
+
+searchBtn.onclick = () => query.value && runSearch(query.value);
 </script>
 
 </body>
