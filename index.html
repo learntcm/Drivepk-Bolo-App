@@ -20,13 +20,12 @@ button{ border:none; background:#000; color:#fff; cursor:pointer; }
 
 .call{ background:#E81F25; font-size:16px; margin-top:6px; transition:transform .05s ease, filter .05s ease; }
 .call.calling{ background:#999; color:#000; }
-.call.talking{ filter:brightness(0.75); transform:scale(0.985); } /* ✅ pressed feedback */
+.call.talking{ filter:brightness(0.75); transform:scale(0.985); }
 
 #status{ margin-top:6px; font-weight:bold; color:#E81F25; font-size:14px; }
 #results{ margin-top:10px; }
 .car{ background:#fff; border-radius:12px; padding:8px; margin-bottom:10px; }
 .car img{ width:100%; height:140px; object-fit:cover; border-radius:8px; }
-
 .smallHint{ margin-top:6px; font-size:12px; color:#333; opacity:0.85; }
 </style>
 </head>
@@ -66,8 +65,8 @@ const LADIES = ["Kiran","Reshma","Mahnoor","Gul Noor","Dil Bahar","Shaheen"];
 
 const HOLD_HINT = "🎤 Press & hold karke bolen. Chhorne par sunna band ho jayega.";
 const MIC_FAIL_MAX = 2;
-const SILENCE_MS = 3000;              // ✅ reminder after 3 seconds (not 5)
-const BETWEEN_PROMPTS_MS = 3000;      // ✅ welcome -> requirement gap 3 seconds
+const SILENCE_MS = 5000;              // ✅ reminder after 5 seconds
+const BETWEEN_PROMPTS_MS = 5000;      // ✅ 2nd/3rd prompt delay 5 seconds
 const POST_TTS_GAP_MS = 250;
 
 /* =========================
@@ -79,11 +78,14 @@ let speaking = false;
 
 let recognition = null;
 let listening = false;
+let isRecognizing = false;
 let micFailCount = 0;
 let silenceTimer = null;
 
-let transcriptBuffer = "";            // stores latest recognized phrase
-let stopResolver = null;             // promise resolver for stop logic
+let transcriptBuffer = "";
+let stopResolver = null;
+
+let micWarmed = false;
 
 /* =========================
    STORAGE
@@ -106,6 +108,27 @@ function clearSilenceTimer(){ if(silenceTimer){ clearTimeout(silenceTimer); sile
 function setStatus(t){ status.innerText = t; }
 
 /* =========================
+   MIC WARM-UP (CRITICAL FIX)
+   Some Android phones won't record SpeechRecognition unless getUserMedia
+   is granted in the same session.
+========================= */
+async function warmupMic(){
+  if(micWarmed) return true;
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return true;
+
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+    // stop immediately
+    stream.getTracks().forEach(t => t.stop());
+    micWarmed = true;
+    return true;
+  }catch(e){
+    // user blocked mic at browser level
+    return false;
+  }
+}
+
+/* =========================
    AUDIO (TTS)
 ========================= */
 function stopAudio(){
@@ -115,8 +138,18 @@ function stopAudio(){
   }
 }
 
+function hardStopMic(){
+  if(!recognition) return;
+  try { recognition.onresult=null; recognition.onerror=null; recognition.onend=null; } catch(e){}
+  try { recognition.abort(); } catch(e){}
+  try { recognition.stop(); } catch(e){}
+  listening = false;
+  isRecognizing = false;
+  clearSilenceTimer();
+  if(stopResolver){ stopResolver(); stopResolver=null; }
+}
+
 async function speak(text){
-  // Always stop mic and previous audio to prevent overlap
   hardStopMic();
   stopAudio();
   clearSilenceTimer();
@@ -166,24 +199,21 @@ if ("webkitSpeechRecognition" in window) {
   recognition.maxAlternatives = 1;
 }
 
-function hardStopMic(){
-  if(!recognition) return;
-  try { recognition.onresult=null; recognition.onerror=null; recognition.onend=null; } catch(e){}
-  try { recognition.abort(); } catch(e){}
-  try { recognition.stop(); } catch(e){}
-  listening = false;
-  clearSilenceTimer();
-  // resolve any waiting stop
-  if(stopResolver){ stopResolver(); stopResolver=null; }
-}
-
-function startHoldListening(){
+async function startHoldListening(){
   if(!recognition){
     micFailCount++;
-    speak(typingFallbackLine());
+    await speak(typingFallbackLine());
     return;
   }
   if(speaking) return;
+  if(isRecognizing) return; // guard
+
+  const ok = await warmupMic();
+  if(!ok){
+    micFailCount++;
+    await speak("Mic permission allow nahi hai. Behtar hai aap type kar dein.");
+    return;
+  }
 
   // UI feedback
   callBtn.classList.add("talking");
@@ -192,22 +222,22 @@ function startHoldListening(){
 
   transcriptBuffer = "";
   listening = true;
+  isRecognizing = true;
 
-  // silence reminder only AFTER mic actually starts
   clearSilenceTimer();
   silenceTimer = setTimeout(async ()=>{
     if(listening && !transcriptBuffer){
       const p=getProfile();
       const nm = p.name || "Doctor";
       await speak(`${nm} bhai, mujhe awaaz clear nahi aa rahi. Model, year aur city bol dein.`);
-      // user must hold again
       setStatus(HOLD_HINT);
     }
   }, SILENCE_MS);
 
   recognition.onresult = e => {
-    // final transcript typically arrives here
-    transcriptBuffer = (e.results && e.results[0] && e.results[0][0] && e.results[0][0].transcript) ? e.results[0][0].transcript : "";
+    transcriptBuffer = (e.results && e.results[0] && e.results[0][0] && e.results[0][0].transcript)
+      ? e.results[0][0].transcript
+      : "";
   };
 
   recognition.onerror = () => {
@@ -215,42 +245,42 @@ function startHoldListening(){
   };
 
   recognition.onend = () => {
-    // if stopHold is waiting, resolve it
     listening = false;
+    isRecognizing = false;
     clearSilenceTimer();
     if(stopResolver){ stopResolver(); stopResolver=null; }
   };
 
-  try { recognition.start(); } catch(e) {
+  try {
+    recognition.start();
+  } catch(e) {
     micFailCount++;
     listening = false;
+    isRecognizing = false;
     clearSilenceTimer();
   }
 }
 
 async function stopHoldListeningAndHandle(){
   if(!recognition) return;
-  if(!listening) {
-    // reset button if user taps weirdly
-    callBtn.classList.remove("talking");
-    callBtn.innerText = "🎤 HOLD TO TALK";
+
+  // restore UI even if weird state
+  callBtn.classList.remove("talking");
+  callBtn.innerText = "🎤 HOLD TO TALK";
+
+  if(!isRecognizing){
     return;
   }
 
-  // stop mic (result may come AFTER stop, so we wait on onend)
   clearSilenceTimer();
   try { recognition.stop(); } catch(e) {}
 
-  // wait for onend OR a timeout
+  // wait for onend OR timeout so transcript can arrive
   await new Promise(resolve=>{
     stopResolver = resolve;
-    setTimeout(resolve, 1200); // safety timeout
+    setTimeout(resolve, 1500);
   });
   stopResolver = null;
-
-  // UI feedback restore
-  callBtn.classList.remove("talking");
-  callBtn.innerText = "🎤 HOLD TO TALK";
 
   const spoken = (transcriptBuffer || "").trim();
 
@@ -258,7 +288,7 @@ async function stopHoldListeningAndHandle(){
     micFailCount++;
     if(micFailCount >= MIC_FAIL_MAX){
       await speak(typingFallbackLine());
-      setStatus("Mic issue ho sakta hai. Behtar hai type kar dein.");
+      setStatus("Mic issue ho sakta hai. Type karke Search karein.");
     } else {
       setStatus("Kuch sunai nahi diya. " + HOLD_HINT);
     }
@@ -267,63 +297,17 @@ async function stopHoldListeningAndHandle(){
 
   micFailCount = 0;
 
-  // If name not saved yet, treat first phrase as name
+  // Name flow
   const needName = await maybeSaveNameFromSpoken(spoken);
   if(needName) return;
 
-  // intents
-  if(wantsBoss(spoken)){
-    const p=getProfile();
-    await speak(`${p.name || "Doctor"} sahib, Assalam o Alaikum. Main Senior Advisor hoon. Bataiye masla kya hai?`);
-    setStatus(HOLD_HINT);
-    return;
-  }
-  if(wantsNewLady(spoken)){
-    await handleLadyChange();
-    return;
-  }
-
-  // normal search
+  // Normal search
   query.value = spoken;
   const p=getProfile();
   p.lastSearch = spoken;
   saveProfile(p);
   await runSearch(spoken);
   setStatus("Results aa gaye. Dobara bolna ho to " + HOLD_HINT);
-}
-
-/* =========================
-   INTENTS
-========================= */
-function wantsNewLady(text){
-  const t=(text||"").toLowerCase();
-  const phrases=[
-    "change lady","switch lady","another lady","other lady","new lady",
-    "aur madam chahiye","koi khoobsurat lady chahiye","dusri madam","dusri lady",
-    "dusri madam se baat karwao","koi aur lady","lady badlo","lady badal do","lady change karo"
-  ];
-  return phrases.some(p=>t.includes(p));
-}
-function wantsBoss(text){
-  const t=(text||"").toLowerCase();
-  const phrases=[
-    "boss","manager","supervisor","senior",
-    "muje boss se baat karni hai","mujhe boss se baat karni hai",
-    "boss se connect karo","manager se baat","supervisor se baat","senior se baat"
-  ];
-  return phrases.some(p=>t.includes(p));
-}
-
-async function handleLadyChange(){
-  const p = getProfile();
-  const current = p.lady || "";
-  const choices = LADIES.filter(x=>x!==current);
-  p.lady = choices.length ? rand(choices) : rand(LADIES);
-  saveProfile(p);
-
-  await speak(`${p.name || "Doctor"} bhai, theek hai. Ab ${p.lady} baat karegi.`);
-  await speak(`Assalam o Alaikum ${p.name || "Doctor"} bhai. Main ${p.lady} hoon. Kya madad karun?`);
-  setStatus(HOLD_HINT);
 }
 
 /* =========================
@@ -369,14 +353,8 @@ function typingFallbackLine(){
    NAME HANDLING
 ========================= */
 function tidyName(raw){
-  return raw
-    .replace(/[^a-zA-Z\s]/g," ")
-    .replace(/\s+/g," ")
-    .trim()
-    .split(" ")
-    .slice(0,3)
-    .map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase())
-    .join(" ");
+  return raw.replace(/[^a-zA-Z\s]/g," ").replace(/\s+/g," ").trim().split(" ").slice(0,3)
+    .map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(" ");
 }
 function extractName(text){
   const t=(text||"").trim();
@@ -386,7 +364,6 @@ function extractName(text){
   if(cleaned && cleaned.length >= 2) return cleaned;
   return null;
 }
-
 async function maybeSaveNameFromSpoken(spoken){
   const p=getProfile();
   if(p.name) return false;
@@ -395,17 +372,17 @@ async function maybeSaveNameFromSpoken(spoken){
   if(!name){
     await speak("Naam clear nahi aaya. Sirf apna naam dobara bol dein.");
     setStatus(HOLD_HINT);
-    return true; // still needs name
+    return true;
   }
 
   p.name = name;
   saveProfile(p);
 
   await speak(`Shukriya ${name} bhai.`);
-  await sleep(BETWEEN_PROMPTS_MS);
+  await sleep(BETWEEN_PROMPTS_MS);          // ✅ 5s delay
   await speak(askRequirementLine(name));
   setStatus(HOLD_HINT);
-  return true; // consumed this utterance as name
+  return true;
 }
 
 /* =========================
@@ -460,34 +437,35 @@ async function connectCall(){
   callBtn.innerText="🎤 HOLD TO TALK";
   hint.innerText = HOLD_HINT;
 
+  // warm up mic once after user gesture (very effective)
+  await warmupMic();
+
   const p=getProfile();
   const lady=getOrAssignLady();
 
   if(!p.name){
     await speak(welcomeFirst(lady));
-    await sleep(BETWEEN_PROMPTS_MS);           // ✅ 3s gap before next speech
+    await sleep(BETWEEN_PROMPTS_MS);        // ✅ 5s delay
     await speak(askNameLine());
     setStatus("Apna naam bolne ke liye " + HOLD_HINT);
   } else {
     await speak(welcomeReturning(p.name));
-    await sleep(BETWEEN_PROMPTS_MS);           // ✅ 3s gap before requirement
+    await sleep(BETWEEN_PROMPTS_MS);        // ✅ 5s delay
     await speak(askRequirementLine(p.name));
     setStatus(HOLD_HINT);
   }
 }
 
 /* =========================
-   BUTTON EVENTS (Hold to talk)
+   BUTTON WIRING
 ========================= */
 callBtn.addEventListener("click", async () => {
   if(!callConnected){
     await connectCall();
   }
-  // if connected, click does nothing; hold handles voice
 });
 
 function bindHoldEvents(btn){
-  // Touch (mobile)
   btn.addEventListener("touchstart", (e)=>{
     if(!callConnected) return;
     e.preventDefault();
@@ -500,7 +478,6 @@ function bindHoldEvents(btn){
     await stopHoldListeningAndHandle();
   }, {passive:false});
 
-  // Mouse (desktop)
   btn.addEventListener("mousedown", ()=>{
     if(!callConnected) return;
     startHoldListening();
@@ -511,7 +488,7 @@ function bindHoldEvents(btn){
   });
   btn.addEventListener("mouseleave", async ()=>{
     if(!callConnected) return;
-    if(listening) await stopHoldListeningAndHandle();
+    await stopHoldListeningAndHandle();
   });
 }
 bindHoldEvents(callBtn);
@@ -525,11 +502,6 @@ searchBtn.onclick = async () => {
   saveProfile(p);
   await runSearch(t);
 };
-
-/* Init hint */
-(function init(){
-  hint.innerText = "Call dabayen. Phir " + HOLD_HINT;
-})();
 </script>
 </body>
 </html>
