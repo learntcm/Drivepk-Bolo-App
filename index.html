@@ -74,7 +74,11 @@
 <script>
 /* ================================
    DrivePK BOLO – single file
-   Multi-voice ladies + boss + variations
+   Fixes requested:
+   ✅ One single greeting (no pause) + same lady voice
+   ✅ Greeting text: “Kia main aap ka naam pooch sakti hoon?”
+   ✅ If search returns 0 results: speak “Koi gaari available nahi”
+   ✅ If search returns results: speak a results line
 ================================ */
 
 const VOICE_API  = "https://meilibeauty.co.uk/voice.php";
@@ -83,7 +87,6 @@ const COMPANY_NUMBER = "051 8319037";
 
 const LADIES = ["Kiran","Reshma","Mahnoor","Gul Noor","Dil Bahar","Shaheen"];
 
-// ✅ REAL different voices (server supports these voices) 2
 const VOICE_BY_LADY = {
   "Kiran":    { voice:"marin",  speed:0.95 },
   "Reshma":   { voice:"cedar",  speed:0.95 },
@@ -95,11 +98,18 @@ const VOICE_BY_LADY = {
 const BOSS_UMAR = { voice:"onyx", speed:0.95 };
 
 const RESULT_LINES = [
-  "Yeh rahi aap ki search results.",
-  "Jee, results aa gaye hain. Dekh lijiye.",
-  "Acha jee, matching gaariyan mil gayi hain.",
-  "Theek hai, yeh aap ke results hain.",
-  "Results aa gaye — aap options dekh sakte hain."
+  "Jee, aap ke results aa gaye hain.",
+  "Acha jee, yeh aap ke results hain.",
+  "Theek hai, matching gaariyan mil gayi hain.",
+  "Results aa gaye — aap options dekh sakte hain.",
+  "Yeh rahi aap ki search results."
+];
+
+const NO_RESULT_LINES = [
+  "Is search par koi gaari available nahi.",
+  "Maazrat, is waqt koi matching gaari nahi mili.",
+  "Acha, is city mein filhaal koi option nazar nahi aa raha.",
+  "Koi gaari nahi mili — aap model ya city change karke try karein."
 ];
 
 const SILENCE_MS = 5000;
@@ -116,7 +126,6 @@ let currentAudio = null;
 let speakSeq = 0;
 let holding = false;
 
-/* ---------- storage ---------- */
 function getProfile(){ return JSON.parse(localStorage.getItem("boloProfile") || "{}"); }
 function saveProfile(p){ localStorage.setItem("boloProfile", JSON.stringify(p)); }
 function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
@@ -131,7 +140,6 @@ function getOrAssignLady(){
   return p.lady;
 }
 
-/* ---------- helpers ---------- */
 function setStatus(t){ status.innerText = t || ""; }
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 function clearSilence(){ if(silenceTimer){ clearTimeout(silenceTimer); silenceTimer=null; } }
@@ -162,7 +170,6 @@ function getLadyVoicePack(){
   return VOICE_BY_LADY[lady] || { voice:"marin", speed:0.95 };
 }
 
-/* ---------- stop audio ---------- */
 function stopAllVoiceEngines(){
   if(currentAudio){
     try{ currentAudio.pause(); currentAudio.currentTime = 0; }catch(e){}
@@ -171,7 +178,6 @@ function stopAllVoiceEngines(){
   try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(e){}
 }
 
-/* ---------- mic warmup ---------- */
 async function warmupMic(){
   if(micReady) return true;
   try{
@@ -184,7 +190,6 @@ async function warmupMic(){
   }
 }
 
-/* ---------- stop mic ---------- */
 function stopMic(){
   if(!recognition) return;
   try{ recognition.onresult=null; recognition.onerror=null; recognition.onend=null; }catch(e){}
@@ -194,7 +199,7 @@ function stopMic(){
   clearSilence();
 }
 
-/* ---------- speak via your voice.php (now multi-voice) ---------- */
+/* speak with chosen voicePack */
 async function speak(text, voicePack=null){
   const mySeq = ++speakSeq;
 
@@ -237,7 +242,6 @@ async function speak(text, voicePack=null){
   });
 }
 
-/* ---------- ring ---------- */
 async function ring(){
   const times = Math.floor(Math.random()*3)+1;
   for(let i=0;i<times;i++){
@@ -249,7 +253,6 @@ async function ring(){
   }
 }
 
-/* ---------- STT ---------- */
 if("webkitSpeechRecognition" in window){
   recognition = new webkitSpeechRecognition();
   recognition.lang = "en-IN";
@@ -257,7 +260,6 @@ if("webkitSpeechRecognition" in window){
   recognition.continuous = false;
 }
 
-/* ---------- hold-to-talk ---------- */
 async function startListening(){
   if(!callConnected) return;
   if(holding) return;
@@ -330,48 +332,34 @@ async function stopListening(){
   await handleSpoken(spoken);
 }
 
-/* ---------- intents ---------- */
+/* intents */
 function wantsComplaint(t){
   t = normalize(t);
-  return [
-    "complaint","complain","shikayat","issue","problem","masla",
-    "customer care","support number","report"
-  ].some(x=>t.includes(x));
+  return ["complaint","complain","shikayat","issue","problem","masla","support","customer care","number"].some(x=>t.includes(x));
 }
-
 function wantsBoss(t){
   t = normalize(t);
-  return [
-    "boss","manager","supervisor","owner","head",
-    "boss se baat","boss se milao","boss se baat karwao",
-    "mujhe boss se baat karni hai","umar","umar se baat"
-  ].some(x=>t.includes(x));
+  return ["boss","manager","supervisor","owner","boss se baat","boss se milao","boss se baat karwao","mujhe boss se baat karni hai","umar","umar se baat"].some(x=>t.includes(x));
 }
-
 function wantsNewLady(t){
   t = normalize(t);
-  return [
-    "change lady","switch lady","another lady","other lady",
-    "dusri madam","dusri lady","aur madam chahiye","koi aur lady",
-    "dusri madam se baat karwao","koi khoobsurat lady chahiye"
-  ].some(x=>t.includes(x));
+  return ["change lady","switch lady","another lady","other lady","dusri madam","dusri lady","aur madam chahiye","koi aur lady","dusri madam se baat karwao","koi khoobsurat lady chahiye"].some(x=>t.includes(x));
 }
-
 function isAskingMyName(t){
   t = normalize(t);
-  return t.includes("your name") || t.includes("aap ka naam") || t.includes("ap ka naam");
+  return t.includes("your name") || t.includes("aap ka naam") || t.includes("ap ka naam") || t.includes("naam kya");
 }
 
-/* ---------- main router ---------- */
+/* main router */
 async function handleSpoken(text){
   const p = getProfile();
-  const lady = p.lady || getOrAssignLady();
   const who = respectfulName(p);
 
-  // First-time: capture user name
+  // first-time: take name
   if(!p.name){
     if(isAskingMyName(text)){
-      await speak(`Mera naam ${lady} hai. Pehle aap apna naam bata dein please.`);
+      const lady = p.lady || getOrAssignLady();
+      await speak(`Mera naam ${lady} hai. Kia main aap ka naam pooch sakti hoon?`);
       return;
     }
     const nm = extractName(text);
@@ -385,7 +373,7 @@ async function handleSpoken(text){
     return;
   }
 
-  // Complaint
+  // complaint
   if(wantsComplaint(text)){
     showSupport();
     await speak(`${who}, complaint ke liye please is number par call karein: ${COMPANY_NUMBER}.`);
@@ -394,39 +382,46 @@ async function handleSpoken(text){
     hideSupport();
   }
 
-  // Boss Umar (male voice)
+  // boss (Umar male voice)
   if(wantsBoss(text)){
     await speak(`${who}, theek hai. Main aap ko Umar se connect kar raha hoon.`, BOSS_UMAR);
     await speak(`${who}, Assalam o Alaikum. Main Umar hoon. Aap ka masla kya hai?`, BOSS_UMAR);
     return;
   }
 
-  // Change lady (switch voice too)
+  // change lady
   if(wantsNewLady(text)){
-    const current = p.lady || lady;
+    const current = p.lady || getOrAssignLady();
     const others = LADIES.filter(x=>x!==current);
     p.lady = rand(others.length ? others : LADIES);
     saveProfile(p);
 
     const newLady = p.lady;
     await speak(`${who}, theek hai. Ab ${newLady} baat karegi.`);
-    await speak(`Assalam o Alaikum ${who}. Jee batayein?`, getLadyVoicePack());
+    await speak(`Assalam o Alaikum ${who}. Main ${newLady} hoon. Kia main aap ka naam pooch sakti hoon?`);
     return;
   }
 
-  // If user asks assistant name
+  // assistant name
   if(isAskingMyName(text)){
-    await speak(`${who}, mera naam ${p.lady} hai.`);
+    const lady = p.lady || getOrAssignLady();
+    await speak(`${who}, mera naam ${lady} hai.`);
     return;
   }
 
-  // Otherwise search
+  // otherwise search
   query.value = text;
-  await runSearch(text);
-  await speak(rand(RESULT_LINES));
+  const count = await runSearch(text);
+
+  // ✅ Speak based on results count
+  if(count > 0){
+    await speak(rand(RESULT_LINES));
+  }else{
+    await speak(rand(NO_RESULT_LINES));
+  }
 }
 
-/* ---------- search ---------- */
+/* search returns count */
 async function runSearch(text){
   hideSupport();
   results.innerHTML = "<p>Gaariyan dhoondi ja rahi hain…</p>";
@@ -440,7 +435,7 @@ async function runSearch(text){
     });
   }catch{
     results.innerHTML = "<p>Search error</p>";
-    return;
+    return 0;
   }
 
   let json=null;
@@ -449,7 +444,7 @@ async function runSearch(text){
   results.innerHTML = "";
   if(!json || !json.data || !json.data.length){
     results.innerHTML = "<p>Koi gaari nahi mili</p>";
-    return;
+    return 0;
   }
 
   json.data.forEach(c=>{
@@ -468,9 +463,11 @@ async function runSearch(text){
       </div>
     `;
   });
+
+  return json.data.length;
 }
 
-/* ---------- call flow ---------- */
+/* call flow */
 async function connectCall(){
   stopAllVoiceEngines();
   stopMic();
@@ -490,20 +487,19 @@ async function connectCall(){
 
   const p = getProfile();
   const lady = getOrAssignLady();
-  const who = respectfulName(p);
 
+  // ✅ SINGLE greeting line (no pause / no voice switch)
   if(!p.name){
-    await speak("Assalam o Alaikum! DrivePK mein khush aamadid.");
-    await speak(`Mera naam ${lady} hai. Aap ka naam kya hai?`);
+    await speak(`Assalam o Alaikum! DrivePK mein khush aamadid. Mera naam ${lady} hai. Kia main aap ka naam pooch sakti hoon?`);
   }else{
-    await speak(`${who}, Assalam o Alaikum. Model, year aur city bol dein.`);
+    await speak(`${respectfulName(p)}, Assalam o Alaikum. Model, year aur city bol dein.`);
   }
 
-  // Warm mic so first press works
+  // warm mic so first press works
   await warmupMic();
 }
 
-/* ---------- events ---------- */
+/* events */
 hideSupport();
 setStatus("");
 hint.innerText = "Call dabayen. Phir 🎤 ko press & hold karke bolen.";
@@ -532,9 +528,11 @@ callBtn.addEventListener("pointercancel", (e)=>{
 searchBtn.addEventListener("click", async ()=>{
   const t = (query.value || "").trim();
   if(!t) return;
-  await runSearch(t);
-  await speak(rand(RESULT_LINES));
+  const count = await runSearch(t);
+  if(count > 0) await speak(rand(RESULT_LINES));
+  else await speak(rand(NO_RESULT_LINES));
 });
 </script>
 </body>
 </html>
+```0
