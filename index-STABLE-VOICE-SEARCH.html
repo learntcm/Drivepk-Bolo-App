@@ -6,36 +6,77 @@
 <title>DrivePK BOLO</title>
 
 <style>
-  body { margin:0; font-family:Arial,sans-serif; background:#e6e6e6; }
-  header { background:#000; color:#fff; padding:10px; display:flex; gap:10px; align-items:center; }
-  .logo { background:#E81F25; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold; }
-  .main { padding:10px; max-width:520px; margin:0 auto; }
-  .hero { background:#000; border-radius:18px; height:22vh; min-height:140px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; margin-bottom:10px; }
-  .hero h1 { font-size:30px; margin:0; }
-  .hero h2 { font-size:14px; color:#E81F25; margin-top:4px; }
+  body{margin:0;font-family:Arial,sans-serif;background:#e6e6e6;}
+  header{background:#000;color:#fff;padding:10px;display:flex;gap:10px;align-items:center;}
+  .logo{background:#E81F25;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:bold;}
+  .main{padding:10px;max-width:520px;margin:0 auto;}
+  .hero{background:#000;border-radius:18px;height:22vh;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;margin-bottom:10px;}
+  .hero h1{font-size:30px;margin:0;}
+  .hero h2{font-size:14px;color:#E81F25;margin-top:4px;}
 
-  input,button { width:100%; height:46px; border-radius:12px; font-size:15px; box-sizing:border-box; }
-  input { padding:0 14px; border:1px solid #ccc; margin-bottom:6px; }
-  button { border:none; background:#000; color:#fff; cursor:pointer; }
+  input,button{width:100%;height:46px;border-radius:12px;font-size:15px;box-sizing:border-box;}
+  input{padding:0 14px;border:1px solid #ccc;margin-bottom:6px;}
+  button{border:none;background:#000;color:#fff;cursor:pointer;}
 
-  .call { background:#E81F25; font-size:16px; margin-top:6px; user-select:none; transition:filter .08s ease, transform .08s ease; }
-  .call.calling { background:#999; color:#000; }
-  .call.talking { filter:brightness(0.78); transform:scale(0.985); }
+  .row{display:flex;gap:8px;}
+  .row button{flex:1;}
 
-  #hint { margin-top:6px; font-size:12px; color:#333; opacity:0.85; }
-  #status { margin-top:6px; font-weight:bold; color:#E81F25; font-size:14px; }
-  #results { margin-top:10px; }
+  .call{background:#E81F25;font-size:16px;margin-top:6px;user-select:none;transition:filter .08s ease,transform .08s ease;}
+  .call.calling{background:#999;color:#000;}
+  .call.talking{filter:brightness(0.78);transform:scale(0.985);}
 
-  .car { background:#fff; border-radius:12px; padding:8px; margin-bottom:10px; }
-  .car img { width:100%; height:140px; object-fit:cover; border-radius:8px; }
+  #hint{margin-top:6px;font-size:12px;color:#333;opacity:.85;}
+  #status{margin-top:6px;font-weight:bold;color:#E81F25;font-size:14px;}
+  #results{margin-top:10px;}
 
-  #supportBox {
-    display:none;
-    margin-top:10px;
-    background:#fff;
-    border-radius:12px;
-    padding:10px;
+  .card{background:#fff;border-radius:12px;padding:10px;margin-bottom:10px;}
+  .car{background:#fff;border-radius:12px;padding:8px;margin-bottom:10px;cursor:pointer;}
+  .car img{width:100%;height:140px;object-fit:cover;border-radius:8px;}
+
+  .pill{display:inline-block;background:#111;color:#fff;border-radius:999px;padding:6px 10px;font-size:12px;}
+  .muted{opacity:.75;font-size:12px;}
+  .btnRed{background:#E81F25 !important;}
+
+  /* Support box */
+  #supportBox{display:none;margin-top:10px;background:#fff;border-radius:12px;padding:10px;}
+
+  /* Modal */
+  .modalBack{
+    position:fixed; inset:0; background:rgba(0,0,0,.55);
+    display:none; align-items:center; justify-content:center; z-index:9999;
+    padding:12px;
   }
+  .modal{
+    width:100%; max-width:420px; background:#fff; border-radius:14px; padding:12px;
+  }
+  .modal h3{margin:0 0 8px 0;}
+  .modal .row2{display:flex; gap:8px; margin-top:8px;}
+  .modal .row2 button{flex:1; height:44px;}
+  .xbtn{float:right;background:#eee;color:#000;width:40px;height:36px;border-radius:10px;}
+  .small{font-size:12px; opacity:.8; margin-top:6px;}
+  .ok{color:#0a7a2f; font-weight:bold;}
+  .bad{color:#b00020; font-weight:bold;}
+
+  /* Detail Page */
+  #detailPage{
+    position:fixed; inset:0; background:#fff; z-index:999; display:none; overflow-y:auto;
+  }
+  .detailHeader{
+    background:#000;color:#fff;padding:10px;display:flex;align-items:center;gap:10px;position:sticky;top:0;
+  }
+  .detailHeader button{background:#E81F25;border-radius:10px;padding:8px 10px;color:#fff;}
+  .galleryWrap{background:#000;position:relative;}
+  .gallery{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;}
+  .gallery img{width:100%;height:240px;object-fit:cover;scroll-snap-align:start;flex-shrink:0;border-right:6px solid #000;}
+  .swipe{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;padding:6px 12px;border-radius:999px;font-size:12px;}
+  .detailBody{padding:12px;}
+  .price{font-size:22px;font-weight:bold;margin:6px 0 12px 0;}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+  .box{background:#111;color:#fff;border-radius:12px;padding:10px 6px;text-align:center;font-size:13px;}
+  .box strong{display:block;font-size:15px;margin-top:4px;}
+  .contactBox{background:#000;color:#fff;border-radius:14px;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .contactBtn{background:#E81F25;color:#fff;border-radius:12px;padding:10px 12px;font-weight:bold;min-width:140px;text-align:center;}
+  .lock{opacity:.7;font-size:13px;}
 </style>
 </head>
 
@@ -54,68 +95,149 @@
     <h2>Voice Search</h2>
   </div>
 
-  <input id="query" placeholder="Jaise: MG Peshawar" />
-  <button id="searchBtn">Search</button>
+  <input id="query" placeholder="Jaise: MG Lahore 2022" />
+  <div class="row">
+    <button id="searchBtn">Search</button>
+    <button id="authBtn" class="btnRed">Login</button>
+  </div>
 
   <button class="call" id="callBtn">CALL</button>
   <div id="hint">Call dabayen. Phir mic ko press & hold karke bolen.</div>
 
   <div id="status"></div>
 
-  <div id="supportBox">
+  <div id="supportBox" class="card">
     <strong>Complaints / Support:</strong>
-    <div style="margin-top:6px; font-size:18px; color:#E81F25; font-weight:bold;">051 8319037</div>
-    <div style="margin-top:4px; font-size:12px; opacity:0.8;">Please call this number for complaints.</div>
+    <div style="margin-top:6px;font-size:18px;color:#E81F25;font-weight:bold;">051 8319037</div>
+    <div class="small">Please call this number for complaints.</div>
   </div>
 
   <div id="results"></div>
 </div>
 
-<script>
-/* Fixes in this version:
-  1) Dr bhai -> Dr sahib (also if saved name is "Doctor ...")
-  2) Lady line: "connect kar rahi hoon" (female)
-  3) After boss request: phone rings again, then Umar answers
-  4) Umar speaks in MAN voice (onyx) by forcing voice pack on BOTH speak() calls
-*/
+<!-- DETAIL PAGE -->
+<div id="detailPage">
+  <div class="detailHeader">
+    <button id="backBtn">← Back</button>
+    <strong id="detailTitle"></strong>
+  </div>
 
+  <div class="galleryWrap">
+    <div class="gallery" id="gallery"></div>
+    <div class="swipe">Swipe ⇠ ⇢</div>
+  </div>
+
+  <div class="detailBody">
+    <div class="price" id="detailPrice"></div>
+
+    <div class="grid" id="specGrid"></div>
+
+    <div class="contactBox">
+      <div>
+        <div class="lock" id="contactHint">🔒 Login to view phone number</div>
+        <div class="muted" id="sellerName"></div>
+      </div>
+      <div class="contactBtn" id="contactBtn">Contact Seller</div>
+    </div>
+
+    <div id="phoneBox" class="card" style="display:none;margin-top:10px;">
+      <div class="pill">Contact</div>
+      <div style="margin-top:6px;font-size:20px;font-weight:bold;color:#E81F25;" id="realPhone"></div>
+      <div class="small" id="phoneOwner"></div>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="modalBack" id="modalBack">
+  <div class="modal">
+    <button class="xbtn" id="closeModal">✕</button>
+    <h3 id="modalTitle">Login</h3>
+
+    <div id="modalMsg" class="small"></div>
+
+    <div id="loginForm">
+      <input id="loginEmail" placeholder="Email" />
+      <input id="loginPass" placeholder="Password" type="password" />
+      <div class="row2">
+        <button id="doLogin" class="btnRed">Login</button>
+        <button id="goRegister">Register</button>
+      </div>
+      <div class="small">If token expires, we auto-refresh.</div>
+    </div>
+
+    <div id="registerForm" style="display:none;">
+      <input id="regName" placeholder="Full Name" />
+      <input id="regEmail" placeholder="Email" />
+      <input id="regPhone" placeholder="Phone (3001234567)" />
+      <input id="regPass" placeholder="Password (Password123)" type="password" />
+      <input id="regPass2" placeholder="Confirm Password" type="password" />
+      <div class="row2">
+        <button id="doRegister" class="btnRed">Create</button>
+        <button id="goLogin">Back</button>
+      </div>
+    </div>
+
+    <div id="loggedInBox" style="display:none;">
+      <div class="card">
+        <div class="pill">Logged In</div>
+        <div style="margin-top:6px;font-weight:bold;" id="whoami"></div>
+        <div class="small" id="whoEmail"></div>
+      </div>
+      <button id="logoutBtn" style="background:#000;margin-top:8px;">Logout</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================
+   CONFIG
+========================= */
 const VOICE_API  = "https://meilibeauty.co.uk/voice.php";
-const SEARCH_API = "https://meilibeauty.co.uk/search.php";
+const GATEWAY_API = "https://meilibeauty.co.uk/search.php"; // mobile gateway
 const COMPANY_NUMBER = "051 8319037";
+const WEBSITE = "www.drivepk.com";
+const OFFICE_ADDRESS = "195, Peshawar Road, Chur Chowk Beside PSO Pump, Westridge, Rawalpindi.";
 
 const LADIES = ["Kiran","Reshma","Mahnoor","Gul Noor","Dil Bahar","Shaheen"];
-
 const VOICE_BY_LADY = {
-  "Kiran":    { voice:"marin",  speed:0.95 },
-  "Reshma":   { voice:"cedar",  speed:0.95 },
-  "Mahnoor":  { voice:"shimmer",speed:0.98 },
-  "Gul Noor": { voice:"coral",  speed:0.95 },
-  "Dil Bahar":{ voice:"nova",   speed:0.98 },
-  "Shaheen":  { voice:"sage",   speed:0.95 }
+  "Kiran":    { voice:"marin",   speed:0.95 },
+  "Reshma":   { voice:"cedar",   speed:0.95 },
+  "Mahnoor":  { voice:"shimmer", speed:0.98 },
+  "Gul Noor": { voice:"coral",   speed:0.95 },
+  "Dil Bahar":{ voice:"nova",    speed:0.98 },
+  "Shaheen":  { voice:"sage",    speed:0.95 }
 };
 
-// Boss voice pack (male)
-const BOSS_UMAR = { voice:"onyx", speed:0.95 };
+// Boss voice pack (you can change to onyx later)
+const BOSS_UMAR = { voice:"coral", speed:0.95 };
 
 const RESULT_LINES = [
-  "Jee, aap ke results aa gaye hain.",
-  "Acha jee, yeh aap ke results hain.",
+  "Jee, yeh aap ke search results hain.",
+  "Acha jee, results aa gaye hain.",
   "Theek hai, matching gaariyan mil gayi hain.",
-  "Results aa gaye, aap options dekh sakte hain.",
   "Yeh rahi aap ki search results."
 ];
 
 const NO_RESULT_LINES = [
   "Is search par koi gaari available nahi.",
   "Maazrat, is waqt koi matching gaari nahi mili.",
-  "Is city mein filhaal koi option nazar nahi aa raha.",
   "Koi gaari nahi mili, aap model ya city change karke try karein."
+];
+
+const UNKNOWN_LINES = [
+  "Sorry, abhi mujhe is ka jawab maloom nahi hai.",
+  "Abhi main sirf gaari search mein help karti hoon. Aap car ka model, year aur city bol dein.",
+  "Maazrat, is cheez mein help nahi ho pa rahi. Aap gaari ka brand aur city batayein."
 ];
 
 const SILENCE_MS = 5000;
 const END_WAIT_MS = 900;
 const MIN_HOLD_MS = 400;
 
+/* =========================
+   STATE
+========================= */
 let callConnected = false;
 let recognition = null;
 let isRecognizing = false;
@@ -130,40 +252,65 @@ let holding = false;
 let holdStartTs = 0;
 let micFailCount = 0;
 
-/* storage */
+let lastResults = []; // list of cars from search
+let currentCar = null;
+
+/* =========================
+   STORAGE
+========================= */
 function getProfile(){ return JSON.parse(localStorage.getItem("boloProfile") || "{}"); }
 function saveProfile(p){ localStorage.setItem("boloProfile", JSON.stringify(p)); }
+
+function getTokens(){
+  return {
+    access: localStorage.getItem("dp_access") || "",
+    refresh: localStorage.getItem("dp_refresh") || "",
+    expiresAt: parseInt(localStorage.getItem("dp_expiresAt") || "0", 10) || 0,
+    user: JSON.parse(localStorage.getItem("dp_user") || "null")
+  };
+}
+function setTokens(data){
+  if(!data) return;
+  if(data.access_token) localStorage.setItem("dp_access", data.access_token);
+  if(data.refresh_token) localStorage.setItem("dp_refresh", data.refresh_token);
+  if(typeof data.expires_in === "number"){
+    localStorage.setItem("dp_expiresAt", String(Date.now() + (data.expires_in*1000) - 5000));
+  }
+  if(data.user) localStorage.setItem("dp_user", JSON.stringify(data.user));
+}
+function clearTokens(){
+  localStorage.removeItem("dp_access");
+  localStorage.removeItem("dp_refresh");
+  localStorage.removeItem("dp_expiresAt");
+  localStorage.removeItem("dp_user");
+}
+
+/* =========================
+   HELPERS
+========================= */
+function $(id){ return document.getElementById(id); }
+function setStatus(t){ $("status").innerText = t || ""; }
+function clearSilence(){ if(silenceTimer){ clearTimeout(silenceTimer); silenceTimer=null; } }
+function showSupport(){ $("supportBox").style.display = "block"; }
+function hideSupport(){ $("supportBox").style.display = "none"; }
 function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function randLady(){ return LADIES[Math.floor(Math.random()*LADIES.length)]; }
+function normalize(t){ return (t||"").toLowerCase().replace(/[^\w\s]/g," ").replace(/\s+/g," ").trim(); }
 
 function getOrAssignLady(){
   const p = getProfile();
-  if(!p.lady){
-    p.lady = randLady();
-    saveProfile(p);
-  }
+  if(!p.lady){ p.lady = randLady(); saveProfile(p); }
   return p.lady;
 }
 
-function setStatus(t){ document.getElementById("status").innerText = t || ""; }
-function clearSilence(){ if(silenceTimer){ clearTimeout(silenceTimer); silenceTimer=null; } }
-function showSupport(){ document.getElementById("supportBox").style.display="block"; }
-function hideSupport(){ document.getElementById("supportBox").style.display="none"; }
-
-function normalize(t){
-  return (t||"").toLowerCase().replace(/[^\w\s]/g," ").replace(/\s+/g," ").trim();
-}
-
-// ✅ Dr detection improved (dr / doctor anywhere at start)
 function isDoctorName(nm){
   const s = (nm||"").toLowerCase().trim();
-  if(!s) return false;
   return s.startsWith("dr") || s.startsWith("doctor") || s.includes(" dr ") || s.includes("doctor ");
 }
 
 function respectfulName(profile){
   if(!profile || !profile.name) return "bhai";
-  const nm = (profile.name || "").trim();
+  const nm = (profile.name||"").trim();
   if(isDoctorName(nm)) return "Dr sahib";
   return nm.split(" ")[0] + " bhai";
 }
@@ -184,16 +331,25 @@ function getLadyVoicePack(){
   return VOICE_BY_LADY[lady] || { voice:"marin", speed:0.95 };
 }
 
-/* stop audio */
-function stopAllVoiceEngines(){
+/* =========================
+   VOICE / MIC
+========================= */
+function stopAllVoice(){
   if(currentAudio){
     try{ currentAudio.pause(); currentAudio.currentTime = 0; }catch(e){}
     currentAudio = null;
   }
-  try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(e){}
 }
 
-/* mic warmup */
+function stopMic(){
+  if(!recognition) return;
+  try{ recognition.onresult=null; recognition.onerror=null; recognition.onend=null; }catch(e){}
+  try{ recognition.abort(); }catch(e){}
+  try{ recognition.stop(); }catch(e){}
+  isRecognizing = false;
+  clearSilence();
+}
+
 async function warmupMic(){
   if(micReady) return true;
   try{
@@ -206,36 +362,27 @@ async function warmupMic(){
   }
 }
 
-/* stop mic */
-function stopMic(){
-  if(!recognition) return;
-  try{ recognition.onresult=null; recognition.onerror=null; recognition.onend=null; }catch(e){}
-  try{ recognition.abort(); }catch(e){}
-  try{ recognition.stop(); }catch(e){}
-  isRecognizing = false;
-  clearSilence();
-}
-
-/* speak */
 async function speak(text, voicePack){
   const mySeq = ++speakSeq;
   stopMic();
-  stopAllVoiceEngines();
+  stopAllVoice();
   clearSilence();
-
   setStatus(text);
 
   const vp = voicePack || getLadyVoicePack();
+  const safeSpeed = Number((vp.speed || 0.95).toFixed(2));
+
   let res;
   try{
     res = await fetch(VOICE_API,{
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ text:text, voice:vp.voice, speed:vp.speed })
+      body: JSON.stringify({ text, voice: vp.voice, speed: safeSpeed })
     });
   }catch{
     return;
   }
+
   if(!res || !res.ok) return;
 
   const blob = await res.blob();
@@ -245,26 +392,24 @@ async function speak(text, voicePack){
   currentAudio = audio;
 
   return new Promise(resolve=>{
-    const done = function(){ if(mySeq===speakSeq) currentAudio=null; resolve(); };
+    const done = ()=>{ if(mySeq===speakSeq) currentAudio=null; resolve(); };
     audio.onended = done;
     audio.onerror = done;
     audio.play().catch(done);
   });
 }
 
-/* ring 1-3 */
 async function ring(){
   const times = Math.floor(Math.random()*3)+1;
   for(let i=0;i<times;i++){
     await new Promise(r=>{
       const a = new Audio("ringtone.mp4");
-      a.onended = function(){ setTimeout(r,350); };
+      a.onended = ()=>setTimeout(r,350);
       a.play().catch(r);
     });
   }
 }
 
-/* STT */
 if("webkitSpeechRecognition" in window){
   recognition = new webkitSpeechRecognition();
   recognition.lang = "en-IN";
@@ -272,14 +417,13 @@ if("webkitSpeechRecognition" in window){
   recognition.continuous = true;
 }
 
-/* hold-to-talk */
+/* Hold-to-talk */
 async function startListening(){
-  if(!callConnected) return;
-  if(holding) return;
+  if(!callConnected || holding) return;
   holding = true;
   holdStartTs = Date.now();
 
-  stopAllVoiceEngines();
+  stopAllVoice();
   hideSupport();
 
   if(!recognition){
@@ -298,39 +442,37 @@ async function startListening(){
   transcript = "";
   isRecognizing = true;
 
-  const callBtn = document.getElementById("callBtn");
-  callBtn.classList.add("talking");
-  callBtn.innerText = "LISTENING...";
+  const btn = $("callBtn");
+  btn.classList.add("talking");
+  btn.innerText = "LISTENING...";
 
-  setStatus("Sun rahi hoon... (hold rakhein)");
+  setStatus("Sun rahi hoon...");
 
   clearSilence();
-  silenceTimer = setTimeout(async function(){
+  silenceTimer = setTimeout(async ()=>{
     if(isRecognizing && !transcript){
       const p = getProfile();
       await speak(respectfulName(p) + ", model, year aur city bol dein.");
     }
   }, SILENCE_MS);
 
-  recognition.onresult = function(e){
+  recognition.onresult = (e)=>{
     try{
       let last = "";
       for(let i=0;i<e.results.length;i++){
         const r = e.results[i];
-        if(r && r[0] && r[0].transcript){
-          last = r[0].transcript;
-        }
+        if(r && r[0] && r[0].transcript) last = r[0].transcript;
       }
       if(last) transcript = last;
     }catch(err){}
   };
 
-  recognition.onerror = function(){
+  recognition.onerror = ()=>{
     isRecognizing = false;
     clearSilence();
   };
 
-  recognition.onend = function(){
+  recognition.onend = ()=>{
     isRecognizing = false;
     clearSilence();
   };
@@ -346,20 +488,17 @@ async function stopListening(){
   if(!holding) return;
   holding = false;
 
-  const callBtn = document.getElementById("callBtn");
-  callBtn.classList.remove("talking");
-  callBtn.innerText = "HOLD TO TALK";
+  const btn = $("callBtn");
+  btn.classList.remove("talking");
+  btn.innerText = "HOLD TO TALK";
 
   if(!recognition || !isRecognizing) return;
 
   const heldMs = Date.now() - holdStartTs;
-  if(heldMs < MIN_HOLD_MS){
-    await new Promise(r=>setTimeout(r, MIN_HOLD_MS - heldMs));
-  }
+  if(heldMs < MIN_HOLD_MS) await new Promise(r=>setTimeout(r, MIN_HOLD_MS - heldMs));
 
   clearSilence();
   try{ recognition.stop(); }catch(e){}
-
   await new Promise(r=>setTimeout(r, END_WAIT_MS));
 
   const spoken = (transcript || "").trim();
@@ -368,7 +507,7 @@ async function stopListening(){
     if(micFailCount === 1){
       await speak("Awaaz clear nahi aayi. Button ko press karke hold rakhein, phir bol kar release karein.");
     } else {
-      await speak("Lagta hai mic record nahi kar raha. Aap type karke bhi search kar sakte hain.");
+      await speak("Lagta hai mic record nahi kar raha. Aap type karke bhi likh sakte hain.");
     }
     return;
   }
@@ -377,29 +516,238 @@ async function stopListening(){
   await handleSpoken(spoken);
 }
 
-/* intents */
-function wantsComplaint(t){
-  t = normalize(t);
-  return ["complaint","complain","shikayat","issue","problem","masla","support","customer care","number"].some(x=>t.indexOf(x)!==-1);
-}
+/* =========================
+   INTENTS + FAQ
+========================= */
 function wantsBoss(t){
   t = normalize(t);
-  return ["boss","manager","supervisor","owner","boss se baat","boss se milao","boss se baat karwao","mujhe boss se baat karni hai","umar","umar se baat"].some(x=>t.indexOf(x)!==-1);
+  return ["boss","manager","supervisor","owner","boss se baat","boss se milao","boss se baat karwao","mujhe boss se baat karni hai","umar","umar se baat"].some(x=>t.includes(x));
+}
+function wantsComplaint(t){
+  t = normalize(t);
+  return ["complaint","complain","shikayat","issue","problem","masla","support","customer care"].some(x=>t.includes(x));
 }
 function wantsNewLady(t){
   t = normalize(t);
-  return ["change lady","switch lady","another lady","other lady","dusri madam","dusri lady","aur madam chahiye","koi aur lady","dusri madam se baat karwao","koi khoobsurat lady chahiye"].some(x=>t.indexOf(x)!==-1);
+  return ["change lady","switch lady","another lady","other lady","dusri madam","dusri lady","aur madam chahiye","koi aur lady","dusri madam se baat karwao","koi khoobsurat lady chahiye"].some(x=>t.includes(x));
 }
 function isAskingMyName(t){
   t = normalize(t);
-  return (t.indexOf("your name")!==-1) || (t.indexOf("aap ka naam")!==-1) || (t.indexOf("ap ka naam")!==-1) || (t.indexOf("naam kya")!==-1);
+  return t.includes("your name") || t.includes("aap ka naam") || t.includes("ap ka naam") || t.includes("naam kya");
+}
+function isAskingAddress(t){
+  t = normalize(t);
+  return t.includes("address") || t.includes("office") || t.includes("location") || t.includes("kidhar") || t.includes("kahan") || t.includes("pata");
+}
+function isAskingPhone(t){
+  t = normalize(t);
+  return t.includes("phone") || t.includes("number") || t.includes("contact") || t.includes("whatsapp");
+}
+function isAskingWebsite(t){
+  t = normalize(t);
+  return t.includes("website") || t.includes("site") || t.includes("url") || t.includes("link");
 }
 
-/* main router */
+const BRANDS=["toyota","honda","suzuki","kia","hyundai","mg","haval","changan","byd","nissan","bmw","audi","mercedes","proton","dfsk","baic","isuzu","jac","peugeot"];
+const CITIES=["lahore","karachi","islamabad","rawalpindi","peshawar","multan","faisalabad","quetta","sialkot","gujranwala","abbottabad","mansehra","swat"];
+function looksLikeCarSearch(t){
+  const x = normalize(t);
+  if(!x) return false;
+  if(/\b(19|20)\d{2}\b/.test(x)) return true;
+  if(x.includes("gaari")||x.includes("car")||x.includes("model")||x.includes("year")) return true;
+  if(BRANDS.some(b=>x.includes(b))) return true;
+  if(CITIES.some(c=>x.includes(c))) return true;
+  return false;
+}
+
+/* =========================
+   GATEWAY CALLS (search.php)
+========================= */
+async function gateway(payload){
+  const res = await fetch(GATEWAY_API,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(payload)
+  });
+  let json = null;
+  try{ json = await res.json(); }catch(e){}
+  return { ok: res.ok, status: res.status, json };
+}
+
+function isTokenExpired(){
+  const t = getTokens();
+  return !t.access || (t.expiresAt && Date.now() > t.expiresAt);
+}
+
+async function refreshIfNeeded(){
+  const t = getTokens();
+  if(!t.refresh) return false;
+  if(!isTokenExpired()) return true;
+
+  const r = await gateway({ action:"refresh", refreshToken: t.refresh });
+  if(r.ok && r.json && r.json.success && r.json.data){
+    setTokens(r.json.data);
+    return true;
+  }
+  return false;
+}
+
+async function doLogin(email, password){
+  const r = await gateway({ action:"login", email, password });
+  if(r.ok && r.json && r.json.success && r.json.data){
+    setTokens(r.json.data);
+    return { ok:true, msg:r.json.message || "Login successful" };
+  }
+  return { ok:false, msg:(r.json && r.json.message) ? r.json.message : "Login failed" };
+}
+
+async function doRegister(payload){
+  payload.action = "register";
+  const r = await gateway(payload);
+  if(r.ok && r.json && r.json.success && r.json.data){
+    setTokens(r.json.data);
+    return { ok:true, msg:r.json.message || "Registration successful" };
+  }
+  return { ok:false, msg:(r.json && r.json.message) ? r.json.message : "Registration failed" };
+}
+
+async function getCarPhone(carIdOrSlug){
+  const ok = await refreshIfNeeded();
+  if(!ok){
+    return { ok:false, msg:"Please login first (verified phone/email required)." };
+  }
+  const token = getTokens().access;
+  const r = await gateway({ action:"carPhone", id: carIdOrSlug, token });
+  if(r.ok && r.json && r.json.phone){
+    return { ok:true, data:r.json };
+  }
+  // common errors
+  const msg = (r.json && (r.json.message || r.json.error)) ? (r.json.message || r.json.error) : "Unable to fetch phone";
+  return { ok:false, msg };
+}
+
+/* =========================
+   SEARCH + RENDER
+========================= */
+async function runSearch(text){
+  hideSupport();
+  $("results").innerHTML = "<p>Gaariyan dhoondi ja rahi hain...</p>";
+
+  const r = await gateway({ action:"search", text });
+  const json = r.json;
+
+  lastResults = (json && json.data) ? json.data : [];
+  $("results").innerHTML = "";
+
+  if(!lastResults.length){
+    $("results").innerHTML = "<p>No cars available</p>";
+    return 0;
+  }
+
+  lastResults.forEach((c,i)=>{
+    const img = (c.images && c.images[0]) ? c.images[0] : "";
+    const price = c.price ? Number(c.price).toLocaleString() : "Call";
+    const title = c.title || "-";
+    const year = c.year || "-";
+    const city = (c.location && c.location.city) ? c.location.city : "-";
+
+    $("results").innerHTML += `
+      <div class="car" onclick="openDetail(${i})">
+        ${img ? `<img src="${img}">` : ""}
+        <h3 style="margin:8px 0 4px 0;">${title}</h3>
+        <div class="muted">${year} • ${city}</div>
+        <strong>PKR ${price}</strong>
+      </div>
+    `;
+  });
+
+  return lastResults.length;
+}
+
+/* Detail page */
+window.openDetail = function(i){
+  currentCar = lastResults[i];
+  if(!currentCar) return;
+
+  $("detailPage").style.display = "block";
+  $("detailTitle").innerText = currentCar.title || "Car Detail";
+  $("detailPrice").innerText = "PKR " + (currentCar.price ? Number(currentCar.price).toLocaleString() : "Call");
+
+  $("gallery").innerHTML = "";
+  (currentCar.images || []).forEach(u=>{
+    $("gallery").innerHTML += `<img src="${u}">`;
+  });
+
+  $("specGrid").innerHTML = `
+    <div class="box">Year<strong>${currentCar.year || "-"}</strong></div>
+    <div class="box">City<strong>${(currentCar.location && currentCar.location.city) ? currentCar.location.city : "-"}</strong></div>
+    <div class="box">Mileage<strong>${currentCar.mileage ? (currentCar.mileage + " km") : "-"}</strong></div>
+    <div class="box">Fuel<strong>${currentCar.fuelType || "-"}</strong></div>
+    <div class="box">Trans<strong>${currentCar.transmission || "-"}</strong></div>
+    <div class="box">Seats<strong>${currentCar.seatingCapacity || "-"}</strong></div>
+  `;
+
+  $("phoneBox").style.display = "none";
+  $("realPhone").innerText = "";
+  $("phoneOwner").innerText = "";
+
+  const t = getTokens();
+  $("contactHint").innerText = t.access ? "Tap to view phone (verified required)" : "🔒 Login to view phone number";
+
+  // try to show seller name if present
+  const dealerName = currentCar.dealerId && (currentCar.dealerId.businessName || currentCar.dealerId.name);
+  const userName = currentCar.userId && (currentCar.userId.full_name || currentCar.userId.name);
+  $("sellerName").innerText = dealerName ? dealerName : (userName ? userName : "");
+};
+
+$("backBtn").onclick = ()=>{ $("detailPage").style.display = "none"; };
+
+/* Contact seller */
+$("contactBtn").onclick = async ()=>{
+  if(!currentCar) return;
+
+  // prefer id or slug (your API supports both)
+  const carId = currentCar._id || currentCar.slug;
+  if(!carId){
+    await speak("Maazrat, is ad ka id available nahi. Please dobara try karein.");
+    return;
+  }
+
+  const t = getTokens();
+  if(!t.access){
+    openAuthModal();
+    await speak("Phone number dekhne ke liye login zaroori hai.");
+    return;
+  }
+
+  await speak("Theek hai, main number nikal rahi hoon.");
+  const r = await getCarPhone(carId);
+  if(!r.ok){
+    // show support if verification issue
+    if((r.msg||"").toLowerCase().includes("verification") || (r.msg||"").toLowerCase().includes("forbidden")){
+      showSupport();
+      await speak("Phone ke liye email aur phone verification required hai. Complaint ke liye aap " + COMPANY_NUMBER + " par call kar sakte hain.");
+    } else {
+      await speak("Maazrat, abhi phone nahi mil saka. " + (r.msg || ""));
+    }
+    return;
+  }
+
+  $("phoneBox").style.display = "block";
+  $("realPhone").innerText = r.data.phone || "";
+  $("phoneOwner").innerText = (r.data.name ? ("Name: " + r.data.name) : "") + (typeof r.data.isDealer === "boolean" ? (" • Dealer: " + (r.data.isDealer ? "Yes" : "No")) : "");
+
+  await speak("Jee, yeh contact number hai.");
+};
+
+/* =========================
+   CONVERSATION ROUTER
+========================= */
 async function handleSpoken(text){
   const p = getProfile();
   const who = respectfulName(p);
 
+  // Capture user's name first
   if(!p.name){
     if(isAskingMyName(text)){
       const lady = p.lady || getOrAssignLady();
@@ -417,6 +765,12 @@ async function handleSpoken(text){
     return;
   }
 
+  // FAQ first
+  if(isAskingAddress(text)){ await speak(who + ", hamara office address hai: " + OFFICE_ADDRESS); return; }
+  if(isAskingPhone(text)){ showSupport(); await speak(who + ", contact number hai: " + COMPANY_NUMBER + ". WhatsApp bhi isi par hai."); return; }
+  if(isAskingWebsite(text)){ await speak(who + ", hamari website hai: " + WEBSITE); return; }
+
+  // complaint/support
   if(wantsComplaint(text)){
     showSupport();
     await speak(who + ", complaint ke liye please is number par call karein: " + COMPANY_NUMBER + ".");
@@ -425,21 +779,22 @@ async function handleSpoken(text){
     hideSupport();
   }
 
-  // ✅ Boss flow: lady says (female grammar) + ring again + Umar answers in male voice
+  // boss
   if(wantsBoss(text)){
     await speak(who + ", theek hai. Main aap ko Umar se connect kar rahi hoon.");
-    await ring(); // ring again to feel real
+    await ring();
     await speak(who + ", Assalam o Alaikum. Main Umar hoon. Aap ka masla kya hai?", BOSS_UMAR);
     return;
   }
 
+  // change lady
   if(wantsNewLady(text)){
-    const current = p.lady || getOrAssignLady();
-    const others = LADIES.filter(x=>x!==current);
+    const cur = p.lady || getOrAssignLady();
+    const others = LADIES.filter(x=>x!==cur);
     p.lady = rand(others.length ? others : LADIES);
     saveProfile(p);
-
     const newLady = p.lady;
+
     await speak(who + ", theek hai. Ab " + newLady + " baat karegi.");
     await speak("Assalam o Alaikum " + who + ". Main " + newLady + " hoon.");
     return;
@@ -451,79 +806,38 @@ async function handleSpoken(text){
     return;
   }
 
-  document.getElementById("query").value = text;
-  const count = await runSearch(text);
+  // If not car search, answer politely
+  if(!looksLikeCarSearch(text)){
+    await speak(rand(UNKNOWN_LINES));
+    return;
+  }
 
+  $("query").value = text;
+  const count = await runSearch(text);
   if(count > 0) await speak(rand(RESULT_LINES));
   else await speak(rand(NO_RESULT_LINES));
 }
 
-/* search returns count */
-async function runSearch(text){
-  hideSupport();
-  const results = document.getElementById("results");
-  results.innerHTML = "<p>Gaariyan dhoondi ja rahi hain...</p>";
-
-  let res;
-  try{
-    res = await fetch(SEARCH_API,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ text:text })
-    });
-  }catch{
-    results.innerHTML = "<p>Search error</p>";
-    return 0;
-  }
-
-  let json = null;
-  try{ json = await res.json(); }catch(e){}
-
-  results.innerHTML = "";
-  if(!json || !json.data || !json.data.length){
-    results.innerHTML = "<p>No cars available</p>";
-    return 0;
-  }
-
-  for(let i=0;i<json.data.length;i++){
-    const c = json.data[i];
-    const img = (c.images && c.images[0]) ? c.images[0] : "";
-    const price = c.price ? Number(c.price).toLocaleString() : "Call";
-    const title = c.title || "-";
-    const year = c.year || "-";
-    const city = (c.location && c.location.city) ? c.location.city : "-";
-
-    results.innerHTML +=
-      '<div class="car">' +
-        (img ? '<img src="' + img + '" />' : "") +
-        '<h3>' + title + '</h3>' +
-        '<div>' + year + ' - ' + city + '</div>' +
-        '<strong>PKR ' + price + '</strong>' +
-      '</div>';
-  }
-
-  return json.data.length;
-}
-
-/* connect call */
+/* =========================
+   CONNECT CALL
+========================= */
 async function connectCall(){
-  stopAllVoiceEngines();
+  stopAllVoice();
   stopMic();
   hideSupport();
 
-  const callBtn = document.getElementById("callBtn");
-  callBtn.classList.add("calling");
-  callBtn.innerText = "CALLING...";
-  callBtn.disabled = true;
+  const btn = $("callBtn");
+  btn.classList.add("calling");
+  btn.innerText = "CALLING...";
+  btn.disabled = true;
 
   await ring();
 
   callConnected = true;
-  callBtn.classList.remove("calling");
-  callBtn.disabled = false;
-  callBtn.innerText = "HOLD TO TALK";
-
-  document.getElementById("hint").innerText = "Press & hold and speak.";
+  btn.classList.remove("calling");
+  btn.disabled = false;
+  btn.innerText = "HOLD TO TALK";
+  $("hint").innerText = "Press & hold and speak.";
 
   const p = getProfile();
   const lady = getOrAssignLady();
@@ -537,38 +851,157 @@ async function connectCall(){
   await warmupMic();
 }
 
-/* events */
-document.getElementById("supportBox").style.display="none";
-setStatus("");
+/* =========================
+   AUTH MODAL UI
+========================= */
+function openAuthModal(){
+  $("modalBack").style.display = "flex";
+  renderAuthState();
+}
+function closeAuthModal(){
+  $("modalBack").style.display = "none";
+  $("modalMsg").innerHTML = "";
+}
+function setModalMsg(ok, msg){
+  $("modalMsg").innerHTML = `<span class="${ok?'ok':'bad'}">${msg}</span>`;
+}
 
-document.getElementById("callBtn").addEventListener("click", async function(){
+function renderAuthState(){
+  const t = getTokens();
+  if(t.access){
+    $("modalTitle").innerText = "Account";
+    $("loginForm").style.display = "none";
+    $("registerForm").style.display = "none";
+    $("loggedInBox").style.display = "block";
+    const u = t.user || {};
+    $("whoami").innerText = u.full_name || u.name || "Logged in";
+    $("whoEmail").innerText = u.email || "";
+    $("authBtn").innerText = "Account";
+  }else{
+    $("modalTitle").innerText = "Login";
+    $("loginForm").style.display = "block";
+    $("registerForm").style.display = "none";
+    $("loggedInBox").style.display = "none";
+    $("authBtn").innerText = "Login";
+  }
+}
+
+/* =========================
+   EVENTS
+========================= */
+$("callBtn").addEventListener("click", async ()=>{
   if(!callConnected) await connectCall();
 });
 
-document.getElementById("callBtn").addEventListener("pointerdown", function(e){
+$("callBtn").addEventListener("pointerdown", (e)=>{
   if(!callConnected) return;
   e.preventDefault();
   try{ e.target.setPointerCapture(e.pointerId); }catch(err){}
   startListening();
 });
-document.getElementById("callBtn").addEventListener("pointerup", function(e){
+$("callBtn").addEventListener("pointerup", (e)=>{
   if(!callConnected) return;
   e.preventDefault();
   stopListening();
 });
-document.getElementById("callBtn").addEventListener("pointercancel", function(e){
+$("callBtn").addEventListener("pointercancel", (e)=>{
   if(!callConnected) return;
   e.preventDefault();
   stopListening();
 });
 
-document.getElementById("searchBtn").addEventListener("click", async function(){
-  const t = (document.getElementById("query").value || "").trim();
+$("searchBtn").addEventListener("click", async ()=>{
+  const t = ($("query").value || "").trim();
   if(!t) return;
+  if(!looksLikeCarSearch(t)){
+    await speak(rand(UNKNOWN_LINES));
+    return;
+  }
   const count = await runSearch(t);
   if(count > 0) await speak(rand(RESULT_LINES));
   else await speak(rand(NO_RESULT_LINES));
 });
+
+$("authBtn").addEventListener("click", ()=>{
+  openAuthModal();
+});
+
+$("closeModal").addEventListener("click", closeAuthModal);
+$("modalBack").addEventListener("click", (e)=>{
+  if(e.target === $("modalBack")) closeAuthModal();
+});
+
+$("goRegister").addEventListener("click", ()=>{
+  $("modalTitle").innerText = "Register";
+  $("loginForm").style.display = "none";
+  $("registerForm").style.display = "block";
+  $("loggedInBox").style.display = "none";
+  $("modalMsg").innerHTML = "";
+});
+
+$("goLogin").addEventListener("click", ()=>{
+  $("modalTitle").innerText = "Login";
+  $("loginForm").style.display = "block";
+  $("registerForm").style.display = "none";
+  $("loggedInBox").style.display = "none";
+  $("modalMsg").innerHTML = "";
+});
+
+$("doLogin").addEventListener("click", async ()=>{
+  const email = ($("loginEmail").value||"").trim();
+  const pass  = ($("loginPass").value||"").trim();
+  if(!email || !pass){
+    setModalMsg(false, "Email aur password required.");
+    return;
+  }
+  setModalMsg(true, "Logging in...");
+  const r = await doLogin(email, pass);
+  setModalMsg(r.ok, r.msg);
+  if(r.ok){
+    renderAuthState();
+    await speak("Login ho gaya. Ab aap phone number dekh sakte hain.");
+  }
+});
+
+$("doRegister").addEventListener("click", async ()=>{
+  const payload = {
+    name: ($("regName").value||"").trim(),
+    email: ($("regEmail").value||"").trim(),
+    phone: ($("regPhone").value||"").trim(),
+    password: ($("regPass").value||"").trim(),
+    confirmPassword: ($("regPass2").value||"").trim(),
+    subscribeToNewsletter: true
+  };
+  if(!payload.name || !payload.email || !payload.phone || !payload.password || !payload.confirmPassword){
+    setModalMsg(false, "Sab fields fill karein.");
+    return;
+  }
+  setModalMsg(true, "Creating account...");
+  const r = await doRegister(payload);
+  setModalMsg(r.ok, r.msg);
+  if(r.ok){
+    renderAuthState();
+    await speak("Account ban gaya. Ab verification complete karke phone dekh sakte hain.");
+  }
+});
+
+$("logoutBtn").addEventListener("click", async ()=>{
+  clearTokens();
+  setModalMsg(true, "Logged out.");
+  renderAuthState();
+  await speak("Theek hai, logout ho gaya.");
+});
+
+/* =========================
+   INIT
+========================= */
+(function init(){
+  hideSupport();
+  setStatus("");
+
+  const t = getTokens();
+  $("authBtn").innerText = t.access ? "Account" : "Login";
+})();
 </script>
 </body>
 </html>
