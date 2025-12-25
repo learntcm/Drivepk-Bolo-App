@@ -9,16 +9,16 @@
 body { margin:0; font-family:Arial,sans-serif; background:#e6e6e6; }
 header{ background:#000; color:#fff; padding:10px; display:flex; gap:10px; align-items:center; }
 .logo{ background:#E81F25; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold; }
-.main{ padding:10px; }
+.main{ padding:10px; max-width:520px; margin:0 auto; } /* keeps UI from sideways scroll */
 .hero{ background:#000; border-radius:18px; height:22vh; min-height:140px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; margin-bottom:10px; }
 .hero h1{ font-size:30px; margin:0; }
 .hero h2{ font-size:14px; color:#E81F25; margin-top:4px; }
 
-input,button{ width:100%; height:46px; border-radius:12px; font-size:15px; }
+input,button{ width:100%; height:46px; border-radius:12px; font-size:15px; box-sizing:border-box; }
 input{ padding:0 14px; border:1px solid #ccc; margin-bottom:6px; }
 button{ border:none; background:#000; color:#fff; cursor:pointer; }
 
-.call{ background:#E81F25; font-size:16px; margin-top:6px; transition:transform .05s ease, filter .05s ease; }
+.call{ background:#E81F25; font-size:16px; margin-top:6px; transition:transform .05s ease, filter .05s ease; user-select:none; }
 .call.calling{ background:#999; color:#000; }
 .call.talking{ filter:brightness(0.75); transform:scale(0.985); }
 
@@ -27,6 +27,14 @@ button{ border:none; background:#000; color:#fff; cursor:pointer; }
 .car{ background:#fff; border-radius:12px; padding:8px; margin-bottom:10px; }
 .car img{ width:100%; height:140px; object-fit:cover; border-radius:8px; }
 .smallHint{ margin-top:6px; font-size:12px; color:#333; opacity:0.85; }
+
+#supportBox{
+  display:none;
+  margin-top:10px;
+  background:#fff;
+  border-radius:12px;
+  padding:10px;
+}
 </style>
 </head>
 
@@ -52,6 +60,18 @@ button{ border:none; background:#000; color:#fff; cursor:pointer; }
   <div class="smallHint" id="hint">Call dabayen. Phir 🎤 ko press & hold karke bolen.</div>
 
   <div id="status"></div>
+
+  <!-- Complaints/Support box -->
+  <div id="supportBox">
+    <strong>Complaints / Support:</strong>
+    <div style="margin-top:6px; font-size:18px; color:#E81F25; font-weight:bold;">
+      051 8319037
+    </div>
+    <div style="margin-top:4px; font-size:12px; opacity:0.8;">
+      Please call this number for complaints.
+    </div>
+  </div>
+
   <div id="results"></div>
 </div>
 
@@ -61,13 +81,16 @@ button{ border:none; background:#000; color:#fff; cursor:pointer; }
 ========================= */
 const VOICE_API  = "https://meilibeauty.co.uk/voice.php";
 const SEARCH_API = "https://meilibeauty.co.uk/search.php";
+
 const LADIES = ["Kiran","Reshma","Mahnoor","Gul Noor","Dil Bahar","Shaheen"];
 
 const HOLD_HINT = "🎤 Press & hold karke bolen. Chhorne par sunna band ho jayega.";
 const MIC_FAIL_MAX = 2;
-const SILENCE_MS = 5000;              // ✅ reminder after 5 seconds
-const BETWEEN_PROMPTS_MS = 5000;      // ✅ 2nd/3rd prompt delay 5 seconds
+const SILENCE_MS = 5000;
+const BETWEEN_PROMPTS_MS = 5000;
 const POST_TTS_GAP_MS = 250;
+
+const COMPANY_NUMBER = "051 8319037";
 
 /* =========================
    STATE
@@ -84,7 +107,6 @@ let silenceTimer = null;
 
 let transcriptBuffer = "";
 let stopResolver = null;
-
 let micWarmed = false;
 
 /* =========================
@@ -101,35 +123,68 @@ function getOrAssignLady(){
 }
 
 /* =========================
-   UTIL
+   UI HELPERS
 ========================= */
+function setStatus(t){ status.innerText = t; }
 function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 function clearSilenceTimer(){ if(silenceTimer){ clearTimeout(silenceTimer); silenceTimer=null; } }
-function setStatus(t){ status.innerText = t; }
+
+function showSupportNumber(){
+  const box = document.getElementById("supportBox");
+  if(box) box.style.display = "block";
+}
+function hideSupportNumber(){
+  const box = document.getElementById("supportBox");
+  if(box) box.style.display = "none";
+}
 
 /* =========================
-   MIC WARM-UP (CRITICAL FIX)
-   Some Android phones won't record SpeechRecognition unless getUserMedia
-   is granted in the same session.
+   HYBRID VOICE
+   - Free ONLY on Android + Chrome
+   - Paid on all others
+========================= */
+function isAndroidChrome(){
+  const ua = navigator.userAgent.toLowerCase();
+  const isAndroid = ua.includes("android");
+  const isChrome = ua.includes("chrome") && !ua.includes("edg") && !ua.includes("opr") && !ua.includes("samsungbrowser");
+  return isAndroid && isChrome;
+}
+
+function speakFree(text){
+  return new Promise(resolve=>{
+    try{
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "en-US";
+      u.rate = 0.95;
+      u.pitch = 1.05;
+      u.onend = () => setTimeout(resolve, POST_TTS_GAP_MS);
+      u.onerror = () => resolve();
+      window.speechSynthesis.speak(u);
+    }catch(e){
+      resolve();
+    }
+  });
+}
+
+/* =========================
+   MIC WARM-UP
 ========================= */
 async function warmupMic(){
   if(micWarmed) return true;
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return true;
-
   try{
     const stream = await navigator.mediaDevices.getUserMedia({ audio:true });
-    // stop immediately
     stream.getTracks().forEach(t => t.stop());
     micWarmed = true;
     return true;
   }catch(e){
-    // user blocked mic at browser level
     return false;
   }
 }
 
 /* =========================
-   AUDIO (TTS)
+   AUDIO / MIC CONTROL
 ========================= */
 function stopAudio(){
   if(currentAudio){
@@ -150,12 +205,19 @@ function hardStopMic(){
 }
 
 async function speak(text){
+  // prevent overlap
   hardStopMic();
   stopAudio();
   clearSilenceTimer();
 
   speaking = true;
   setStatus(text);
+
+  if(isAndroidChrome()){
+    await speakFree(text);
+    speaking = false;
+    return;
+  }
 
   const res = await fetch(VOICE_API,{
     method:"POST",
@@ -199,6 +261,10 @@ if ("webkitSpeechRecognition" in window) {
   recognition.maxAlternatives = 1;
 }
 
+function normalize(t){
+  return (t||"").toLowerCase().replace(/[^\w\s]/g," ").replace(/\s+/g," ").trim();
+}
+
 async function startHoldListening(){
   if(!recognition){
     micFailCount++;
@@ -206,7 +272,7 @@ async function startHoldListening(){
     return;
   }
   if(speaking) return;
-  if(isRecognizing) return; // guard
+  if(isRecognizing) return;
 
   const ok = await warmupMic();
   if(!ok){
@@ -215,7 +281,6 @@ async function startHoldListening(){
     return;
   }
 
-  // UI feedback
   callBtn.classList.add("talking");
   callBtn.innerText = "🎙 LISTENING…";
   setStatus("Sun rahi hoon… " + HOLD_HINT);
@@ -235,14 +300,13 @@ async function startHoldListening(){
   }, SILENCE_MS);
 
   recognition.onresult = e => {
-    transcriptBuffer = (e.results && e.results[0] && e.results[0][0] && e.results[0][0].transcript)
-      ? e.results[0][0].transcript
-      : "";
+    transcriptBuffer =
+      (e.results && e.results[0] && e.results[0][0] && e.results[0][0].transcript)
+        ? e.results[0][0].transcript
+        : "";
   };
 
-  recognition.onerror = () => {
-    micFailCount++;
-  };
+  recognition.onerror = () => { micFailCount++; };
 
   recognition.onend = () => {
     listening = false;
@@ -251,31 +315,21 @@ async function startHoldListening(){
     if(stopResolver){ stopResolver(); stopResolver=null; }
   };
 
-  try {
-    recognition.start();
-  } catch(e) {
-    micFailCount++;
-    listening = false;
-    isRecognizing = false;
-    clearSilenceTimer();
-  }
+  try { recognition.start(); }
+  catch(e){ micFailCount++; listening=false; isRecognizing=false; clearSilenceTimer(); }
 }
 
 async function stopHoldListeningAndHandle(){
   if(!recognition) return;
 
-  // restore UI even if weird state
   callBtn.classList.remove("talking");
   callBtn.innerText = "🎤 HOLD TO TALK";
 
-  if(!isRecognizing){
-    return;
-  }
+  if(!isRecognizing) return;
 
   clearSilenceTimer();
   try { recognition.stop(); } catch(e) {}
 
-  // wait for onend OR timeout so transcript can arrive
   await new Promise(resolve=>{
     stopResolver = resolve;
     setTimeout(resolve, 1500);
@@ -297,17 +351,170 @@ async function stopHoldListeningAndHandle(){
 
   micFailCount = 0;
 
-  // Name flow
-  const needName = await maybeSaveNameFromSpoken(spoken);
-  if(needName) return;
+  // 1) Name capture (first time)
+  const consumedByName = await maybeSaveNameFromSpoken(spoken);
+  if(consumedByName) return;
 
-  // Normal search
+  // 2) Conversation intents
+  const handled = await handleConversationIntent(spoken);
+  if(handled) return;
+
+  // 3) Search
+  hideSupportNumber();
   query.value = spoken;
   const p=getProfile();
   p.lastSearch = spoken;
   saveProfile(p);
   await runSearch(spoken);
-  setStatus("Results aa gaye. Dobara bolna ho to " + HOLD_HINT);
+
+  await speak(resultsLine(p.name || "Doctor"));
+  setStatus("Dobara bolna ho to " + HOLD_HINT);
+}
+
+/* =========================
+   INTENTS
+========================= */
+function isAskingMyName(t){
+  t = normalize(t);
+  return (
+    t.includes("what is your name") ||
+    t.includes("whats your name") ||
+    t.includes("tell me your name") ||
+    t.includes("ap ka naam") || t.includes("aap ka naam") ||
+    t.includes("tumhara naam") ||
+    t.includes("madam ka naam") ||
+    t.includes("lady ka naam")
+  );
+}
+
+function isGreeting(t){
+  t = normalize(t);
+  return (
+    t.includes("assalam") || t.includes("salam") || t === "hi" || t === "hello" ||
+    t.includes("aoa") || t.includes("asalam o alaikum")
+  );
+}
+
+function isThanks(t){
+  t = normalize(t);
+  return t.includes("thanks") || t.includes("thank you") || t.includes("shukriya") || t.includes("jazak");
+}
+
+function isHelp(t){
+  t = normalize(t);
+  return t.includes("help") || t.includes("kya kar sakti ho") || t.includes("how to use");
+}
+
+function wantsNewLady(t){
+  t = normalize(t);
+  const phrases = [
+    "change lady","switch lady","another lady","other lady","new lady",
+    "aur madam chahiye","aur lady chahiye",
+    "dusri madam","dusri lady","koi aur lady","koi aur madam",
+    "dusri madam se baat karwao","dusri lady se baat karwao",
+    "madam change karo","lady change karo",
+    "lady badlo","lady badal do","madam badlo","madam badal do",
+    "koi khoobsurat lady chahiye"
+  ];
+  return phrases.some(p => t.includes(p));
+}
+
+function wantsBoss(t){
+  t = normalize(t);
+  const phrases = [
+    "boss","manager","supervisor","senior","team lead","owner",
+    "mujhe boss se baat karni hai","muje boss se baat karni hai",
+    "boss se baat karwao","boss se connect karo",
+    "manager se baat karwao","supervisor se baat karwao",
+    "senior se baat karwao","team lead se baat karwao",
+    "owner se baat karwao","head se baat karwao"
+  ];
+  return phrases.some(p => t.includes(p));
+}
+
+function wantsComplaint(t){
+  t = normalize(t);
+  const phrases = [
+    "complain","complaint","shikayat","shikayat karni",
+    "issue","problem","masla","report",
+    "bad service","bakwas","fraud","scam",
+    "customer care","support number",
+    "call number","phone number",
+    "compliments", "compliments number"
+  ];
+  return phrases.some(p => t.includes(p));
+}
+
+/* =========================
+   INTENT HANDLERS
+========================= */
+async function handleLadyChange(){
+  const p = getProfile();
+  const current = p.lady || "";
+  const choices = LADIES.filter(x=>x!==current);
+  p.lady = choices.length ? rand(choices) : rand(LADIES);
+  saveProfile(p);
+
+  hideSupportNumber();
+  await speak(`${p.name || "Doctor"} bhai, theek hai. Ab ${p.lady} baat karegi.`);
+  await speak(`Assalam o Alaikum ${p.name || "Doctor"} bhai. Main ${p.lady} hoon. Kya madad karun?`);
+  setStatus(HOLD_HINT);
+}
+
+async function handleConversationIntent(spoken){
+  const p = getProfile();
+  const name = p.name || "Doctor";
+  const lady = getOrAssignLady();
+
+  // Complaint request -> show number + Umar can guide
+  if(wantsComplaint(spoken)){
+    showSupportNumber();
+    await speak(`${name} bhai, agar aap ko complaint ya issue ho, please is number par call karein: ${COMPANY_NUMBER}.`);
+    setStatus("Complaints number screen par show ho gaya hai.");
+    return true;
+  } else {
+    hideSupportNumber();
+  }
+
+  // Boss request -> Umar
+  if(wantsBoss(spoken)){
+    await speak(`${name} bhai, Assalam o Alaikum. Main Umar hoon, DrivePK ka boss. Bataiye, kya madad chahiye?`);
+    setStatus(HOLD_HINT);
+    return true;
+  }
+
+  // Change lady
+  if(wantsNewLady(spoken)){
+    await handleLadyChange();
+    return true;
+  }
+
+  // Ask assistant name
+  if(isAskingMyName(spoken)){
+    await speak(`${name} bhai, mera naam ${lady} hai. DrivePK se baat ho rahi hai.`);
+    setStatus(HOLD_HINT);
+    return true;
+  }
+
+  if(isGreeting(spoken)){
+    await speak(`Assalam o Alaikum ${name} bhai. Aap ko konsi gaari chahiye? Model, year aur city bol dein.`);
+    setStatus(HOLD_HINT);
+    return true;
+  }
+
+  if(isThanks(spoken)){
+    await speak(`Khushi hui ${name} bhai. Bata dein aur kya dhoondhna hai?`);
+    setStatus(HOLD_HINT);
+    return true;
+  }
+
+  if(isHelp(spoken)){
+    await speak(`Main DrivePK assistant hoon. Aap model, year, budget aur city bolen, main gaariyan dhoond deti hoon.`);
+    setStatus(HOLD_HINT);
+    return true;
+  }
+
+  return false;
 }
 
 /* =========================
@@ -320,11 +527,11 @@ function welcomeReturning(name){
     `${name} bhai, welcome back. Bata dein konsi gaari chahiye?`
   ]);
 }
-function welcomeFirst(lady){
+function welcomeFirst(){
   return rand([
-    `Assalam o Alaikum! DrivePK mein khush aamadid. Main ${lady} hoon.`,
-    `Salam! DrivePK se baat ho rahi hai. Main ${lady} hoon.`,
-    `Assalam o Alaikum! DrivePK ki taraf se. Main ${lady} hoon.`
+    `Assalam o Alaikum! DrivePK mein khush aamadid.`,
+    `Salam! DrivePK se baat ho rahi hai.`,
+    `Assalam o Alaikum! DrivePK ki taraf se.`
   ]);
 }
 function askNameLine(){
@@ -348,9 +555,19 @@ function typingFallbackLine(){
     "Awaaz receive nahi ho rahi. Kindly text box mein likh dein."
   ]);
 }
+function resultsLine(name){
+  const n = name || "Doctor";
+  return rand([
+    `Yeh rahi aap ki search results.`,
+    `${n} bhai, results aa gaye. Aap dekh lijiye.`,
+    `${n} bhai, matching gaariyan mil gayi hain.`,
+    `Results aa gaye hain. Agar aur filter chahiye to bol dein.`,
+    `${n} bhai, yeh rahi matching gaariyan.`
+  ]);
+}
 
 /* =========================
-   NAME HANDLING
+   NAME CAPTURE
 ========================= */
 function tidyName(raw){
   return raw.replace(/[^a-zA-Z\s]/g," ").replace(/\s+/g," ").trim().split(" ").slice(0,3)
@@ -364,9 +581,18 @@ function extractName(text){
   if(cleaned && cleaned.length >= 2) return cleaned;
   return null;
 }
+
 async function maybeSaveNameFromSpoken(spoken){
   const p=getProfile();
   if(p.name) return false;
+
+  // If user asks assistant name before giving theirs, answer and request theirs
+  if(isAskingMyName(spoken)){
+    const lady = getOrAssignLady();
+    await speak(`Mera naam ${lady} hai. Pehle aap apna naam bata dein, phir main gaari dhoond deti hoon.`);
+    setStatus(HOLD_HINT);
+    return true;
+  }
 
   const name = extractName(spoken);
   if(!name){
@@ -379,7 +605,7 @@ async function maybeSaveNameFromSpoken(spoken){
   saveProfile(p);
 
   await speak(`Shukriya ${name} bhai.`);
-  await sleep(BETWEEN_PROMPTS_MS);          // ✅ 5s delay
+  await sleep(BETWEEN_PROMPTS_MS);
   await speak(askRequirementLine(name));
   setStatus(HOLD_HINT);
   return true;
@@ -389,6 +615,7 @@ async function maybeSaveNameFromSpoken(spoken){
    SEARCH
 ========================= */
 async function runSearch(text){
+  hideSupportNumber();
   results.innerHTML="<p>Gaariyan dhoondi ja rahi hain…</p>";
   const res=await fetch(SEARCH_API,{
     method:"POST",
@@ -428,6 +655,7 @@ async function connectCall(){
   callBtn.disabled=true;
 
   hardStopMic(); stopAudio(); clearSilenceTimer();
+  hideSupportNumber();
 
   await ringPhone();
 
@@ -437,20 +665,19 @@ async function connectCall(){
   callBtn.innerText="🎤 HOLD TO TALK";
   hint.innerText = HOLD_HINT;
 
-  // warm up mic once after user gesture (very effective)
   await warmupMic();
 
   const p=getProfile();
-  const lady=getOrAssignLady();
+  getOrAssignLady(); // ensure lady exists
 
   if(!p.name){
-    await speak(welcomeFirst(lady));
-    await sleep(BETWEEN_PROMPTS_MS);        // ✅ 5s delay
+    await speak(welcomeFirst());
+    await sleep(BETWEEN_PROMPTS_MS);
     await speak(askNameLine());
     setStatus("Apna naam bolne ke liye " + HOLD_HINT);
   } else {
     await speak(welcomeReturning(p.name));
-    await sleep(BETWEEN_PROMPTS_MS);        // ✅ 5s delay
+    await sleep(BETWEEN_PROMPTS_MS);
     await speak(askRequirementLine(p.name));
     setStatus(HOLD_HINT);
   }
@@ -466,6 +693,7 @@ callBtn.addEventListener("click", async () => {
 });
 
 function bindHoldEvents(btn){
+  // Touch
   btn.addEventListener("touchstart", (e)=>{
     if(!callConnected) return;
     e.preventDefault();
@@ -478,6 +706,7 @@ function bindHoldEvents(btn){
     await stopHoldListeningAndHandle();
   }, {passive:false});
 
+  // Mouse
   btn.addEventListener("mousedown", ()=>{
     if(!callConnected) return;
     startHoldListening();
@@ -493,7 +722,7 @@ function bindHoldEvents(btn){
 }
 bindHoldEvents(callBtn);
 
-/* Manual Search */
+// Manual Search
 searchBtn.onclick = async () => {
   const t=query.value.trim();
   if(!t) return;
