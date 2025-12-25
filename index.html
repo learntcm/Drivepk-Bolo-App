@@ -9,7 +9,7 @@
   body { margin:0; font-family:Arial,sans-serif; background:#e6e6e6; }
   header{ background:#000; color:#fff; padding:10px; display:flex; gap:10px; align-items:center; }
   .logo{ background:#E81F25; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold; }
-  .main{ padding:10px; max-width:520px; margin:0 auto; } /* prevents sideways scroll */
+  .main{ padding:10px; max-width:520px; margin:0 auto; }
   .hero{ background:#000; border-radius:18px; height:22vh; min-height:140px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; margin-bottom:10px; }
   .hero h1{ font-size:30px; margin:0; }
   .hero h2{ font-size:14px; color:#E81F25; margin-top:4px; }
@@ -75,11 +75,10 @@
 /* =========================================
    DrivePK BOLO – SINGLE index.html SCRIPT
    PAID voice.php ONLY (no Google/device TTS)
-   Fixes:
-   - push-to-talk works on first press (mic warmup after connect)
-   - no double/triple talking (stop audio + pointer events only)
-   - results voice only: "Yeh rahi aap ki search results."
-   - Dr bhai => Dr sahib (only say "Dr sahib", not full Dr name)
+   Updates requested:
+   ✅ Variations in “search results” line
+   ✅ “Different tones” per lady (best possible client-side = lady-specific phrasing + fillers)
+   ✅ Add/strengthen: “boss se baat / complain / shikayat”
 ========================================= */
 
 /* ---------- CONFIG ---------- */
@@ -99,13 +98,52 @@ let transcript = "";
 let silenceTimer = null;
 let micReady = false;
 
-// voice overlap guards
 let currentAudio = null;
 let speakSeq = 0;
 let speakBusy = false;
-
-// pointer hold state
 let holding = false;
+
+/* ---------- LADY “TONE” (phrasing styles) ---------- */
+const LADY_TONE = {
+  "Kiran": {
+    greet: ["Assalam o Alaikum. Main Kiran hoon. Jee batayein?", "Salam! Kiran bol rahi hoon. Kya madad karun?"],
+    ack:   ["Jee bilkul.", "Theek hai.", "Acha jee."],
+    ask:   ["Model, year aur city bol dein.", "Konsi gaari chahiye? Model/year/city batayein."]
+  },
+  "Reshma": {
+    greet: ["Assalam o Alaikum! Main Reshma. Aap ki khidmat mein.", "Salam! Reshma bol rahi hoon. Jee batayein."],
+    ack:   ["Ji ji.", "Bilkul jee.", "Acha theek."],
+    ask:   ["Apni requirement bata dein, main dhoond deti hoon.", "Model/year/city bol dein please."]
+  },
+  "Mahnoor": {
+    greet: ["Assalam o Alaikum! Mahnoor here. Bata dein kia chahiye?", "Salam! Main Mahnoor. Jee batayein."],
+    ack:   ["Okay jee.", "Sure jee.", "Done."],
+    ask:   ["Model, year, city bol dein.", "Kis city mein chahiye aur model kya ho?"]
+  },
+  "Gul Noor": {
+    greet: ["Assalam o Alaikum. Main Gul Noor. Jee farmaiye.", "Salam! Gul Noor bol rahi hoon. Kya madad karun?"],
+    ack:   ["Jee theek.", "Acha jee.", "Bilkul."],
+    ask:   ["Model/year/city bol dein jee.", "Konsi gaari dhoondni hai?"]
+  },
+  "Dil Bahar": {
+    greet: ["Assalam o Alaikum! Main Dil Bahar. Jee batayein.", "Salam! Dil Bahar bol rahi hoon. Kya help chahiye?"],
+    ack:   ["Haan jee.", "Theek hai jee.", "Acha."],
+    ask:   ["Model, year aur city bata dein.", "Aap ki budget aur city bhi bata dein."]
+  },
+  "Shaheen": {
+    greet: ["Assalam o Alaikum! Main Shaheen. Seedha batayein kia chahiye.", "Salam! Shaheen bol rahi hoon. Jee farmaiye."],
+    ack:   ["Chalein.", "Theek.", "Okay jee."],
+    ask:   ["Model/year/city bol dein, main abhi dhoondti hoon.", "Konsi gaari aur kis city mein?"]
+  }
+};
+
+const RESULT_LINES = [
+  "Yeh rahi aap ki search results.",
+  "Jee, results aa gaye hain. Dekh lijiye.",
+  "Theek hai, matching gaariyan mil gayi hain.",
+  "Acha jee, yeh aap ke results hain.",
+  "Results aa gaye — aap scroll karke options dekh sakte hain."
+];
 
 /* ---------- STORAGE ---------- */
 function getProfile(){ return JSON.parse(localStorage.getItem("boloProfile") || "{}"); }
@@ -123,13 +161,14 @@ function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 function clearSilence(){ if(silenceTimer){ clearTimeout(silenceTimer); silenceTimer=null; } }
 function showSupport(){ supportBox.style.display="block"; }
 function hideSupport(){ supportBox.style.display="none"; }
+
 function normalize(t){ return (t||"").toLowerCase().replace(/[^\w\s]/g," ").replace(/\s+/g," ").trim(); }
 
 function respectfulName(profile){
   if(!profile || !profile.name) return "bhai";
   const nm = profile.name.trim();
-  if(nm.toLowerCase().startsWith("dr")) return "Dr sahib";
-  return nm.split(" ")[0] + " bhai";
+  if(nm.toLowerCase().startsWith("dr")) return "Dr sahib";              // ✅ doctor
+  return nm.split(" ")[0] + " bhai";                                    // ✅ everyone else
 }
 
 function extractName(text){
@@ -138,19 +177,16 @@ function extractName(text){
   let raw = m ? m[2] : t;
   raw = raw.replace(/[^a-zA-Z\s]/g," ").replace(/\s+/g," ").trim();
   if(!raw) return null;
-  // If user says "Dr Sarwar", keep it as "Dr Sarwar"
   const parts = raw.split(" ").slice(0,3);
   return parts.map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(" ");
 }
 
 /* ---------- STOP ENGINES ---------- */
 function stopAllVoiceEngines(){
-  // stop any HTMLAudio
   if(currentAudio){
     try{ currentAudio.pause(); currentAudio.currentTime = 0; }catch(e){}
     currentAudio = null;
   }
-  // cancel device TTS if any old code exists in cache
   try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(e){}
 }
 
@@ -177,17 +213,12 @@ function stopMic(){
   clearSilence();
 }
 
-/* ---------- PAID TTS (voice.php) ---------- */
+/* ---------- PAID TTS ---------- */
 async function speak(text){
   const mySeq = ++speakSeq;
-
   stopMic();
   stopAllVoiceEngines();
   clearSilence();
-
-  if(speakBusy){
-    // previous audio already stopped; continue with latest
-  }
   speakBusy = true;
 
   setStatus(text);
@@ -232,7 +263,7 @@ async function speak(text){
   });
 }
 
-/* ---------- RING (1-3 times) ---------- */
+/* ---------- RING (1-3) ---------- */
 async function ring(){
   const times = Math.floor(Math.random()*3)+1;
   for(let i=0;i<times;i++){
@@ -286,7 +317,9 @@ async function startListening(){
     if(isRecognizing && !transcript){
       const p = getProfile();
       const who = respectfulName(p);
-      await speak(`${who}, model, year aur city bol dein.`);
+      const lady = p.lady || getOrAssignLady();
+      const tone = LADY_TONE[lady] || LADY_TONE["Kiran"];
+      await speak(`${tone.ack[0]} ${who}, ${rand(tone.ask)}`);
     }
   }, SILENCE_MS);
 
@@ -326,14 +359,25 @@ async function stopListening(){
   await handleSpoken(spoken);
 }
 
-/* ---------- INTENTS ---------- */
+/* ---------- INTENTS (strengthened) ---------- */
 function wantsComplaint(t){
   t = normalize(t);
-  return t.includes("complaint") || t.includes("complain") || t.includes("shikayat") || t.includes("issue") || t.includes("masla");
+  const phrases = [
+    "complaint","complain","shikayat","issue","problem","masla",
+    "report","fraud","scam","bad service","customer care","support number",
+    "i want to complain","i want complaint","i want to complaint"
+  ];
+  return phrases.some(p => t.includes(p));
 }
 function wantsBoss(t){
   t = normalize(t);
-  return t.includes("boss") || t.includes("umar") || t.includes("manager") || t.includes("supervisor");
+  const phrases = [
+    "boss","manager","supervisor","owner","head","senior",
+    "boss se baat","boss se connect","boss se milao","boss se baat karwao",
+    "mujhe boss se baat karni hai","muje boss se baat karni hai",
+    "umar","umar se baat","umar se connect","umar se milao"
+  ];
+  return phrases.some(p => t.includes(p));
 }
 function wantsNewLady(t){
   t = normalize(t);
@@ -360,67 +404,73 @@ function isAskingMyName(t){
 /* ---------- MAIN ROUTER ---------- */
 async function handleSpoken(text){
   const p = getProfile();
-  const lady = getOrAssignLady();
+  const lady = p.lady || getOrAssignLady();
+  const tone = LADY_TONE[lady] || LADY_TONE["Kiran"];
   const who = respectfulName(p);
 
   // First-time: capture name
   if(!p.name){
-    // If user asks assistant name before giving theirs
     if(isAskingMyName(text)){
-      await speak(`Mera naam ${lady} hai. Pehle aap apna naam bata dein please.`);
+      await speak(`${rand(tone.ack)} Mera naam ${lady} hai. Pehle aap apna naam bata dein please.`);
       return;
     }
 
     const nm = extractName(text);
     if(!nm){
-      await speak("Naam clear nahi aaya. Sirf apna naam dobara bol dein.");
+      await speak(`${rand(tone.ack)} Naam clear nahi aaya. Sirf apna naam dobara bol dein.`);
       return;
     }
     p.name = nm;
     saveProfile(p);
 
     const who2 = respectfulName(p);
-    await speak(`Shukriya ${who2}. Ab apni requirement bol dein.`);
+    await speak(`${rand(tone.ack)} Shukriya ${who2}. ${rand(tone.ask)}`);
     return;
   }
 
-  // Conversation intents
+  // Complaint
   if(wantsComplaint(text)){
     showSupport();
-    await speak(`${who}, complaint ke liye please is number par call karein: ${COMPANY_NUMBER}.`);
+    await speak(`${rand(tone.ack)} ${who}, complaint ke liye please is number par call karein: ${COMPANY_NUMBER}.`);
     return;
   } else {
     hideSupport();
   }
 
+  // Boss
   if(wantsBoss(text)){
-    await speak(`${who}, main Umar hoon, DrivePK ka boss. Bataiye kya masla hai ya kya madad chahiye?`);
+    // Umar (male)
+    await speak(`${who}, theek hai. Main aap ko Umar se connect kar rahi hoon.`);
+    await speak(`${who}, Assalam o Alaikum. Main Umar hoon, DrivePK ka boss. Bataiye kya masla hai ya kya madad chahiye?`);
     return;
   }
 
+  // Change lady
   if(wantsNewLady(text)){
     const current = p.lady || lady;
     const others = LADIES.filter(x=>x!==current);
     p.lady = rand(others.length ? others : LADIES);
     saveProfile(p);
-    await speak(`${who}, theek hai. Ab ${p.lady} baat karegi.`);
+
+    const newLady = p.lady;
+    const newTone = LADY_TONE[newLady] || LADY_TONE["Kiran"];
+    await speak(`${who}, theek hai. Ab ${newLady} baat karegi.`);
+    await speak(rand(newTone.greet)); // ✅ “tone change” via different phrasing
     return;
   }
 
-  if(isAskingMyName(text)){
-    await speak(`${who}, mera naam ${p.lady || lady} hai. DrivePK se baat ho rahi hai.`);
-    return;
-  }
-
+  // Greeting
   if(isGreeting(text)){
-    await speak(`${who}, Assalam o Alaikum. Bataiye konsi gaari chahiye? Model, year aur city bol dein.`);
+    await speak(`${rand(tone.ack)} ${who}, Assalam o Alaikum. ${rand(tone.ask)}`);
     return;
   }
 
   // Otherwise: treat as search
   query.value = text;
   await runSearch(text);
-  await speak("Yeh rahi aap ki search results."); // ✅ no name repeating on results
+
+  // ✅ variation in results line
+  await speak(rand(RESULT_LINES));
 }
 
 /* ---------- SEARCH ---------- */
@@ -486,16 +536,19 @@ async function connectCall(){
   hint.innerText = "🎤 Press & hold karke bolen.";
 
   const p = getProfile();
-  getOrAssignLady();
+  const lady = getOrAssignLady();
+  const tone = LADY_TONE[lady] || LADY_TONE["Kiran"];
 
   if(!p.name){
-    await speak("Assalam o Alaikum! DrivePK mein khush aamadid. Aap ka naam kya hai?");
+    await speak("Assalam o Alaikum! DrivePK mein khush aamadid.");
+    await speak(rand(tone.greet));
+    await speak("Aap ka naam kya hai?");
   }else{
     const who = respectfulName(p);
-    await speak(`${who}, Assalam o Alaikum. Bataiye konsi gaari chahiye?`);
+    await speak(`${rand(tone.ack)} ${who}. ${rand(tone.ask)}`);
   }
 
-  // ✅ IMPORTANT: warmup mic AFTER welcome so first push-to-talk works
+  // warmup mic so first press works
   await warmupMic();
 }
 
@@ -504,7 +557,6 @@ hideSupport();
 setStatus("");
 hint.innerText = "Call dabayen. Phir 🎤 ko press & hold karke bolen.";
 
-// click: only connects call (no ringing again later)
 callBtn.addEventListener("click", async ()=>{
   if(!callConnected) await connectCall();
 });
@@ -532,9 +584,8 @@ searchBtn.addEventListener("click", async ()=>{
   const t = (query.value || "").trim();
   if(!t) return;
   await runSearch(t);
-  await speak("Yeh rahi aap ki search results."); // ✅ no name here either
+  await speak(rand(RESULT_LINES));
 });
 </script>
 </body>
 </html>
-```0
