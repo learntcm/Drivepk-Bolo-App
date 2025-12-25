@@ -1,199 +1,574 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>DrivePK BOLO</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
 
 <style>
-body{margin:0;font-family:Arial;background:#eee}
-header{background:#000;color:#fff;padding:12px;display:flex;gap:10px;align-items:center}
-.logo{background:#e81f25;width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:bold}
-.main{padding:12px}
-.hero{background:#000;color:#fff;border-radius:18px;height:22vh;min-height:160px;display:flex;flex-direction:column;justify-content:center;align-items:center}
-.hero h1{margin:0;font-size:34px}
-.hero h2{margin:6px 0 0;color:#e81f25;font-size:15px}
+  body { margin:0; font-family:Arial,sans-serif; background:#e6e6e6; }
+  header { background:#000; color:#fff; padding:10px; display:flex; gap:10px; align-items:center; }
+  .logo { background:#E81F25; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold; }
+  .main { padding:10px; max-width:520px; margin:0 auto; }
+  .hero { background:#000; border-radius:18px; height:22vh; min-height:140px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; margin-bottom:10px; }
+  .hero h1 { font-size:30px; margin:0; }
+  .hero h2 { font-size:14px; color:#E81F25; margin-top:4px; }
 
-input,button{width:100%;height:52px;border-radius:14px;font-size:16px}
-input{padding:0 14px;border:1px solid #ccc;margin-top:8px}
-button{border:none;background:#000;color:#fff;margin-top:8px}
-.call{background:#e81f25}
-.call.talking{background:#0a7a0a}
-#status{margin-top:8px;color:#e81f25;font-weight:bold}
-.car{background:#fff;border-radius:14px;padding:10px;margin-top:10px}
+  input,button { width:100%; height:46px; border-radius:12px; font-size:15px; box-sizing:border-box; }
+  input { padding:0 14px; border:1px solid #ccc; margin-bottom:6px; }
+  button { border:none; background:#000; color:#fff; cursor:pointer; }
+
+  .call { background:#E81F25; font-size:16px; margin-top:6px; user-select:none; transition:filter .08s ease, transform .08s ease; }
+  .call.calling { background:#999; color:#000; }
+  .call.talking { filter:brightness(0.78); transform:scale(0.985); }
+
+  #hint { margin-top:6px; font-size:12px; color:#333; opacity:0.85; }
+  #status { margin-top:6px; font-weight:bold; color:#E81F25; font-size:14px; }
+  #results { margin-top:10px; }
+
+  .car { background:#fff; border-radius:12px; padding:8px; margin-bottom:10px; }
+  .car img { width:100%; height:140px; object-fit:cover; border-radius:8px; }
+
+  #supportBox {
+    display:none;
+    margin-top:10px;
+    background:#fff;
+    border-radius:12px;
+    padding:10px;
+  }
 </style>
 </head>
 
 <body>
-
 <header>
   <div class="logo">D</div>
-  <div><strong>DrivePK</strong><br><small>Bolo aur gaari dhoondo</small></div>
+  <div>
+    <strong>DrivePK</strong><br />
+    <small>Bolo aur gaari dhoondo</small>
+  </div>
 </header>
 
 <div class="main">
   <div class="hero">
     <h1>DrivePK</h1>
-    <h2>Roman Urdu Voice Search</h2>
+    <h2>Voice Search</h2>
   </div>
 
-  <input id="query" placeholder="Jaise: Honda 2019 Lahore">
+  <input id="query" placeholder="Jaise: MG Peshawar" />
   <button id="searchBtn">Search</button>
-  <button id="callBtn" class="call">🎤 TALK</button>
+
+  <button class="call" id="callBtn">CALL</button>
+  <div id="hint">Call dabayen. Phir mic ko press & hold karke bolen.</div>
 
   <div id="status"></div>
+
+  <div id="supportBox">
+    <strong>Complaints / Support:</strong>
+    <div style="margin-top:6px; font-size:18px; color:#E81F25; font-weight:bold;">051 8319037</div>
+    <div style="margin-top:4px; font-size:12px; opacity:0.8;">Please call this number for complaints.</div>
+  </div>
+
   <div id="results"></div>
 </div>
 
 <script>
-/* =======================
-   VOICE CONFIG
-======================= */
+/* Fixes in this version:
+  1) Dr bhai -> Dr sahib (also if saved name is "Doctor ...")
+  2) Lady line: "connect kar rahi hoon" (female)
+  3) After boss request: phone rings again, then Umar answers
+  4) Umar speaks in MAN voice (onyx) by forcing voice pack on BOTH speak() calls
+*/
 
-const LADIES = {
-  Kiran:{voice:"marin",speed:0.95},
-  Reshma:{voice:"cedar",speed:0.95},
-  Shaheen:{voice:"sage",speed:0.95}
+const VOICE_API  = "https://meilibeauty.co.uk/voice.php";
+const SEARCH_API = "https://meilibeauty.co.uk/search.php";
+const COMPANY_NUMBER = "051 8319037";
+
+const LADIES = ["Kiran","Reshma","Mahnoor","Gul Noor","Dil Bahar","Shaheen"];
+
+const VOICE_BY_LADY = {
+  "Kiran":    { voice:"marin",  speed:0.95 },
+  "Reshma":   { voice:"cedar",  speed:0.95 },
+  "Mahnoor":  { voice:"shimmer",speed:0.98 },
+  "Gul Noor": { voice:"coral",  speed:0.95 },
+  "Dil Bahar":{ voice:"nova",   speed:0.98 },
+  "Shaheen":  { voice:"sage",   speed:0.95 }
 };
 
-const RESULT_LINES=[
- "Yeh rahi aap ki search results.",
- "Aap ke liye kuch gaariyan mil gayi hain.",
- "Search complete ho gayi hai."
+// Boss voice pack (male)
+const BOSS_UMAR = { voice:"onyx", speed:0.95 };
+
+const RESULT_LINES = [
+  "Jee, aap ke results aa gaye hain.",
+  "Acha jee, yeh aap ke results hain.",
+  "Theek hai, matching gaariyan mil gayi hain.",
+  "Results aa gaye, aap options dekh sakte hain.",
+  "Yeh rahi aap ki search results."
 ];
 
-const NO_RESULT_LINES=[
- "Maaf kijiye, is search par koi gaari available nahi.",
- "Abhi is requirement ki koi gaari nahi mili."
+const NO_RESULT_LINES = [
+  "Is search par koi gaari available nahi.",
+  "Maazrat, is waqt koi matching gaari nahi mili.",
+  "Is city mein filhaal koi option nazar nahi aa raha.",
+  "Koi gaari nahi mili, aap model ya city change karke try karein."
 ];
 
-const profile = JSON.parse(localStorage.getItem("drivepk_profile")||"{}");
-function saveProfile(){localStorage.setItem("drivepk_profile",JSON.stringify(profile));}
+const SILENCE_MS = 5000;
+const END_WAIT_MS = 900;
+const MIN_HOLD_MS = 400;
 
-function respectfulName(){
- if(!profile.name) return "";
- if(profile.name.toLowerCase().includes("dr")) return "Dr sahib";
- return profile.name+" bhai";
+let callConnected = false;
+let recognition = null;
+let isRecognizing = false;
+let transcript = "";
+let silenceTimer = null;
+let micReady = false;
+
+let currentAudio = null;
+let speakSeq = 0;
+
+let holding = false;
+let holdStartTs = 0;
+let micFailCount = 0;
+
+/* storage */
+function getProfile(){ return JSON.parse(localStorage.getItem("boloProfile") || "{}"); }
+function saveProfile(p){ localStorage.setItem("boloProfile", JSON.stringify(p)); }
+function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function randLady(){ return LADIES[Math.floor(Math.random()*LADIES.length)]; }
+
+function getOrAssignLady(){
+  const p = getProfile();
+  if(!p.lady){
+    p.lady = randLady();
+    saveProfile(p);
+  }
+  return p.lady;
 }
 
-if(!profile.lady){
- const keys=Object.keys(LADIES);
- profile.lady=keys[Math.floor(Math.random()*keys.length)];
- saveProfile();
+function setStatus(t){ document.getElementById("status").innerText = t || ""; }
+function clearSilence(){ if(silenceTimer){ clearTimeout(silenceTimer); silenceTimer=null; } }
+function showSupport(){ document.getElementById("supportBox").style.display="block"; }
+function hideSupport(){ document.getElementById("supportBox").style.display="none"; }
+
+function normalize(t){
+  return (t||"").toLowerCase().replace(/[^\w\s]/g," ").replace(/\s+/g," ").trim();
 }
 
-/* =======================
-   SPEAK
-======================= */
-async function speak(text,voicePack){
- const vp=voicePack||LADIES[profile.lady];
- const res=await fetch("https://meilibeauty.co.uk/voice.php",{
-  method:"POST",
-  headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({text,voice:vp.voice,speed:vp.speed})
- });
- const audio=new Audio(URL.createObjectURL(await res.blob()));
- return audio.play();
+// ✅ Dr detection improved (dr / doctor anywhere at start)
+function isDoctorName(nm){
+  const s = (nm||"").toLowerCase().trim();
+  if(!s) return false;
+  return s.startsWith("dr") || s.startsWith("doctor") || s.includes(" dr ") || s.includes("doctor ");
 }
 
-/* =======================
-   NAME SAFETY
-======================= */
-
-const NAME_BLACKLIST=[
- "honda","toyota","suzuki","kia","mg","byd","lahore","karachi","car","gaari","model","year"
-];
-
-function normalize(t){return t.toLowerCase();}
-
-function isExplicitName(t){
- t=normalize(t);
- return t.startsWith("my name is")||t.startsWith("mera naam")||t.startsWith("i am");
+function respectfulName(profile){
+  if(!profile || !profile.name) return "bhai";
+  const nm = (profile.name || "").trim();
+  if(isDoctorName(nm)) return "Dr sahib";
+  return nm.split(" ")[0] + " bhai";
 }
 
-function extractName(t){
- t=normalize(t)
-  .replace("my name is","")
-  .replace("mera naam","")
-  .replace("i am","")
-  .trim();
- for(const b of NAME_BLACKLIST){if(t.includes(b))return null;}
- if(!/^[a-z\s]{2,25}$/.test(t))return null;
- return t.split(" ").map(w=>w[0].toUpperCase()+w.slice(1)).join(" ");
+function extractName(text){
+  const t = (text||"").trim();
+  const m = t.match(/(my name is|mera naam)\s+(.+)/i);
+  let raw = m ? m[2] : t;
+  raw = raw.replace(/[^a-zA-Z\s]/g," ").replace(/\s+/g," ").trim();
+  if(!raw) return null;
+  const parts = raw.split(" ").slice(0,3);
+  return parts.map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(" ");
 }
 
-/* =======================
-   MIC
-======================= */
-let rec=null;
-if("webkitSpeechRecognition"in window){
- rec=new webkitSpeechRecognition();
- rec.lang="en-GB";
- rec.onresult=e=>handleText(e.results[0][0].transcript);
+function getLadyVoicePack(){
+  const p = getProfile();
+  const lady = p.lady || getOrAssignLady();
+  return VOICE_BY_LADY[lady] || { voice:"marin", speed:0.95 };
 }
 
-/* =======================
-   CORE HANDLER
-======================= */
-async function handleText(text){
- status.innerText="Aap ne kaha: "+text;
-
- // name
- if(!profile.name && isExplicitName(text)){
-  const n=extractName(text);
-  if(n){profile.name=n;saveProfile();await speak("Shukriya "+respectfulName()+". Ab apni requirement bol dein.");return;}
- }
-
- // boss
- if(text.toLowerCase().includes("boss")||text.toLowerCase().includes("complain")){
-  document.getElementById("results").innerHTML="<div class='car'>📞 Complaint: 0300-8319037</div>";
-  await speak("Theek hai. Complaint ka number screen par show ho raha hai.");
-  await speak("Assalam o Alaikum. Main Umar hoon. Aap ka masla kya hai?",{voice:"onyx",speed:0.95});
-  return;
- }
-
- // search
- runSearch(text);
+/* stop audio */
+function stopAllVoiceEngines(){
+  if(currentAudio){
+    try{ currentAudio.pause(); currentAudio.currentTime = 0; }catch(e){}
+    currentAudio = null;
+  }
+  try{ window.speechSynthesis && window.speechSynthesis.cancel(); }catch(e){}
 }
 
-/* =======================
-   SEARCH
-======================= */
+/* mic warmup */
+async function warmupMic(){
+  if(micReady) return true;
+  try{
+    const s = await navigator.mediaDevices.getUserMedia({audio:true});
+    s.getTracks().forEach(t=>t.stop());
+    micReady = true;
+    return true;
+  }catch{
+    return false;
+  }
+}
+
+/* stop mic */
+function stopMic(){
+  if(!recognition) return;
+  try{ recognition.onresult=null; recognition.onerror=null; recognition.onend=null; }catch(e){}
+  try{ recognition.abort(); }catch(e){}
+  try{ recognition.stop(); }catch(e){}
+  isRecognizing = false;
+  clearSilence();
+}
+
+/* speak */
+async function speak(text, voicePack){
+  const mySeq = ++speakSeq;
+  stopMic();
+  stopAllVoiceEngines();
+  clearSilence();
+
+  setStatus(text);
+
+  const vp = voicePack || getLadyVoicePack();
+  let res;
+  try{
+    res = await fetch(VOICE_API,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ text:text, voice:vp.voice, speed:vp.speed })
+    });
+  }catch{
+    return;
+  }
+  if(!res || !res.ok) return;
+
+  const blob = await res.blob();
+  if(mySeq !== speakSeq) return;
+
+  const audio = new Audio(URL.createObjectURL(blob));
+  currentAudio = audio;
+
+  return new Promise(resolve=>{
+    const done = function(){ if(mySeq===speakSeq) currentAudio=null; resolve(); };
+    audio.onended = done;
+    audio.onerror = done;
+    audio.play().catch(done);
+  });
+}
+
+/* ring 1-3 */
+async function ring(){
+  const times = Math.floor(Math.random()*3)+1;
+  for(let i=0;i<times;i++){
+    await new Promise(r=>{
+      const a = new Audio("ringtone.mp4");
+      a.onended = function(){ setTimeout(r,350); };
+      a.play().catch(r);
+    });
+  }
+}
+
+/* STT */
+if("webkitSpeechRecognition" in window){
+  recognition = new webkitSpeechRecognition();
+  recognition.lang = "en-IN";
+  recognition.interimResults = true;
+  recognition.continuous = true;
+}
+
+/* hold-to-talk */
+async function startListening(){
+  if(!callConnected) return;
+  if(holding) return;
+  holding = true;
+  holdStartTs = Date.now();
+
+  stopAllVoiceEngines();
+  hideSupport();
+
+  if(!recognition){
+    holding = false;
+    await speak("Mic supported nahi hai. Please type karke search karein.");
+    return;
+  }
+
+  const ok = await warmupMic();
+  if(!ok){
+    holding = false;
+    await speak("Mic permission allow nahi. Please type kar dein.");
+    return;
+  }
+
+  transcript = "";
+  isRecognizing = true;
+
+  const callBtn = document.getElementById("callBtn");
+  callBtn.classList.add("talking");
+  callBtn.innerText = "LISTENING...";
+
+  setStatus("Sun rahi hoon... (hold rakhein)");
+
+  clearSilence();
+  silenceTimer = setTimeout(async function(){
+    if(isRecognizing && !transcript){
+      const p = getProfile();
+      await speak(respectfulName(p) + ", model, year aur city bol dein.");
+    }
+  }, SILENCE_MS);
+
+  recognition.onresult = function(e){
+    try{
+      let last = "";
+      for(let i=0;i<e.results.length;i++){
+        const r = e.results[i];
+        if(r && r[0] && r[0].transcript){
+          last = r[0].transcript;
+        }
+      }
+      if(last) transcript = last;
+    }catch(err){}
+  };
+
+  recognition.onerror = function(){
+    isRecognizing = false;
+    clearSilence();
+  };
+
+  recognition.onend = function(){
+    isRecognizing = false;
+    clearSilence();
+  };
+
+  try{ recognition.start(); }catch(e){
+    holding = false;
+    isRecognizing = false;
+    clearSilence();
+  }
+}
+
+async function stopListening(){
+  if(!holding) return;
+  holding = false;
+
+  const callBtn = document.getElementById("callBtn");
+  callBtn.classList.remove("talking");
+  callBtn.innerText = "HOLD TO TALK";
+
+  if(!recognition || !isRecognizing) return;
+
+  const heldMs = Date.now() - holdStartTs;
+  if(heldMs < MIN_HOLD_MS){
+    await new Promise(r=>setTimeout(r, MIN_HOLD_MS - heldMs));
+  }
+
+  clearSilence();
+  try{ recognition.stop(); }catch(e){}
+
+  await new Promise(r=>setTimeout(r, END_WAIT_MS));
+
+  const spoken = (transcript || "").trim();
+  if(!spoken){
+    micFailCount++;
+    if(micFailCount === 1){
+      await speak("Awaaz clear nahi aayi. Button ko press karke hold rakhein, phir bol kar release karein.");
+    } else {
+      await speak("Lagta hai mic record nahi kar raha. Aap type karke bhi search kar sakte hain.");
+    }
+    return;
+  }
+
+  micFailCount = 0;
+  await handleSpoken(spoken);
+}
+
+/* intents */
+function wantsComplaint(t){
+  t = normalize(t);
+  return ["complaint","complain","shikayat","issue","problem","masla","support","customer care","number"].some(x=>t.indexOf(x)!==-1);
+}
+function wantsBoss(t){
+  t = normalize(t);
+  return ["boss","manager","supervisor","owner","boss se baat","boss se milao","boss se baat karwao","mujhe boss se baat karni hai","umar","umar se baat"].some(x=>t.indexOf(x)!==-1);
+}
+function wantsNewLady(t){
+  t = normalize(t);
+  return ["change lady","switch lady","another lady","other lady","dusri madam","dusri lady","aur madam chahiye","koi aur lady","dusri madam se baat karwao","koi khoobsurat lady chahiye"].some(x=>t.indexOf(x)!==-1);
+}
+function isAskingMyName(t){
+  t = normalize(t);
+  return (t.indexOf("your name")!==-1) || (t.indexOf("aap ka naam")!==-1) || (t.indexOf("ap ka naam")!==-1) || (t.indexOf("naam kya")!==-1);
+}
+
+/* main router */
+async function handleSpoken(text){
+  const p = getProfile();
+  const who = respectfulName(p);
+
+  if(!p.name){
+    if(isAskingMyName(text)){
+      const lady = p.lady || getOrAssignLady();
+      await speak("Mera naam " + lady + " hai. Kia main aap ka naam pooch sakti hoon?");
+      return;
+    }
+    const nm = extractName(text);
+    if(!nm){
+      await speak("Naam clear nahi aaya. Sirf apna naam dobara bol dein.");
+      return;
+    }
+    p.name = nm;
+    saveProfile(p);
+    await speak("Shukriya " + respectfulName(p) + ". Ab apni requirement bol dein.");
+    return;
+  }
+
+  if(wantsComplaint(text)){
+    showSupport();
+    await speak(who + ", complaint ke liye please is number par call karein: " + COMPANY_NUMBER + ".");
+    return;
+  } else {
+    hideSupport();
+  }
+
+  // ✅ Boss flow: lady says (female grammar) + ring again + Umar answers in male voice
+  if(wantsBoss(text)){
+    await speak(who + ", theek hai. Main aap ko Umar se connect kar rahi hoon.");
+    await ring(); // ring again to feel real
+    await speak(who + ", Assalam o Alaikum. Main Umar hoon. Aap ka masla kya hai?", BOSS_UMAR);
+    return;
+  }
+
+  if(wantsNewLady(text)){
+    const current = p.lady || getOrAssignLady();
+    const others = LADIES.filter(x=>x!==current);
+    p.lady = rand(others.length ? others : LADIES);
+    saveProfile(p);
+
+    const newLady = p.lady;
+    await speak(who + ", theek hai. Ab " + newLady + " baat karegi.");
+    await speak("Assalam o Alaikum " + who + ". Main " + newLady + " hoon.");
+    return;
+  }
+
+  if(isAskingMyName(text)){
+    const lady = p.lady || getOrAssignLady();
+    await speak(who + ", mera naam " + lady + " hai.");
+    return;
+  }
+
+  document.getElementById("query").value = text;
+  const count = await runSearch(text);
+
+  if(count > 0) await speak(rand(RESULT_LINES));
+  else await speak(rand(NO_RESULT_LINES));
+}
+
+/* search returns count */
 async function runSearch(text){
- results.innerHTML="Searching…";
- const res=await fetch("https://meilibeauty.co.uk/search.php",{
-  method:"POST",
-  headers:{"Content-Type":"application/json"},
-  body:JSON.stringify({text})
- });
- const json=await res.json();
- if(!json.data||!json.data.length){
-  results.innerHTML="<div class='car'>No cars found</div>";
-  await speak(NO_RESULT_LINES[Math.floor(Math.random()*NO_RESULT_LINES.length)]);
-  return;
- }
- results.innerHTML="";
- json.data.forEach(c=>{
-  results.innerHTML+=`<div class='car'><strong>${c.title}</strong><br>PKR ${c.price}</div>`;
- });
- await speak(RESULT_LINES[Math.floor(Math.random()*RESULT_LINES.length)]);
+  hideSupport();
+  const results = document.getElementById("results");
+  results.innerHTML = "<p>Gaariyan dhoondi ja rahi hain...</p>";
+
+  let res;
+  try{
+    res = await fetch(SEARCH_API,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ text:text })
+    });
+  }catch{
+    results.innerHTML = "<p>Search error</p>";
+    return 0;
+  }
+
+  let json = null;
+  try{ json = await res.json(); }catch(e){}
+
+  results.innerHTML = "";
+  if(!json || !json.data || !json.data.length){
+    results.innerHTML = "<p>No cars available</p>";
+    return 0;
+  }
+
+  for(let i=0;i<json.data.length;i++){
+    const c = json.data[i];
+    const img = (c.images && c.images[0]) ? c.images[0] : "";
+    const price = c.price ? Number(c.price).toLocaleString() : "Call";
+    const title = c.title || "-";
+    const year = c.year || "-";
+    const city = (c.location && c.location.city) ? c.location.city : "-";
+
+    results.innerHTML +=
+      '<div class="car">' +
+        (img ? '<img src="' + img + '" />' : "") +
+        '<h3>' + title + '</h3>' +
+        '<div>' + year + ' - ' + city + '</div>' +
+        '<strong>PKR ' + price + '</strong>' +
+      '</div>';
+  }
+
+  return json.data.length;
 }
 
-/* =======================
-   BUTTONS
-======================= */
-callBtn.onpointerdown=()=>{
- callBtn.classList.add("talking");
- status.innerText="Sun rahi hoon…";
- try{rec.start();}catch{}
-};
-callBtn.onpointerup=()=>{
- callBtn.classList.remove("talking");
- try{rec.stop();}catch{}
-};
+/* connect call */
+async function connectCall(){
+  stopAllVoiceEngines();
+  stopMic();
+  hideSupport();
 
-searchBtn.onclick=()=>query.value&&handleText(query.value);
+  const callBtn = document.getElementById("callBtn");
+  callBtn.classList.add("calling");
+  callBtn.innerText = "CALLING...";
+  callBtn.disabled = true;
+
+  await ring();
+
+  callConnected = true;
+  callBtn.classList.remove("calling");
+  callBtn.disabled = false;
+  callBtn.innerText = "HOLD TO TALK";
+
+  document.getElementById("hint").innerText = "Press & hold and speak.";
+
+  const p = getProfile();
+  const lady = getOrAssignLady();
+
+  if(!p.name){
+    await speak("Assalam o Alaikum! DrivePK mein khush aamadid. Mera naam " + lady + " hai. Kia main aap ka naam pooch sakti hoon?");
+  }else{
+    await speak(respectfulName(p) + ", Assalam o Alaikum. Model, year aur city bol dein.");
+  }
+
+  await warmupMic();
+}
+
+/* events */
+document.getElementById("supportBox").style.display="none";
+setStatus("");
+
+document.getElementById("callBtn").addEventListener("click", async function(){
+  if(!callConnected) await connectCall();
+});
+
+document.getElementById("callBtn").addEventListener("pointerdown", function(e){
+  if(!callConnected) return;
+  e.preventDefault();
+  try{ e.target.setPointerCapture(e.pointerId); }catch(err){}
+  startListening();
+});
+document.getElementById("callBtn").addEventListener("pointerup", function(e){
+  if(!callConnected) return;
+  e.preventDefault();
+  stopListening();
+});
+document.getElementById("callBtn").addEventListener("pointercancel", function(e){
+  if(!callConnected) return;
+  e.preventDefault();
+  stopListening();
+});
+
+document.getElementById("searchBtn").addEventListener("click", async function(){
+  const t = (document.getElementById("query").value || "").trim();
+  if(!t) return;
+  const count = await runSearch(t);
+  if(count > 0) await speak(rand(RESULT_LINES));
+  else await speak(rand(NO_RESULT_LINES));
+});
 </script>
-
 </body>
 </html>
