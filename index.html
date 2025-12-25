@@ -7,27 +7,10 @@
 
 <style>
 body { margin:0; font-family:Arial,sans-serif; background:#e6e6e6; }
-
-/* HEADER */
-header{
-  background:#000; color:#fff; padding:10px;
-  display:flex; gap:10px; align-items:center;
-}
-.logo{
-  background:#E81F25; width:38px; height:38px; border-radius:10px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:16px; font-weight:bold;
-}
+header{ background:#000; color:#fff; padding:10px; display:flex; gap:10px; align-items:center; }
+.logo{ background:#E81F25; width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:bold; }
 .main{ padding:10px; }
-
-/* HERO */
-.hero{
-  background:#000; border-radius:18px;
-  height:22vh; min-height:140px;
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  color:#fff; margin-bottom:10px;
-}
+.hero{ background:#000; border-radius:18px; height:22vh; min-height:140px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; margin-bottom:10px; }
 .hero h1{ font-size:30px; margin:0; }
 .hero h2{ font-size:14px; color:#E81F25; margin-top:4px; }
 
@@ -40,9 +23,15 @@ button{ border:none; background:#000; color:#fff; cursor:pointer; }
 
 #status{ margin-top:6px; font-weight:bold; color:#E81F25; font-size:14px; }
 #results{ margin-top:10px; }
-
 .car{ background:#fff; border-radius:12px; padding:8px; margin-bottom:10px; }
 .car img{ width:100%; height:140px; object-fit:cover; border-radius:8px; }
+
+.smallHint{
+  margin-top:6px;
+  font-size:12px;
+  color:#333;
+  opacity:0.8;
+}
 </style>
 </head>
 
@@ -63,7 +52,10 @@ button{ border:none; background:#000; color:#fff; cursor:pointer; }
 
   <input id="query" placeholder="Jaise: Toyota Corolla 2019 Lahore">
   <button id="searchBtn">Search</button>
+
+  <!-- One button that becomes CALL then HOLD-TO-TALK -->
   <button class="call" id="callBtn">📞 CALL</button>
+  <div class="smallHint" id="hint">Call dabayen. Phir 🎤 ko press & hold karke bolen.</div>
 
   <div id="status"></div>
   <div id="results"></div>
@@ -76,18 +68,24 @@ button{ border:none; background:#000; color:#fff; cursor:pointer; }
 const VOICE_API  = "https://meilibeauty.co.uk/voice.php";
 const SEARCH_API = "https://meilibeauty.co.uk/search.php";
 const LADIES = ["Kiran","Reshma","Mahnoor","Gul Noor","Dil Bahar","Shaheen"];
-const TONES  = ["friendly","direct","formal"];
 
-/* mic timing */
-const MIC_SAFE_DELAY_MS = 1500;          // stronger delay to avoid cutting audio on Android
-const SILENCE_REMINDER_MS = 5000;        // if user stays silent, prompt again after 5s
+const HOLD_HINT = "🎤 Press & hold karke bolen. Chhorne par sunna band ho jayega.";
+const MIC_FAIL_MAX = 2;                // after 2 failures -> suggest typing
+const SILENCE_MS = 5000;               // if user holds but no speech -> reminder
+const POST_TTS_GAP_MS = 300;           // small gap after voice ends (stability)
 
 /* =========================
    STATE
 ========================= */
-let callConnected = false;               // IMPORTANT: prevents re-ringing on TALK
-let silenceTimer = null;
+let callConnected = false;
 let currentAudio = null;
+let speaking = false;
+let listening = false;
+let micFailCount = 0;
+let silenceTimer = null;
+
+let recognition = null;
+let lastTranscript = "";
 
 /* =========================
    STORAGE
@@ -101,79 +99,54 @@ function getOrAssignLady(){
   if(!p.lady){ p.lady = rand(LADIES); saveProfile(p); }
   return p.lady;
 }
-function getOrAssignTone(){
-  const p=getProfile();
-  if(!p.tone){ p.tone = rand(TONES); saveProfile(p); }
-  return p.tone;
-}
 
 /* =========================
-   SPEECH RECOGNITION
+   SPEECH RECOGNITION SETUP
 ========================= */
-let recognition=null;
-if("webkitSpeechRecognition" in window){
-  recognition=new webkitSpeechRecognition();
-  recognition.lang="en-GB";
-  recognition.interimResults=false;
-  recognition.continuous=false;
-}
-
-function hardStopMic(){
-  if(!recognition) return;
-  try { recognition.onresult=null; recognition.onerror=null; } catch(e){}
-  try { recognition.abort(); } catch(e){}
-  try { recognition.stop(); } catch(e){}
+if ("webkitSpeechRecognition" in window) {
+  recognition = new webkitSpeechRecognition();
+  recognition.lang = "en-GB";
+  recognition.interimResults = false;
+  recognition.continuous = false;
 }
 
 function clearSilenceTimer(){
   if(silenceTimer){ clearTimeout(silenceTimer); silenceTimer=null; }
 }
 
-function listenOnce(callback){
-  if(!recognition){
-    status.innerText="Aap ka browser voice support nahi karta.";
-    return;
-  }
-  hardStopMic();
+function hardStopMic(){
+  if(!recognition) return;
+  try { recognition.onresult=null; recognition.onerror=null; recognition.onend=null; } catch(e){}
+  try { recognition.abort(); } catch(e){}
+  try { recognition.stop(); } catch(e){}
+  listening = false;
   clearSilenceTimer();
-
-  // Start a silence reminder: only triggers if user doesn't speak
-  silenceTimer = setTimeout(async ()=>{
-    // If user still hasn't spoken, give a reminder then listen again
-    await speak("Doctor bhai, agar aap bol nahi rahe to model, year aur city bata dein.");
-    listenOnce(callback);
-  }, SILENCE_REMINDER_MS);
-
-  setTimeout(()=>{
-    recognition.onresult = e => {
-      clearSilenceTimer();
-      callback(e.results[0][0].transcript);
-    };
-    recognition.onerror = () => {
-      // keep calm; silence reminder will handle retry
-    };
-    try { recognition.start(); } catch(e){}
-  }, MIC_SAFE_DELAY_MS);
 }
 
+function setStatus(t){ status.innerText = t; }
+
 /* =========================
-   AUDIO (TTS)
+   AUDIO (TTS) — NO OVERLAP GUARANTEE
+   - We never speak if already speaking; we queue by awaiting speak()
 ========================= */
 function stopAudio(){
   if(currentAudio){
-    try { currentAudio.pause(); currentAudio.currentTime=0; } catch(e){}
-    currentAudio=null;
+    try { currentAudio.pause(); currentAudio.currentTime = 0; } catch(e){}
+    currentAudio = null;
   }
 }
 
 async function speak(text){
-  hardStopMic();     // never overlap mic + audio
+  // Prevent overlap:
+  // Stop mic + stop previous audio before speaking
+  hardStopMic();
   stopAudio();
   clearSilenceTimer();
 
-  status.innerText = text;
+  speaking = true;
+  setStatus(text);
 
-  const res = await fetch(VOICE_API,{
+  const res = await fetch(VOICE_API, {
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body:JSON.stringify({text})
@@ -184,14 +157,26 @@ async function speak(text){
   currentAudio = audio;
 
   return new Promise(resolve=>{
-    audio.onended = () => { currentAudio=null; setTimeout(resolve, 250); };
-    audio.onerror = () => { currentAudio=null; resolve(); };
-    audio.play().catch(()=>{ currentAudio=null; resolve(); });
+    audio.onended = () => {
+      currentAudio = null;
+      speaking = false;
+      setTimeout(resolve, POST_TTS_GAP_MS);
+    };
+    audio.onerror = () => {
+      currentAudio = null;
+      speaking = false;
+      resolve();
+    };
+    audio.play().catch(() => {
+      currentAudio = null;
+      speaking = false;
+      resolve();
+    });
   });
 }
 
 /* =========================
-   RING (1–3 times)
+   RING (1–3)
 ========================= */
 async function ringPhone(){
   const rings = Math.floor(Math.random()*3) + 1;
@@ -202,48 +187,6 @@ async function ringPhone(){
       r.play().catch(res);
     });
   }
-}
-
-/* =========================
-   MESSAGES (Roman Urdu)
-   - Returning user: NO lady name repeated
-========================= */
-function firstWelcome(lady){
-  // first time: you can still mention name because you're introducing
-  const options = [
-    `Assalam o Alaikum! DrivePK mein khush aamadid. Main ${lady} hoon.`,
-    `Salam! DrivePK se baat ho rahi hai. Main ${lady} hoon.`,
-    `Assalam o Alaikum! DrivePK ki taraf se. Main ${lady} hoon.`
-  ];
-  return rand(options);
-}
-
-function askNameLine(){
-  const options = [
-    "Doctor bhai, aap ka naam kya hai?",
-    "Doctor bhai, main aap ka naam jaan sakti hoon?",
-    "Doctor bhai, aap apna naam bata dein please."
-  ];
-  return rand(options);
-}
-
-function returningWelcome(name){
-  // returning: DO NOT say lady name
-  const options = [
-    `${name} bhai, Assalam o Alaikum. Kya madad karun?`,
-    `${name} bhai, salam. Aaj kya dhoondhna hai?`,
-    `${name} bhai, welcome back. Bata dein aap ko konsi gaari chahiye?`
-  ];
-  return rand(options);
-}
-
-function promptForQuery(){
-  // This should NOT be immediate after welcome unless user presses TALK.
-  return rand([
-    "Aap apni requirement bol dein, jaise model, year aur city.",
-    "Model, year aur city bata dein please.",
-    "Konsi gaari chahiye? Model aur city bata dein."
-  ]);
 }
 
 /* =========================
@@ -269,6 +212,75 @@ function extractName(text){
 }
 
 /* =========================
+   INTENTS (lady switch + boss)
+========================= */
+function wantsNewLady(text){
+  const t=(text||"").toLowerCase();
+  const phrases=[
+    "change lady","switch lady","another lady","other lady","new lady",
+    "aur madam chahiye","koi khoobsurat lady chahiye","dusri madam","dusri lady",
+    "dusri madam se baat karwao","koi aur lady","lady badlo","lady badal do","lady change karo"
+  ];
+  return phrases.some(p=>t.includes(p));
+}
+function wantsBoss(text){
+  const t=(text||"").toLowerCase();
+  const phrases=[
+    "boss","manager","supervisor","senior",
+    "muje boss se baat karni hai","mujhe boss se baat karni hai",
+    "boss se connect karo","manager se baat","supervisor se baat","senior se baat"
+  ];
+  return phrases.some(p=>t.includes(p));
+}
+
+/* =========================
+   MESSAGES (Roman Urdu)
+========================= */
+function welcomeReturning(name){
+  const options=[
+    `${name} bhai, Assalam o Alaikum. Kya madad karun?`,
+    `${name} bhai, salam. Aaj kya dhoondhna hai?`,
+    `${name} bhai, welcome back. Bata dein konsi gaari chahiye?`
+  ];
+  return rand(options);
+}
+
+function welcomeFirst(lady){
+  const options=[
+    `Assalam o Alaikum! DrivePK mein khush aamadid. Main ${lady} hoon.`,
+    `Salam! DrivePK se baat ho rahi hai. Main ${lady} hoon.`,
+    `Assalam o Alaikum! DrivePK ki taraf se. Main ${lady} hoon.`
+  ];
+  return rand(options);
+}
+
+function askNameLine(){
+  const options=[
+    "Doctor bhai, aap ka naam kya hai?",
+    "Doctor bhai, main aap ka naam jaan sakti hoon?",
+    "Doctor bhai, aap apna naam bata dein please."
+  ];
+  return rand(options);
+}
+
+function askRequirementLine(name){
+  const options=[
+    `${name} bhai, apni requirement bol dein — jaise model, year aur city.`,
+    `${name} bhai, model aur city bata dein please.`,
+    `${name} bhai, konsi gaari chahiye? Model/year/city bol dein.`
+  ];
+  return rand(options);
+}
+
+function typingFallbackLine(){
+  return rand([
+    "Mujhe aap ki awaaz clear nahi aa rahi. Behtar hai aap type kar dein.",
+    "Mic issue lag raha hai. Aap please type karke search kar lein.",
+    "Awaaz receive nahi ho rahi. Kindly text box mein likh dein."
+  ]);
+}
+
+/* =========================
    SEARCH
 ========================= */
 async function runSearch(text){
@@ -281,8 +293,8 @@ async function runSearch(text){
 
   let json=null;
   try{ json=await res.json(); }catch(e){}
-
   results.innerHTML="";
+
   if(!json || !json.data || !json.data.length){
     results.innerHTML="<p>Koi gaari nahi mili</p>";
     return;
@@ -303,70 +315,117 @@ async function runSearch(text){
 }
 
 /* =========================
-   TALK MODE (no ringing)
-   - When connected: TALK just listens
-   - Silence reminder triggers after 5s if user doesn't speak
+   HOLD-TO-TALK (core fix)
+   - start mic on press/hold
+   - stop mic on release
 ========================= */
-async function startTalkForSearch(){
-  await speak(promptForQuery());
-  listenOnce(async spoken=>{
+function startHoldListening(){
+  if(!recognition){
+    // no speech API available
+    micFailCount++;
+    speak(typingFallbackLine());
+    return;
+  }
+
+  if(speaking) return; // do not start mic while audio is playing
+
+  hardStopMic();
+  lastTranscript = "";
+  listening = true;
+  setStatus("🎙 Listening… (hold)  " + HOLD_HINT);
+
+  // silence reminder only when mic actually started
+  clearSilenceTimer();
+  silenceTimer = setTimeout(async ()=>{
+    if(listening && !lastTranscript){
+      const p=getProfile();
+      const name=p.name || "Doctor";
+      await speak(`${name} bhai, agar aap bol nahi rahe to model, year aur city bata dein.`);
+      // After reminder, user must hold again
+      setStatus(HOLD_HINT);
+    }
+  }, SILENCE_MS);
+
+  recognition.onresult = e => {
+    lastTranscript = e.results[0][0].transcript || "";
+  };
+
+  recognition.onerror = () => {
+    // mic blocked / permission / no input
+    micFailCount++;
+  };
+
+  recognition.onend = () => {
+    // onend fires after stop/abort
+    listening = false;
+    clearSilenceTimer();
+  };
+
+  try { recognition.start(); } catch(e) {
+    micFailCount++;
+    listening = false;
+    clearSilenceTimer();
+  }
+}
+
+async function stopHoldListeningAndHandle(){
+  if(!recognition) return;
+  if(!listening) return;
+
+  // stop now; onend will update listening=false
+  try { recognition.stop(); } catch(e){}
+  clearSilenceTimer();
+
+  // wait a moment for lastTranscript to settle
+  setTimeout(async ()=>{
+    const spoken = (lastTranscript || "").trim();
+    if(!spoken){
+      micFailCount++;
+      if(micFailCount >= MIC_FAIL_MAX){
+        await speak(typingFallbackLine());
+        setStatus("Type karke Search karein.");
+      } else {
+        setStatus("Kuch sunai nahi diya. " + HOLD_HINT);
+      }
+      return;
+    }
+
+    micFailCount = 0;
+
+    // Handle intents
+    if(wantsBoss(spoken)){
+      const p=getProfile();
+      await speak(`${p.name || "Doctor"} sahib, Assalam o Alaikum. Main Senior Advisor hoon. Bataiye, masla kya hai?`);
+      setStatus(HOLD_HINT);
+      return;
+    }
+    if(wantsNewLady(spoken)){
+      const p=getProfile();
+      const current = p.lady || "";
+      const choices = LADIES.filter(x=>x!==current);
+      p.lady = choices.length ? rand(choices) : rand(LADIES);
+      saveProfile(p);
+      await speak(`${p.name || "Doctor"} bhai, theek hai. Ab ${p.lady} baat karegi.`);
+      await speak(`Assalam o Alaikum ${p.name || "Doctor"} bhai. Main ${p.lady} hoon. Kya madad karun?`);
+      setStatus(HOLD_HINT);
+      return;
+    }
+
+    // Normal search
     query.value = spoken;
     const p=getProfile();
     p.lastSearch = spoken;
     saveProfile(p);
     await runSearch(spoken);
-    status.innerText="Agar dobara bolna ho to 🎤 TALK dabayein.";
-  });
+
+    setStatus("Results aa gaye. Dobara bolna ho to " + HOLD_HINT);
+  }, 250);
 }
 
 /* =========================
-   FLOWS
+   CALL FLOW
 ========================= */
-async function firstTimeFlow(){
-  const lady = getOrAssignLady();
-  await speak(firstWelcome(lady));
-  await speak(askNameLine());
-
-  listenOnce(async userText=>{
-    const name = extractName(userText);
-    if(!name){
-      await speak("Maaf kijiye, naam clear nahi aaya. Sirf apna naam dobara bol dein.");
-      return firstTimeFlow();
-    }
-    const p=getProfile();
-    p.name=name;
-    p.lady=lady;
-    saveProfile(p);
-
-    // NOTE: Do NOT instantly repeat second prompt; go into talk mode now
-    await speak(`Shukriya ${name} bhai. Ab aap kis gaari ki talash kar rahe hain?`);
-    await startTalkForSearch();
-  });
-}
-
-async function returningFlow(){
-  const p=getProfile();
-  await speak(returningWelcome(p.name || "Doctor"));
-  // IMPORTANT: we do NOT auto-start mic immediately here.
-  // The user will press TALK to speak OR we can start talk automatically.
-  // Since you want smoother UX, we start listening after a short pause with a 5s reminder.
-  await startTalkForSearch();
-}
-
-/* =========================
-   BUTTON BEHAVIOR
-   - First press: CALL = ring + connect + welcome
-   - After connected: TALK = just listen (NO RINGING)
-========================= */
-callBtn.onclick = async () => {
-  // If already connected, behave like TALK (no ringing)
-  if(callConnected){
-    callBtn.innerText="🎤 LISTENING…";
-    await startTalkForSearch();
-    callBtn.innerText="🎤 TALK";
-    return;
-  }
-
+async function connectCall(){
   callBtn.classList.add("calling");
   callBtn.innerText="📞 CALLING…";
   callBtn.disabled=true;
@@ -375,16 +434,150 @@ callBtn.onclick = async () => {
 
   await ringPhone();
 
-  callConnected = true;                // ✅ now connected, no more ringing on next presses
+  callConnected = true;
   callBtn.classList.remove("calling");
   callBtn.disabled=false;
-  callBtn.innerText="🎤 TALK";          // show TALK after connect
+  callBtn.innerText="🎤 HOLD TO TALK";
+  hint.innerText = HOLD_HINT;
 
   const p=getProfile();
-  if(!p.name) await firstTimeFlow();
-  else await returningFlow();
+  const lady=getOrAssignLady();
+
+  if(!p.name){
+    await speak(welcomeFirst(lady));
+    await speak(askNameLine());
+    // Now user must HOLD to speak name
+    setStatus("Apna naam bolne ke liye " + HOLD_HINT);
+  } else {
+    await speak(welcomeReturning(p.name));
+    // Do not auto prompt twice; just give ONE requirement line
+    await speak(askRequirementLine(p.name));
+    setStatus(HOLD_HINT);
+  }
+}
+
+/* =========================
+   HANDLE NAME IF NEEDED
+   - If profile has no name, first spoken phrase is treated as name
+========================= */
+async function maybeSaveNameFromSpoken(spoken){
+  const p=getProfile();
+  if(p.name) return false;
+
+  const name = extractName(spoken);
+  if(!name) return true; // still need name
+
+  p.name = name;
+  saveProfile(p);
+  await speak(`Shukriya ${name} bhai. Ab apni requirement bol dein — jaise model, year aur city.`);
+  setStatus(HOLD_HINT);
+  return false;
+}
+
+/* Modify stop handler to save name first if needed */
+const originalStop = stopHoldListeningAndHandle;
+stopHoldListeningAndHandle = async function(){
+  if(!recognition || !listening) return;
+
+  try { recognition.stop(); } catch(e){}
+  clearSilenceTimer();
+
+  setTimeout(async ()=>{
+    const spoken = (lastTranscript || "").trim();
+    if(!spoken){
+      micFailCount++;
+      if(micFailCount >= MIC_FAIL_MAX){
+        await speak(typingFallbackLine());
+        setStatus("Type karke Search karein.");
+      } else {
+        setStatus("Kuch sunai nahi diya. " + HOLD_HINT);
+      }
+      return;
+    }
+
+    // If name not saved yet, treat first phrase as name
+    const stillNeedName = await maybeSaveNameFromSpoken(spoken);
+    if(stillNeedName){
+      await speak("Naam clear nahi aaya. Sirf apna naam dobara bol dein.");
+      setStatus(HOLD_HINT);
+      return;
+    }
+
+    micFailCount = 0;
+
+    // Handle intents (after name is saved)
+    if(wantsBoss(spoken)){
+      const p=getProfile();
+      await speak(`${p.name || "Doctor"} sahib, Assalam o Alaikum. Main Senior Advisor hoon. Bataiye, masla kya hai?`);
+      setStatus(HOLD_HINT);
+      return;
+    }
+    if(wantsNewLady(spoken)){
+      const p=getProfile();
+      const current = p.lady || "";
+      const choices = LADIES.filter(x=>x!==current);
+      p.lady = choices.length ? rand(choices) : rand(LADIES);
+      saveProfile(p);
+      await speak(`${p.name || "Doctor"} bhai, theek hai. Ab ${p.lady} baat karegi.`);
+      await speak(`Assalam o Alaikum ${p.name || "Doctor"} bhai. Main ${p.lady} hoon. Kya madad karun?`);
+      setStatus(HOLD_HINT);
+      return;
+    }
+
+    // Normal search
+    query.value = spoken;
+    const p=getProfile();
+    p.lastSearch = spoken;
+    saveProfile(p);
+    await runSearch(spoken);
+    setStatus("Results aa gaye. Dobara bolna ho to " + HOLD_HINT);
+  }, 250);
 };
 
+/* =========================
+   BUTTON WIRING
+   - First tap = connect (ring + welcome)
+   - After connected: HOLD press/release = mic on/off
+========================= */
+callBtn.addEventListener("click", async () => {
+  if(!callConnected){
+    await connectCall();
+  }
+  // if already connected, click does nothing (hold handles talk)
+});
+
+/* Hold-to-talk events (mobile + desktop) */
+function bindHoldEvents(btn){
+  // Touch (mobile)
+  btn.addEventListener("touchstart", (e)=>{
+    if(!callConnected) return;
+    e.preventDefault();
+    startHoldListening();
+  }, {passive:false});
+
+  btn.addEventListener("touchend", async (e)=>{
+    if(!callConnected) return;
+    e.preventDefault();
+    await stopHoldListeningAndHandle();
+  }, {passive:false});
+
+  // Mouse (desktop)
+  btn.addEventListener("mousedown", ()=>{
+    if(!callConnected) return;
+    startHoldListening();
+  });
+  btn.addEventListener("mouseup", async ()=>{
+    if(!callConnected) return;
+    await stopHoldListeningAndHandle();
+  });
+  btn.addEventListener("mouseleave", async ()=>{
+    if(!callConnected) return;
+    if(listening) await stopHoldListeningAndHandle();
+  });
+}
+bindHoldEvents(callBtn);
+
+/* Manual Search button */
 searchBtn.onclick = async () => {
   const t=query.value.trim();
   if(!t) return;
@@ -393,6 +586,16 @@ searchBtn.onclick = async () => {
   saveProfile(p);
   await runSearch(t);
 };
+
+/* On load: show correct label */
+(function init(){
+  const p=getProfile();
+  if(p.name){
+    hint.innerText = "Call dabayen. Phir " + HOLD_HINT;
+  } else {
+    hint.innerText = "Call dabayen. Phir apna naam bolne ke liye " + HOLD_HINT;
+  }
+})();
 </script>
 </body>
 </html>
