@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DrivePK – Search Results</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f0f0f;
+  color: #fff;
+}
+
+.container {
+  padding: 15px;
+}
+
+/* CARD */
+.car-card {
+  background: #1a1a1a;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+/* IMAGE */
+.car-card img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+}
+
+/* CONTENT */
+.car-content {
+  padding: 12px;
+}
+
+.car-title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.car-location {
+  font-size: 13px;
+  color: #aaa;
+  margin-bottom: 8px;
+}
+
+/* SPECS */
+.specs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  font-size: 12px;
+  color: #ddd;
+  margin-bottom: 10px;
+}
+
+/* PRICE */
+.price {
+  font-size: 18px;
+  font-weight: bold;
+  color: #ef1d1d;
+  margin-bottom: 10px;
+}
+
+/* BUTTONS */
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.actions button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.view-btn {
+  background: #333;
+  color: #fff;
+}
+
+.contact-btn {
+  background: #ef1d1d;
+  color: #fff;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container" id="resultsContainer">
+  <!-- Search results injected here -->
+</div>
+
+<script>
+/* ------------------------------
+   CONFIG
+-------------------------------- */
+const API_BASE = "https://api.drivepk.com";
+
+/* ------------------------------
+   UTILITIES
+-------------------------------- */
+function formatPrice(price) {
+  if (!price) return "Price on Call";
+  return "PKR " + (price / 100000).toFixed(1) + " Lakh";
+}
+
+/* ------------------------------
+   FETCH SEARCH RESULTS
+-------------------------------- */
+async function fetchResults() {
+  const params = new URLSearchParams(window.location.search);
+  const query = params.get("q");
+
+  if (!query) {
+    document.getElementById("resultsContainer").innerHTML =
+      "<p>No search query provided.</p>";
+    return;
+  }
+
+  try {
+    // 🔹 TEMP: replace with your real search endpoint later
+    const res = await fetch(`${API_BASE}/cars/search?q=${encodeURIComponent(query)}`);
+    const data = await res.json();
+
+    renderResults(data || []);
+  } catch (err) {
+    document.getElementById("resultsContainer").innerHTML =
+      "<p>Error loading results.</p>";
+  }
+}
+
+/* ------------------------------
+   RENDER RESULTS
+-------------------------------- */
+function renderResults(cars) {
+  const container = document.getElementById("resultsContainer");
+  container.innerHTML = "";
+
+  if (!cars.length) {
+    container.innerHTML = "<p>No cars found.</p>";
+    return;
+  }
+
+  cars.forEach(car => {
+    const card = document.createElement("div");
+    card.className = "car-card";
+
+    card.innerHTML = `
+      <img src="${car.images?.[0] || 'https://via.placeholder.com/400x200'}" />
+      <div class="car-content">
+        <div class="car-title">${car.title}</div>
+        <div class="car-location">${car.location?.city || ""}, ${car.location?.province || ""}</div>
+
+        <div class="specs">
+          <div>${car.seats || "-"} Seater</div>
+          <div>${car.mileage ? car.mileage.toLocaleString() + " km" : "-"}</div>
+          <div>${car.transmission || "-"}</div>
+          <div>${car.fuel || "-"}</div>
+          <div>${car.year || "-"}</div>
+          <div>${car.condition || "-"}</div>
+        </div>
+
+        <div class="price">${formatPrice(car.price)}</div>
+
+        <div class="actions">
+          <button class="view-btn" onclick="viewCar('${car.slug}')">View Details</button>
+          <button class="contact-btn" onclick="contactSeller('${car.slug}')">Contact Seller</button>
+        </div>
+      </div>
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+/* ------------------------------
+   ACTIONS
+-------------------------------- */
+function viewCar(slug) {
+  window.location.href = `/car.html?slug=${slug}`;
+}
+
+function contactSeller(slug) {
+  // Auth gate will be handled later
+  alert("Please login to contact seller.");
+}
+
+/* ------------------------------
+   INIT
+-------------------------------- */
+fetchResults();
+</script>
+
+</body>
+</html>
