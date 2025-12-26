@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>DrivePK BOLO</title>
 
+<!-- ✅ PWA REQUIRED (INSTALL APP will appear) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#E81F25">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
 <style>
   body{margin:0;font-family:Arial,sans-serif;background:#e6e6e6;}
   header{background:#000;color:#fff;padding:10px;display:flex;gap:10px;align-items:center;}
@@ -108,7 +113,7 @@
 
   <div id="supportBox" class="card">
     <strong>Complaints / Support:</strong>
-    <div style="margin-top:6px;font-size:18px;color:#E81F25;font-weight:bold;">051 8319037</div>
+    <div style="margin-top:6px;font-size:18px;color:#E81F25;font-weight:bold;">0300 8319037</div>
     <div class="small">Please call this number for complaints.</div>
   </div>
 
@@ -210,7 +215,7 @@ const VOICE_BY_LADY = {
 };
 
 // Boss voice pack
-const BOSS_UMAR = { voice:"coral", speed:0.95 };
+const BOSS_UMAR = { voice:"onyx", speed:0.95 };
 
 const UNKNOWN_LINES = [
   "Sorry, abhi mujhe is ka jawab maloom nahi hai.",
@@ -455,7 +460,6 @@ async function startRecognitionWithRetry(maxAttempts){
     isRecognizing = false;
     clearSilence();
 
-    // Common Android errors
     if(err === "not-allowed" || err === "service-not-allowed"){
       await speak("Mic permission allow nahi. Please site settings mein microphone allow karein.");
       holding = false;
@@ -471,14 +475,13 @@ async function startRecognitionWithRetry(maxAttempts){
       holding = false;
       return;
     }
-    // no-speech is common; we handle it by allowing restart while holding
   };
 
   recognition.onend = ()=>{
     isRecognizing = false;
     clearSilence();
 
-    // While holding, auto-restart quickly (helps Android missing starts)
+    // While holding, auto-restart quickly
     if(holding && restartWhileHolding && !stopRequested){
       setTimeout(async ()=>{
         if(holding && !stopRequested){
@@ -488,19 +491,16 @@ async function startRecognitionWithRetry(maxAttempts){
     }
   };
 
-  // Try starting multiple times
   for(let attempt=1; attempt<=maxAttempts; attempt++){
     if(stopRequested) break;
     try{
       recognition.start();
       return { ok:true };
     }catch(e){
-      // wait and retry
       await new Promise(r=>setTimeout(r, 250 * attempt));
-      // recreate recognition each attempt
       recognition = createRecognition();
       if(!recognition) break;
-      // re-bind handlers again after recreate
+
       recognition.onresult = (e)=>{ try{
         let lastFinal="", lastAny="";
         for(let i=0;i<e.results.length;i++){
@@ -511,6 +511,7 @@ async function startRecognitionWithRetry(maxAttempts){
         }
         transcript = (lastFinal || lastAny || transcript || "");
       }catch(err){} };
+
       recognition.onerror = async (ev)=>{
         const err = (ev && ev.error) ? String(ev.error) : "unknown";
         isRecognizing = false;
@@ -531,6 +532,7 @@ async function startRecognitionWithRetry(maxAttempts){
           return;
         }
       };
+
       recognition.onend = ()=>{
         isRecognizing = false;
         clearSilence();
@@ -548,7 +550,6 @@ async function startRecognitionWithRetry(maxAttempts){
   return { ok:false, reason:"start_failed" };
 }
 
-/* Hold-to-talk */
 async function startListening(){
   if(!callConnected || holding) return;
   holding = true;
@@ -608,7 +609,6 @@ async function stopListening(){
   const heldMs = Date.now() - holdStartTs;
   if(heldMs < MIN_HOLD_MS) await new Promise(r=>setTimeout(r, MIN_HOLD_MS - heldMs));
 
-  // stop recognition cleanly
   stopMic();
   await new Promise(r=>setTimeout(r, END_WAIT_MS));
 
@@ -775,7 +775,7 @@ async function handleSpoken(text){
   if(wantsBoss(text)){
     await speak(who + ", theek hai. Main aap ko Umar se connect kar rahi hoon.");
     await ring();
-    await speak(who + ", Assalam o Alaikum. Main Umar hoon. Aap ka masla kya hai?", BOSS_UMAR);
+    await speak(who + ", Assalam o Alaikum. Main Umar hoon. Aap ki kasai madad karo?", BOSS_UMAR);
     return;
   }
 
@@ -988,6 +988,13 @@ $("logoutBtn").addEventListener("click", async ()=>{
   setStatus("");
   const t = getTokens();
   $("authBtn").innerText = t.access ? "Account" : "Login";
+
+  // ✅ PWA INSTALL (Service Worker)
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    });
+  }
 })();
 </script>
 </body>
