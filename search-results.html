@@ -6,200 +6,343 @@
 <title>DrivePK – Search Results</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #0f0f0f;
-  color: #fff;
-}
-
-.container {
-  padding: 15px;
-}
-
-/* CARD */
-.car-card {
-  background: #1a1a1a;
-  border-radius: 12px;
-  margin-bottom: 16px;
-  overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-}
-
-/* IMAGE */
-.car-card img {
-  width: 100%;
-  height: 220px;
-  object-fit: cover;
-}
-
-/* CONTENT */
-.car-content {
-  padding: 12px;
-}
-
-.car-title {
-  font-size: 16px;
-  font-weight: bold;
-  margin-bottom: 4px;
-}
-
-.car-location {
-  font-size: 13px;
-  color: #aaa;
-  margin-bottom: 8px;
-}
-
-/* SPECS */
-.specs {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  font-size: 12px;
-  color: #ddd;
-  margin-bottom: 10px;
-}
-
-/* PRICE */
-.price {
-  font-size: 18px;
-  font-weight: bold;
-  color: #ef1d1d;
-  margin-bottom: 10px;
-}
-
-/* BUTTONS */
-.actions {
-  display: flex;
-  gap: 10px;
-}
-
-.actions button {
-  flex: 1;
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.view-btn {
-  background: #333;
-  color: #fff;
-}
-
-.contact-btn {
-  background: #ef1d1d;
-  color: #fff;
-}
+  :root{
+    --red:#ef1d1d;
+    --bg:#0f0f0f;
+    --card:#1a1a1a;
+    --muted:#a9a9a9;
+    --line:#2a2a2a;
+  }
+  body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#fff;}
+  .topbar{
+    position:sticky;top:0;z-index:10;
+    background:rgba(15,15,15,.95);backdrop-filter: blur(8px);
+    border-bottom:1px solid var(--line);
+    padding:12px 14px;
+  }
+  .topbar .row{display:flex;gap:10px;align-items:center;}
+  .qbox{
+    flex:1;display:flex;gap:8px;align-items:center;
+    background:#111;border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+  }
+  .qbox input{
+    width:100%;border:none;outline:none;background:transparent;color:#fff;font-size:14px;
+  }
+  .btn{
+    border:none;border-radius:10px;padding:10px 12px;cursor:pointer;
+    background:var(--red);color:#fff;font-weight:700;
+  }
+  .btn.secondary{background:#2b2b2b;font-weight:600;}
+  .container{padding:14px;max-width:720px;margin:0 auto;}
+  .meta{color:var(--muted);font-size:13px;margin:10px 2px 14px;}
+  .grid{display:flex;flex-direction:column;gap:14px;}
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;overflow:hidden;
+    box-shadow:0 6px 18px rgba(0,0,0,.35);
+  }
+  .thumb{
+    width:100%;height:220px;object-fit:cover;display:block;background:#222;
+  }
+  .content{padding:12px;}
+  .title{font-size:16px;font-weight:800;margin:0 0 6px;}
+  .loc{font-size:13px;color:var(--muted);margin:0 0 10px;}
+  .specs{
+    display:flex;flex-wrap:wrap;gap:8px;
+    font-size:12px;color:#e7e7e7;margin:0 0 10px;
+  }
+  .pill{
+    border:1px solid #333;border-radius:999px;padding:6px 10px;background:#151515;
+  }
+  .price{
+    font-size:18px;font-weight:900;color:var(--red);
+    margin:0 0 12px;
+  }
+  .actions{display:flex;gap:10px;}
+  .actions button{
+    flex:1;border:none;border-radius:10px;padding:10px 12px;cursor:pointer;font-size:14px;
+  }
+  .view{background:#2b2b2b;color:#fff;font-weight:700;}
+  .contact{background:var(--red);color:#fff;font-weight:900;}
+  .loader, .end, .error{
+    text-align:center;color:var(--muted);padding:18px 8px;font-size:13px;
+  }
+  .small{font-size:12px;color:var(--muted);}
 </style>
 </head>
 
 <body>
 
-<div class="container" id="resultsContainer">
-  <!-- Search results injected here -->
+<div class="topbar">
+  <div class="row">
+    <div class="qbox">
+      <input id="q" type="text" placeholder="Search: Toyota Corolla 2020 Lahore..." />
+    </div>
+    <button class="btn" id="searchBtn">Search</button>
+    <button class="btn secondary" id="clearBtn">Clear</button>
+  </div>
+  <div class="small" id="appliedFilters"></div>
+</div>
+
+<div class="container">
+  <div class="meta" id="meta">Loading…</div>
+  <div class="grid" id="list"></div>
+  <div class="loader" id="loader" style="display:none;">Loading more cars…</div>
+  <div class="end" id="end" style="display:none;">You’ve reached the end.</div>
+  <div class="error" id="error" style="display:none;">Could not load results. Please try again.</div>
 </div>
 
 <script>
-/* ------------------------------
-   CONFIG
--------------------------------- */
-const API_BASE = "https://api.drivepk.com";
+/**
+ * DrivePK BOLO Search Results
+ * Uses: GET https://api.drivepk.com/cars
+ * Response: { message, data: [...], pagination: {...} }
+ * Pagination: page, limit, total, totalPages, hasNext, hasPrev
+ */
 
-/* ------------------------------
-   UTILITIES
--------------------------------- */
-function formatPrice(price) {
-  if (!price) return "Price on Call";
-  return "PKR " + (price / 100000).toFixed(1) + " Lakh";
+const API_BASE = "https://api.drivepk.com";
+const DEFAULT_LIMIT = 20;
+
+const els = {
+  q: document.getElementById("q"),
+  searchBtn: document.getElementById("searchBtn"),
+  clearBtn: document.getElementById("clearBtn"),
+  list: document.getElementById("list"),
+  meta: document.getElementById("meta"),
+  loader: document.getElementById("loader"),
+  end: document.getElementById("end"),
+  error: document.getElementById("error"),
+  appliedFilters: document.getElementById("appliedFilters"),
+};
+
+let state = {
+  page: 1,
+  limit: DEFAULT_LIMIT,
+  hasNext: false,
+  total: 0,
+  loading: false,
+  // current query params (for API)
+  params: {}
+};
+
+function formatPricePKR(price) {
+  if (!price || isNaN(price)) return "Price on Call";
+  const n = Number(price);
+  if (n >= 10000000) return `PKR ${(n/10000000).toFixed(2)} Crore`;
+  if (n >= 100000) return `PKR ${(n/100000).toFixed(1)} Lakh`;
+  return `PKR ${n.toLocaleString()}`;
 }
 
-/* ------------------------------
-   FETCH SEARCH RESULTS
--------------------------------- */
-async function fetchResults() {
-  const params = new URLSearchParams(window.location.search);
-  const query = params.get("q");
+function safeText(v, fallback="-") {
+  return (v === null || v === undefined || v === "") ? fallback : String(v);
+}
 
-  if (!query) {
-    document.getElementById("resultsContainer").innerHTML =
-      "<p>No search query provided.</p>";
-    return;
+function buildPills(car) {
+  // Map fields from your sample
+  const seats = car.seatingCapacity ?? car.seater; // support either name
+  const mileage = car.mileage;
+  const transmission = car.transmission;
+  const fuel = car.fuelType ?? car.engineType; // sample has both
+  const year = car.year;
+  const condition = car.condition;
+
+  const pills = [];
+  if (seats) pills.push(`${seats} Seater`);
+  if (mileage !== undefined && mileage !== null) pills.push(`${Number(mileage).toLocaleString()} km`);
+  if (transmission) pills.push(transmission);
+  if (fuel) pills.push(fuel);
+  if (year) pills.push(year);
+  if (condition) pills.push(condition);
+
+  return pills.slice(0, 8); // keep it neat
+}
+
+function renderCard(car) {
+  const img = (car.images && car.images.length) ? car.images[0] : "https://via.placeholder.com/800x500?text=DrivePK";
+  const city = car.location?.city || car.currentLocation?.city || "";
+  const province = car.location?.province || car.currentLocation?.province || "";
+  const area = car.location?.area || car.currentLocation?.area || "";
+  const locLine = [area, city, province].filter(Boolean).join(", ");
+
+  const pills = buildPills(car)
+    .map(p => `<span class="pill">${p}</span>`)
+    .join("");
+
+  const price = formatPricePKR(car.price);
+
+  const slugOrId = car.slug || car._id || "";
+  const title = safeText(car.title, "Car");
+
+  const div = document.createElement("div");
+  div.className = "card";
+  div.innerHTML = `
+    <img class="thumb" src="${img}" alt="${title}" loading="lazy" />
+    <div class="content">
+      <div class="title">${title}</div>
+      <div class="loc">${locLine || "Pakistan"}</div>
+      <div class="specs">${pills || '<span class="pill">Details unavailable</span>'}</div>
+      <div class="price">${price}</div>
+      <div class="actions">
+        <button class="view" data-slug="${slugOrId}">View Details</button>
+        <button class="contact" data-slug="${slugOrId}">Contact Seller</button>
+      </div>
+    </div>
+  `;
+
+  // actions
+  div.querySelector(".view").addEventListener("click", () => {
+    // If you already have a car details page, route there.
+    // Option A: open DrivePK listing directly:
+    // window.location.href = `https://drivepk.com/cars/${car.slug}`;
+    // Option B: open your BOLO detail page:
+    window.location.href = `car.html?slug=${encodeURIComponent(slugOrId)}`;
+  });
+
+  div.querySelector(".contact").addEventListener("click", () => {
+    alert("Login required to contact seller (same as DrivePK).");
+  });
+
+  return div;
+}
+
+function setMeta() {
+  const p = state.params;
+  const parts = [];
+  if (p.carName) parts.push(`carName="${p.carName}"`);
+  if (p.brand) parts.push(`brand=${p.brand}`);
+  if (p.model) parts.push(`model=${p.model}`);
+  if (p.city) parts.push(`city=${p.city}`);
+  if (p.minPrice) parts.push(`minPrice=${p.minPrice}`);
+  if (p.maxPrice) parts.push(`maxPrice=${p.maxPrice}`);
+  const filterText = parts.length ? `Filters: ${parts.join(" • ")}` : "No filters";
+
+  els.appliedFilters.textContent = filterText;
+
+  if (state.total) {
+    els.meta.textContent = `Showing ${els.list.children.length} of ${state.total} results`;
+  } else {
+    els.meta.textContent = `Showing ${els.list.children.length} results`;
   }
+}
+
+function parseQueryToParams(q) {
+  // Very simple: use carName for now (most reliable & broad)
+  // Later we can add smart parsing (brand/model/year/city) safely.
+  return { carName: q };
+}
+
+function buildUrl(params, page, limit) {
+  const url = new URL(API_BASE + "/cars");
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== null && v !== undefined && v !== "") url.searchParams.set(k, v);
+  });
+  url.searchParams.set("page", String(page));
+  url.searchParams.set("limit", String(limit));
+  return url.toString();
+}
+
+async function loadPage({ reset=false } = {}) {
+  if (state.loading) return;
+  if (!reset && !state.hasNext && state.page !== 1) return;
+
+  state.loading = true;
+  els.error.style.display = "none";
+  els.loader.style.display = "block";
+  els.end.style.display = "none";
 
   try {
-    // 🔹 TEMP: replace with your real search endpoint later
-    const res = await fetch(`${API_BASE}/cars/search?q=${encodeURIComponent(query)}`);
-    const data = await res.json();
+    const url = buildUrl(state.params, state.page, state.limit);
+    const res = await fetch(url, { method: "GET" });
 
-    renderResults(data || []);
-  } catch (err) {
-    document.getElementById("resultsContainer").innerHTML =
-      "<p>Error loading results.</p>";
+    if (!res.ok) throw new Error("HTTP " + res.status);
+
+    const json = await res.json();
+
+    const cars = Array.isArray(json.data) ? json.data : [];
+    const pag = json.pagination || {};
+    state.total = pag.total || state.total || 0;
+    state.hasNext = !!pag.hasNext;
+
+    // Render
+    cars.forEach(car => els.list.appendChild(renderCard(car)));
+
+    setMeta();
+
+    if (!state.hasNext) {
+      els.end.style.display = "block";
+    }
+  } catch (e) {
+    console.log("Load error:", e);
+    els.error.style.display = "block";
+  } finally {
+    els.loader.style.display = "none";
+    state.loading = false;
   }
 }
 
-/* ------------------------------
-   RENDER RESULTS
--------------------------------- */
-function renderResults(cars) {
-  const container = document.getElementById("resultsContainer");
-  container.innerHTML = "";
+function resetAndSearch(query) {
+  // Reset list
+  els.list.innerHTML = "";
+  state.page = 1;
+  state.total = 0;
+  state.hasNext = true; // assume true until first response
+  state.params = parseQueryToParams(query);
 
-  if (!cars.length) {
-    container.innerHTML = "<p>No cars found.</p>";
-    return;
+  // Update URL for sharing
+  const u = new URL(window.location.href);
+  u.searchParams.set("q", query);
+  history.replaceState(null, "", u.toString());
+
+  setMeta();
+  loadPage({ reset:true });
+}
+
+function initFromUrl() {
+  const u = new URL(window.location.href);
+  const q = u.searchParams.get("q") || "";
+  els.q.value = q;
+  if (q.trim()) resetAndSearch(q.trim());
+  else {
+    els.meta.textContent = "Type a search and press Search.";
+    els.appliedFilters.textContent = "No filters";
   }
-
-  cars.forEach(car => {
-    const card = document.createElement("div");
-    card.className = "car-card";
-
-    card.innerHTML = `
-      <img src="${car.images?.[0] || 'https://via.placeholder.com/400x200'}" />
-      <div class="car-content">
-        <div class="car-title">${car.title}</div>
-        <div class="car-location">${car.location?.city || ""}, ${car.location?.province || ""}</div>
-
-        <div class="specs">
-          <div>${car.seats || "-"} Seater</div>
-          <div>${car.mileage ? car.mileage.toLocaleString() + " km" : "-"}</div>
-          <div>${car.transmission || "-"}</div>
-          <div>${car.fuel || "-"}</div>
-          <div>${car.year || "-"}</div>
-          <div>${car.condition || "-"}</div>
-        </div>
-
-        <div class="price">${formatPrice(car.price)}</div>
-
-        <div class="actions">
-          <button class="view-btn" onclick="viewCar('${car.slug}')">View Details</button>
-          <button class="contact-btn" onclick="contactSeller('${car.slug}')">Contact Seller</button>
-        </div>
-      </div>
-    `;
-
-    container.appendChild(card);
-  });
 }
 
-/* ------------------------------
-   ACTIONS
--------------------------------- */
-function viewCar(slug) {
-  window.location.href = `/car.html?slug=${slug}`;
-}
+// Infinite scroll
+window.addEventListener("scroll", () => {
+  const nearBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 800);
+  if (nearBottom && !state.loading && state.hasNext) {
+    state.page += 1;
+    loadPage();
+  }
+});
 
-function contactSeller(slug) {
-  // Auth gate will be handled later
-  alert("Please login to contact seller.");
-}
+// UI events
+els.searchBtn.addEventListener("click", () => {
+  const q = els.q.value.trim();
+  if (!q) return;
+  resetAndSearch(q);
+});
 
-/* ------------------------------
-   INIT
--------------------------------- */
-fetchResults();
+els.clearBtn.addEventListener("click", () => {
+  els.q.value = "";
+  els.list.innerHTML = "";
+  state = { page:1, limit:DEFAULT_LIMIT, hasNext:false, total:0, loading:false, params:{} };
+  const u = new URL(window.location.href);
+  u.searchParams.delete("q");
+  history.replaceState(null, "", u.toString());
+  els.meta.textContent = "Type a search and press Search.";
+  els.appliedFilters.textContent = "No filters";
+  els.end.style.display = "none";
+  els.error.style.display = "none";
+});
+
+els.q.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") els.searchBtn.click();
+});
+
+initFromUrl();
 </script>
 
 </body>
