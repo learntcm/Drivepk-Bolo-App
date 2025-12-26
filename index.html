@@ -3,97 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DrivePK - Search Cars</title>
+    <title>DrivePK - Mobile Portal</title>
     <style>
-        :root { --primary: #007bff; --dark: #333; --light: #f8f9fa; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #eee; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: auto; }
-        
-        /* Search Box */
-        .search-box { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; margin-top: 10px; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        :root {
+            --primary: #d32f2f; /* DrivePK Red style */
+            --secondary: #2c3e50;
+            --bg: #f0f2f5;
+            --white: #ffffff;
+        }
 
-        /* Car Cards */
-        .car-card { background: white; border-radius: 12px; overflow: hidden; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .car-img { width: 100%; height: 200px; object-fit: cover; background: #ddd; }
-        .car-info { padding: 15px; }
-        .car-title { font-size: 18px; font-weight: bold; margin: 0; color: var(--dark); }
-        .car-price { color: #28a745; font-size: 20px; font-weight: bold; margin: 10px 0; }
-        .car-meta { font-size: 14px; color: #666; display: flex; justify-content: space-between; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; }
+
+        /* Navigation */
+        .navbar { background: var(--primary); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .nav-tabs { display: flex; background: var(--white); border-bottom: 1px solid #ddd; }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: bold; color: #666; transition: 0.3s; }
+        .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); background: #fff5f5; }
+
+        .container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+        .section { display: none; }
+        .section.active { display: block; animation: fadeIn 0.4s; }
+
+        /* Forms */
+        .card { background: var(--white); padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 600; color: var(--secondary); }
+        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #b71c1c; }
+
+        /* Car Results */
+        .car-display { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .car-image { width: 100%; height: 300px; object-fit: cover; background: #ddd; }
+        .car-content { padding: 20px; }
+        .price-tag { font-size: 28px; color: #2e7d32; font-weight: 800; margin: 10px 0; }
+        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; background: #f9f9f9; padding: 10px; border-radius: 8px; }
+        .detail-item { font-size: 14px; color: #555; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .status { text-align: center; color: #666; margin-top: 20px; }
-        .error { background: #fee; color: #c00; padding: 15px; border-radius: 8px; border: 1px solid #fcc; }
+        #loading { display: none; text-align: center; padding: 20px; font-weight: bold; color: var(--primary); }
     </style>
 </head>
 <body>
 
+<div class="navbar">
+    <h2 style="margin:0">DrivePK Bolo App</h2>
+</div>
+
+<div class="nav-tabs">
+    <div class="tab active" onclick="switchTab('search')">Search Car</div>
+    <div class="tab" onclick="switchTab('auth')">Login / Signup</div>
+</div>
+
 <div class="container">
-    <div class="search-box">
-        <h2 style="margin-top:0">DrivePK Search</h2>
-        <input type="text" id="carId" placeholder="Paste Car ID or Slug (e.g. toyota-aqua-...)">
-        <button onclick="getCarDetails()">Search Car</button>
+    
+    <div id="search" class="section active">
+        <div class="card">
+            <div class="form-group">
+                <label>Car ID or Slug</label>
+                <input type="text" id="carSlug" placeholder="e.g. toyota-aqua-2012-..." value="toyota-aqua-2012-for-sale-in-gujranwala-10427461">
+            </div>
+            <button class="btn btn-primary" onclick="fetchCar()">Get Car Info</button>
+        </div>
+
+        <div id="loading">Connecting to DrivePK...</div>
+        <div id="carResult"></div>
     </div>
 
-    <div id="displayArea">
-        <p class="status">Enter a car ID to see details</p>
+    <div id="auth" class="section">
+        <div class="card">
+            <h3>Login to DrivePK</h3>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="yourname@email.com">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPass" placeholder="••••••••">
+            </div>
+            <button class="btn btn-primary" onclick="handleLogin()">Login</button>
+        </div>
+
+        <div class="card" style="border-top: 4px solid var(--secondary);">
+            <h3>Register Account</h3>
+            <p style="font-size: 12px; color: #666;">Create an account to see owner phone numbers.</p>
+            <div class="form-group"><input type="text" id="regName" placeholder="Full Name"></div>
+            <div class="form-group"><input type="email" id="regEmail" placeholder="Email Address"></div>
+            <div class="form-group"><input type="text" id="regPhone" placeholder="Phone (3001234567)"></div>
+            <div class="form-group"><input type="password" id="regPass" placeholder="Create Password"></div>
+            <button class="btn btn-primary" style="background: var(--secondary);" onclick="handleSignup()">Sign Up</button>
+        </div>
     </div>
+
 </div>
 
 <script>
-    async function getCarDetails() {
-        const id = document.getElementById('carId').value.trim();
-        const display = document.getElementById('displayArea');
+    // Tab Switching Logic
+    function switchTab(tabId) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
 
-        if (!id) {
-            alert("Please enter a Car ID or Slug");
-            return;
-        }
+    // 1. Fetch Car Data
+    async function fetchCar() {
+        const slug = document.getElementById('carSlug').value;
+        const resultDiv = document.getElementById('carResult');
+        const loader = document.getElementById('loading');
 
-        display.innerHTML = '<p class="status">Searching DrivePK database...</p>';
+        loader.style.display = 'block';
+        resultDiv.innerHTML = '';
 
         try {
-            // Using the real Production URL from your documentation
-            const response = await fetch(`https://api.drivepk.com/cars/${id}`);
+            const response = await fetch(`https://api.drivepk.com/cars/${slug}`);
+            if (!response.ok) throw new Error("Car not found in database.");
             
-            if (!response.ok) {
-                throw new Error("Car not found. Please check the ID/Slug.");
-            }
+            const data = await response.json();
+            const car = data.carAd;
 
-            const result = await response.json();
-            const car = result.carAd;
-
-            // Formatting Price to PKR
-            const formattedPrice = new Intl.NumberFormat('en-PK', {
-                style: 'currency',
-                currency: 'PKR',
-                maximumFractionDigits: 0
-            }).format(car.price);
-
-            display.innerHTML = `
-                <div class="car-card">
-                    <img src="${car.images[0] || 'https://via.placeholder.com/400x200?text=No+Image'}" class="car-img" alt="Car Image">
-                    <div class="car-info">
-                        <p class="car-title">${car.title}</p>
-                        <p class="car-price">${formattedPrice}</p>
-                        <div class="car-meta">
-                            <span>📍 ${car.location.city}</span>
-                            <span>🛣️ ${car.mileage.toLocaleString()} km</span>
-                            <span>📅 ${car.year}</span>
+            resultDiv.innerHTML = `
+                <div class="car-display">
+                    <img src="${car.images[0]}" class="car-image">
+                    <div class="car-content">
+                        <h1 style="margin:0">${car.title}</h1>
+                        <p class="price-tag">PKR ${car.price.toLocaleString()}</p>
+                        
+                        <div class="details-grid">
+                            <div class="detail-item"><strong>City:</strong> ${car.location.city}</div>
+                            <div class="detail-item"><strong>Mileage:</strong> ${car.mileage} km</div>
+                            <div class="detail-item"><strong>Model:</strong> ${car.carModel.name}</div>
+                            <div class="detail-item"><strong>Year:</strong> ${car.year}</div>
                         </div>
-                        <p style="font-size:13px; color:#888; margin-top:15px;">${car.description.substring(0, 100)}...</p>
-                        <button style="background:#333" onclick="window.open('https://drivepk.com/car/${car.slug}')">View on Website</button>
+
+                        <h3>Description</h3>
+                        <p style="color:#444; line-height:1.6;">${car.description}</p>
+                        
+                        <hr>
+                        <p><strong>Seller:</strong> ${car.isDealer ? car.dealerId.businessName : car.userId.full_name}</p>
                     </div>
                 </div>
             `;
-
-        } catch (error) {
-            display.innerHTML = `
-                <div class="error">
-                    <strong>Search Failed:</strong> ${error.message}
-                </div>
-            `;
+        } catch (err) {
+            resultDiv.innerHTML = `<div class="card" style="color:red">Error: ${err.message}</div>`;
+        } finally {
+            loader.style.display = 'none';
         }
+    }
+
+    // 2. Placeholder for Auth Logic (Based on your API doc)
+    async function handleLogin() {
+        alert("Login functionality connected to https://api.drivepk.com/auth/mobile/login");
+        // Logic for POST request goes here
+    }
+
+    async function handleSignup() {
+        alert("Registration logic connected to https://api.drivepk.com/auth/mobile/register");
     }
 </script>
 
