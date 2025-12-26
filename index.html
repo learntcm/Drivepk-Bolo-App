@@ -1,511 +1,294 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DrivePK Search</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DrivePK BOLO</title>
 
-  <style>
-    :root{
-      --red:#E81F25;
-      --black:#000;
-      --bg:#0f0f10;
-      --card:#161618;
-      --text:#fff;
-      --muted:#bdbdbd;
-      --border:#2a2a2e;
-      --chip:#202024;
-    }
+<style>
+  :root{
+    --red:#E81F25;
+    --black:#000;
+    --bg:#e6e6e6;
+    --card:#ffffff;
+    --muted:#7a7a7a;
+  }
+  body{margin:0;font-family:Arial,sans-serif;background:var(--bg);}
 
-    *{ box-sizing:border-box; }
-    body{
-      margin:0;
-      font-family: Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
+  header{
+    background:var(--black);
+    color:#fff;
+    padding:10px 12px;
+    display:flex;gap:10px;align-items:center;
+  }
+  .logo{
+    background:var(--red);
+    width:38px;height:38px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:16px;font-weight:bold;
+  }
+  .brand{font-weight:800; letter-spacing:.3px;}
 
-    header{
-      background: var(--black);
-      padding:12px 12px;
-      display:flex;
-      align-items:center;
-      gap:10px;
-      position: sticky;
-      top: 0;
-      z-index: 99;
-      border-bottom:1px solid var(--border);
-    }
+  .main{padding:10px;max-width:520px;margin:0 auto;}
 
-    .logo{
-      background: var(--red);
-      width:40px;height:40px;border-radius:12px;
-      display:flex;align-items:center;justify-content:center;
-      font-weight:800;
-      letter-spacing:0.5px;
-    }
+  /* HERO BANNER (same concept you had before) */
+  .hero{
+    background:#000;
+    border-radius:18px;
+    height:22vh;min-height:140px;
+    display:flex;flex-direction:column;
+    align-items:center;justify-content:center;
+    color:#fff;
+    margin-bottom:10px;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::after{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(232,31,37,.35), transparent 45%),
+      radial-gradient(circle at 80% 70%, rgba(232,31,37,.25), transparent 50%);
+    pointer-events:none;
+  }
+  .hero h1{margin:0;font-size:22px;z-index:1;}
+  .hero p{margin:6px 0 0;color:#cfcfcf;font-size:13px;z-index:1;}
+  .hero .tag{
+    margin-top:10px;
+    background:var(--red);
+    padding:8px 12px;
+    border-radius:14px;
+    font-weight:800;
+    font-size:13px;
+    z-index:1;
+  }
 
-    .wrap{
-      max-width:720px;
-      margin:0 auto;
-      padding:12px;
-    }
+  /* SEARCH BAR */
+  .bar{display:flex;gap:10px;align-items:center;margin-bottom:10px;}
+  input{
+    flex:1;
+    border:none;
+    border-radius:14px;
+    padding:12px 12px;
+    outline:none;
+    background:#111;
+    color:#fff;
+    box-shadow:0 2px 10px rgba(0,0,0,.12) inset;
+  }
+  button{
+    border:none;
+    padding:12px 14px;
+    border-radius:14px;
+    font-weight:800;
+    cursor:pointer;
+  }
+  .btnSearch{background:var(--red);color:#fff;}
+  .btnClear{background:#4a4a4a;color:#fff;}
 
-    .bar{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
+  /* STATUS */
+  .status{font-size:13px;color:#333;margin:8px 2px;}
+  .err{color:#b00020;font-weight:800;}
 
-    .input{
-      flex:1;
-      min-width:200px;
-      background:#0b0b0c;
-      border:1px solid var(--border);
-      color:var(--text);
-      padding:12px 12px;
-      border-radius:14px;
-      outline:none;
-    }
+  /* RESULTS */
+  .card{
+    background:var(--card);
+    border-radius:18px;
+    padding:12px;
+    margin:10px 0;
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+  }
+  .title{margin:0 0 6px;font-size:16px;font-weight:900;}
+  .meta{margin:0;color:var(--muted);font-size:13px;line-height:1.35;}
+  .row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;}
+  .price{background:#000;color:#fff;padding:8px 10px;border-radius:12px;font-weight:900;}
+  .pill{background:#f2f2f2;color:#111;padding:6px 10px;border-radius:999px;font-weight:800;font-size:12px;}
+  .thumb{
+    width:100%;
+    height:180px;
+    object-fit:cover;
+    border-radius:14px;
+    background:#ddd;
+    display:block;
+    margin-bottom:10px;
+  }
 
-    .btn{
-      border:none;
-      padding:12px 14px;
-      border-radius:14px;
-      cursor:pointer;
-      font-weight:700;
-    }
-    .btn.red{ background: var(--red); color:#fff; }
-    .btn.gray{ background:#2a2a2e; color:#fff; }
-    .btn.voice{ background:#1f1f22; color:#fff; border:1px solid var(--border); }
-    .btn:active{ transform: scale(0.98); }
-
-    .status{
-      margin:10px 2px 0;
-      color:var(--muted);
-      font-size:14px;
-      min-height: 18px;
-    }
-
-    .chips{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-top:10px;
-    }
-    .chip{
-      background:var(--chip);
-      border:1px solid var(--border);
-      color:#fff;
-      padding:6px 10px;
-      border-radius:999px;
-      font-size:12px;
-      cursor:pointer;
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:12px;
-      margin-top:12px;
-    }
-
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:18px;
-      overflow:hidden;
-    }
-
-    .thumb{
-      width:100%;
-      height:180px;
-      background:#0b0b0c;
-      object-fit:cover;
-      display:block;
-    }
-
-    .cbody{
-      padding:12px;
-    }
-
-    .title{
-      font-weight:800;
-      font-size:16px;
-      margin:0 0 6px;
-      line-height:1.25;
-    }
-
-    .meta{
-      color:var(--muted);
-      font-size:13px;
-      margin:0 0 10px;
-      line-height:1.35;
-    }
-
-    .row{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-
-    .price{
-      font-weight:900;
-      color:#fff;
-      background:#0b0b0c;
-      border:1px solid var(--border);
-      padding:8px 10px;
-      border-radius:12px;
-      font-size:14px;
-    }
-
-    .pill{
-      font-size:12px;
-      color:#fff;
-      border:1px solid var(--border);
-      padding:6px 10px;
-      border-radius:999px;
-      background:#101012;
-    }
-
-    .pager{
-      display:flex;
-      gap:10px;
-      justify-content:space-between;
-      margin:14px 0 30px;
-    }
-
-    .small{
-      font-size:12px;
-      color:var(--muted);
-      margin-top:8px;
-    }
-
-    .error{
-      color:#ffb3b3;
-    }
-  </style>
+  /* Voice button */
+  .voiceRow{display:flex;gap:10px;margin-top:8px;margin-bottom:4px;}
+  .btnVoice{background:#000;color:#fff;flex:1;}
+</style>
 </head>
 
 <body>
-  <header>
-    <div class="logo">DP</div>
-    <div style="font-weight:800;">DrivePK Search</div>
-  </header>
+<header>
+  <div class="logo">DP</div>
+  <div class="brand">DrivePK BOLO</div>
+</header>
 
-  <div class="wrap">
-    <div class="bar">
-      <input id="q" class="input" placeholder='Search: "Honda in Karachi" or "Toyota Corolla 2020 Lahore"' />
-      <button class="btn red" id="btnSearch">Search</button>
-      <button class="btn gray" id="btnClear">Clear</button>
-      <button class="btn voice" id="btnVoice">🎤 Voice</button>
-    </div>
+<div class="main">
 
-    <div class="chips">
-      <div class="chip" data-q="Honda in Karachi">Honda in Karachi</div>
-      <div class="chip" data-q="Toyota Corolla 2020 Lahore">Toyota Corolla 2020 Lahore</div>
-      <div class="chip" data-q="Suzuki in Islamabad">Suzuki in Islamabad</div>
-      <div class="chip" data-q="KIA Sportage Lahore">KIA Sportage Lahore</div>
-    </div>
-
-    <div class="status" id="status"></div>
-
-    <div class="grid" id="results"></div>
-
-    <div class="pager">
-      <button class="btn gray" id="prevBtn">⬅ Prev</button>
-      <button class="btn gray" id="nextBtn">Next ➡</button>
-    </div>
-
-    <div class="small" id="pageInfo"></div>
+  <div class="hero">
+    <h1>Find Cars Fast</h1>
+    <p>Speak or type: “Honda in Karachi”</p>
+    <div class="tag">AI Search (Beta)</div>
   </div>
 
+  <div class="bar">
+    <input id="q" placeholder="Search: Toyota Corolla 2020 Lahore" />
+    <button class="btnSearch" id="searchBtn">Search</button>
+    <button class="btnClear" id="clearBtn">Clear</button>
+  </div>
+
+  <div class="voiceRow">
+    <button class="btnVoice" id="voiceBtn">🎤 Voice Search</button>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div id="results"></div>
+
+</div>
+
 <script>
-  // =========================
-  // CONFIG
-  // =========================
-  const BASE_URL = "https://api.drivepk.com";
-  const ENDPOINT = "/cars";
-  const LIMIT = 10;
+  // IMPORTANT:
+  // This file calls YOUR OWN SERVER proxy endpoint:
+  // /api/cars -> server.js will fetch https://api.drivepk.com/cars for you.
+  const API_PROXY = "/api/cars";
 
-  let currentPage = 1;
-  let lastQueryParams = {};
-  let lastPagination = null;
-
-  // =========================
-  // DOM
-  // =========================
   const qEl = document.getElementById("q");
   const statusEl = document.getElementById("status");
   const resultsEl = document.getElementById("results");
-  const prevBtn = document.getElementById("prevBtn");
-  const nextBtn = document.getElementById("nextBtn");
-  const pageInfo = document.getElementById("pageInfo");
 
-  // =========================
-  // HELPERS
-  // =========================
-  function setStatus(msg, isError=false){
+  function setStatus(msg, isErr=false){
     statusEl.textContent = msg || "";
-    statusEl.className = "status" + (isError ? " error" : "");
+    statusEl.className = "status" + (isErr ? " err" : "");
   }
 
-  function escapeHtml(str){
-    if (!str) return "";
-    return String(str)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  function formatPKR(value){
-    const n = Number(value || 0);
+  function formatPKR(v){
+    const n = Number(v || 0);
     return "PKR " + n.toLocaleString("en-PK");
   }
 
-  function capWord(s){
-    if (!s) return "";
-    return s.charAt(0).toUpperCase() + s.slice(1);
-  }
-
-  // =========================
-  // VOICE / TEXT PARSER
-  // Supports: "Honda in Karachi", "Toyota Corolla 2020 Lahore"
-  // Maps to API params: brand, model, year, city, carName
-  // =========================
-  const BRANDS = ["honda","toyota","suzuki","kia","hyundai","mg","changan","mercedes","bmw","audi","nissan","mitsubishi"];
-  const CITIES = ["karachi","lahore","islamabad","rawalpindi","peshawar","quetta","faisalabad","multan","gujranwala","sialkot","hyderabad"];
+  // Parse "Honda in Karachi" into brand + city
+  const BRANDS = ["honda","toyota","suzuki","kia","hyundai","mg","changan","nissan","mitsubishi","audi","bmw","mercedes"];
+  const CITIES = ["karachi","lahore","islamabad","rawalpindi","peshawar","quetta","faisalabad","multan","hyderabad","gujranwala"];
 
   function parseQuery(text){
-    const t = (text || "").toLowerCase().trim();
+    const t = (text || "").toLowerCase();
+    const brand = BRANDS.find(b => t.includes(b)) || "";
+    const city = CITIES.find(c => t.includes(c)) || "";
 
-    const brandFound = BRANDS.find(b => t.includes(b)) || "";
-    const cityFound = CITIES.find(c => t.includes(c)) || "";
-
-    // year (1900-current+1)
+    // year
     const yearMatch = t.match(/\b(19\d{2}|20\d{2})\b/);
-    const yearFound = yearMatch ? Number(yearMatch[1]) : "";
+    const year = yearMatch ? yearMatch[1] : "";
 
-    // model guess: any word after brand (simple heuristic)
-    // example: "toyota corolla 2020 lahore" => model "Corolla"
-    let modelFound = "";
-    if (brandFound) {
-      const afterBrand = t.split(brandFound)[1] || "";
-      // take first word that is not "in" and not a year and not a city
-      const words = afterBrand.split(/\s+/).filter(Boolean);
-      const cleaned = words.filter(w => w !== "in" && !/^\d{4}$/.test(w) && w !== cityFound);
-      if (cleaned.length) modelFound = cleaned[0];
+    // model guess (simple)
+    let model = "";
+    if (brand){
+      const after = t.split(brand)[1] || "";
+      const words = after.split(/\s+/).filter(Boolean);
+      const cleaned = words.filter(w => w !== "in" && w !== city && !/^\d{4}$/.test(w));
+      if (cleaned.length) model = cleaned[0];
     }
 
-    // If nothing detected, fallback to carName search
-    const carName = (!brandFound && !cityFound && !yearFound) ? text.trim() : "";
-
-    return {
-      brand: brandFound ? capWord(brandFound) : "",
-      model: modelFound ? capWord(modelFound) : "",
-      year: yearFound || "",
-      city: cityFound ? capWord(cityFound) : "",
-      carName: carName
-    };
+    const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
+    return { brand: cap(brand), city: cap(city), year, model: cap(model) };
   }
 
-  // =========================
-  // API CALL
-  // =========================
-  async function fetchCars(params){
-    const url = new URL(BASE_URL + ENDPOINT);
-
-    // required paging
-    url.searchParams.set("page", String(params.page || 1));
-    url.searchParams.set("limit", String(params.limit || LIMIT));
-
-    // optional filters
-    Object.entries(params).forEach(([k, v]) => {
-      if (k === "page" || k === "limit") return;
-      if (v !== undefined && v !== null && String(v).trim() !== "") {
-        url.searchParams.set(k, String(v).trim());
-      }
-    });
-
-    // Fetch + safe JSON parsing
-    const res = await fetch(url.toString(), { method:"GET", headers:{ "Accept":"application/json" } });
-    const text = await res.text();
-
-    let json;
-    try { json = JSON.parse(text); }
-    catch {
-      throw new Error("API did not return JSON. Check endpoint / CORS. First chars: " + text.slice(0, 60));
-    }
-
-    if (!res.ok) {
-      throw new Error(json?.message || ("API error: " + res.status));
-    }
-
-    return {
-      cars: Array.isArray(json.data) ? json.data : [],
-      pagination: json.pagination || null,
-      message: json.message || ""
-    };
-  }
-
-  // =========================
-  // RENDER
-  // =========================
   function renderCars(cars){
     resultsEl.innerHTML = "";
 
     if (!cars || cars.length === 0){
       resultsEl.innerHTML = `
         <div class="card">
-          <div class="cbody">
-            <p class="title">No cars found</p>
-            <p class="meta">Try different brand/city or remove filters.</p>
-          </div>
+          <p class="title">No cars found</p>
+          <p class="meta">Try a different brand/city or remove filters.</p>
         </div>
       `;
       return;
     }
 
-    for (const car of cars){
-      const img = (car.images && car.images[0]) ? car.images[0] : "";
-      const title = escapeHtml(car.title || "Car");
-      const brandName = escapeHtml(car.brand?.name || "");
-      const modelName = escapeHtml(car.carModel?.name || car.model?.name || "");
-      const year = escapeHtml(car.year || "");
-      const city = escapeHtml(car.location?.city || car.currentLocation?.city || "");
-      const area = escapeHtml(car.location?.area || car.currentLocation?.area || "");
-      const condition = escapeHtml(car.condition || "");
-      const price = formatPKR(car.price || 0);
+    cars.forEach(car => {
+      const img = car.images && car.images[0] ? car.images[0] : "";
+      const brandName = car.brand && car.brand.name ? car.brand.name : "";
+      const modelName = car.carModel && car.carModel.name ? car.carModel.name : "";
+      const city = car.location && car.location.city ? car.location.city : "";
+      const area = car.location && car.location.area ? car.location.area : "";
+      const condition = car.condition || "active";
 
       resultsEl.insertAdjacentHTML("beforeend", `
         <div class="card">
-          ${img ? `<img class="thumb" src="${img}" alt="${title}" onerror="this.style.display='none'">` : `<div class="thumb"></div>`}
-          <div class="cbody">
-            <p class="title">${title}</p>
-            <p class="meta">
-              ${brandName}${modelName ? " • " + modelName : ""}${year ? " • " + year : ""}<br/>
-              ${city}${area ? " • " + area : ""}
-            </p>
-            <div class="row">
-              <div class="price">${price}</div>
-              <div class="pill">${condition || "active"}</div>
-            </div>
+          ${img ? `<img class="thumb" src="${img}" alt="car" onerror="this.style.display='none'">` : ""}
+          <p class="title">${car.title || "Car"}</p>
+          <p class="meta">
+            ${brandName}${modelName ? " • " + modelName : ""}${car.year ? " • " + car.year : ""}<br>
+            ${city}${area ? " • " + area : ""}
+          </p>
+          <div class="row">
+            <div class="price">${formatPKR(car.price)}</div>
+            <div class="pill">${condition}</div>
           </div>
         </div>
       `);
-    }
+    });
   }
 
-  function renderPagination(pagination){
-    lastPagination = pagination;
-
-    if (!pagination){
-      pageInfo.textContent = "";
-      prevBtn.disabled = true;
-      nextBtn.disabled = true;
+  async function searchCars(){
+    const text = qEl.value.trim();
+    if (!text){
+      setStatus("Type something like: Honda in Karachi", true);
       return;
     }
 
-    pageInfo.textContent = `Page ${pagination.page} of ${pagination.totalPages} • Total: ${pagination.total}`;
-    prevBtn.disabled = !pagination.hasPrev;
-    nextBtn.disabled = !pagination.hasNext;
-  }
-
-  // =========================
-  // SEARCH FLOW
-  // =========================
-  async function doSearch(queryText, page=1){
-    currentPage = page;
     setStatus("Loading...");
     resultsEl.innerHTML = "";
 
-    const parsed = parseQuery(queryText);
+    const { brand, city, year, model } = parseQuery(text);
 
-    // Build params for your API
-    // IMPORTANT: Your API expects single-value parameters like brand, model, year, city, carName, etc.
-    const params = {
-      page: currentPage,
-      limit: LIMIT,
-      brand: parsed.brand,
-      model: parsed.model,
-      year: parsed.year,
-      city: parsed.city,
-      carName: parsed.carName
-    };
+    // Build query to proxy
+    const url = new URL(window.location.origin + API_PROXY);
+    if (brand) url.searchParams.set("brand", brand);
+    if (city) url.searchParams.set("city", city);
+    if (year) url.searchParams.set("year", year);
+    if (model) url.searchParams.set("model", model);
+    url.searchParams.set("limit", "20");
+    url.searchParams.set("page", "1");
 
-    // store last query params (for pagination next/prev)
-    lastQueryParams = { ...params };
+    try{
+      const res = await fetch(url.toString(), { headers: { "Accept":"application/json" } });
+      const json = await res.json();
 
-    try {
-      const { cars, pagination } = await fetchCars(params);
-      setStatus(""); // clear
+      if (!res.ok) throw new Error(json.message || "API error");
+
+      const cars = Array.isArray(json.data) ? json.data : [];
+      setStatus("");
       renderCars(cars);
-      renderPagination(pagination);
-    } catch (err){
-      setStatus("Error: " + err.message, true);
-      renderCars([]); // show "No cars found" card
-      renderPagination(null);
+    } catch(err){
+      setStatus("Error: " + (err.message || "Failed to fetch"), true);
+      renderCars([]);
     }
   }
 
-  // =========================
-  // EVENTS
-  // =========================
-  document.getElementById("btnSearch").addEventListener("click", () => {
-    const text = qEl.value.trim();
-    if (!text) return setStatus("Type something like: Honda in Karachi", true);
-    doSearch(text, 1);
-  });
-
-  document.getElementById("btnClear").addEventListener("click", () => {
+  document.getElementById("searchBtn").addEventListener("click", searchCars);
+  document.getElementById("clearBtn").addEventListener("click", () => {
     qEl.value = "";
-    resultsEl.innerHTML = "";
     setStatus("");
-    renderPagination(null);
+    resultsEl.innerHTML = "";
   });
-
-  document.querySelectorAll(".chip").forEach(chip => {
-    chip.addEventListener("click", () => {
-      const val = chip.getAttribute("data-q") || "";
-      qEl.value = val;
-      doSearch(val, 1);
-    });
-  });
-
-  prevBtn.addEventListener("click", () => {
-    if (!lastPagination || !lastPagination.hasPrev) return;
-    doSearch(qEl.value.trim(), currentPage - 1);
-  });
-
-  nextBtn.addEventListener("click", () => {
-    if (!lastPagination || !lastPagination.hasNext) return;
-    doSearch(qEl.value.trim(), currentPage + 1);
-  });
-
   qEl.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") document.getElementById("btnSearch").click();
+    if (e.key === "Enter") searchCars();
   });
 
-  // =========================
-  // VOICE SEARCH (Web Speech API)
-  // Works on Chrome Android (most devices)
-  // =========================
+  // Voice search
   const VoiceRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  const voiceBtn = document.getElementById("btnVoice");
+  const voiceBtn = document.getElementById("voiceBtn");
 
-  if (!VoiceRecognition) {
+  if (!VoiceRecognition){
+    voiceBtn.textContent = "🎤 Voice Not Supported";
     voiceBtn.disabled = true;
-    voiceBtn.textContent = "🎤 Not Supported";
   } else {
     const rec = new VoiceRecognition();
     rec.lang = "en-US";
     rec.interimResults = false;
-    rec.maxAlternatives = 1;
 
     voiceBtn.addEventListener("click", () => {
       setStatus("Listening...");
@@ -515,23 +298,11 @@
     rec.onresult = (event) => {
       const text = event.results[0][0].transcript || "";
       qEl.value = text;
-      doSearch(text, 1);
+      searchCars();
     };
 
-    rec.onerror = (e) => {
-      setStatus("Voice error: " + (e.error || "unknown"), true);
-    };
-
-    rec.onend = () => {
-      // If no result, stop message after a second
-      setTimeout(() => {
-        if (statusEl.textContent === "Listening...") setStatus("");
-      }, 800);
-    };
+    rec.onerror = (e) => setStatus("Voice error: " + (e.error || "unknown"), true);
   }
-
-  // Optional: run a default search on load (comment out if you want empty)
-  // doSearch("Honda in Karachi", 1);
 </script>
 </body>
 </html>
