@@ -57,7 +57,7 @@
   .ok{color:#0a7a2f; font-weight:bold;}
   .bad{color:#b00020; font-weight:bold;}
 
-  /* Detail Page */
+  /* Detail Page (kept for future use; search now redirects) */
   #detailPage{
     position:fixed; inset:0; background:#fff; z-index:999; display:none; overflow-y:auto;
   }
@@ -115,7 +115,7 @@
   <div id="results"></div>
 </div>
 
-<!-- DETAIL PAGE -->
+<!-- DETAIL PAGE (kept, not used in new redirect search flow) -->
 <div id="detailPage">
   <div class="detailHeader">
     <button id="backBtn">← Back</button>
@@ -194,7 +194,7 @@
    CONFIG
 ========================= */
 const VOICE_API  = "https://meilibeauty.co.uk/voice.php";
-const GATEWAY_API = "https://meilibeauty.co.uk/search.php"; // mobile gateway
+const GATEWAY_API = "https://meilibeauty.co.uk/search.php"; // kept for login/refresh/phone
 const COMPANY_NUMBER = "051 8319037";
 const WEBSITE = "www.drivepk.com";
 const OFFICE_ADDRESS = "195, Peshawar Road, Chur Chowk Beside PSO Pump, Westridge, Rawalpindi.";
@@ -209,21 +209,8 @@ const VOICE_BY_LADY = {
   "Shaheen":  { voice:"sage",    speed:0.95 }
 };
 
-// Boss voice pack (you can change to onyx later)
+// Boss voice pack
 const BOSS_UMAR = { voice:"coral", speed:0.95 };
-
-const RESULT_LINES = [
-  "Jee, yeh aap ke search results hain.",
-  "Acha jee, results aa gaye hain.",
-  "Theek hai, matching gaariyan mil gayi hain.",
-  "Yeh rahi aap ki search results."
-];
-
-const NO_RESULT_LINES = [
-  "Is search par koi gaari available nahi.",
-  "Maazrat, is waqt koi matching gaari nahi mili.",
-  "Koi gaari nahi mili, aap model ya city change karke try karein."
-];
 
 const UNKNOWN_LINES = [
   "Sorry, abhi mujhe is ka jawab maloom nahi hai.",
@@ -232,28 +219,29 @@ const UNKNOWN_LINES = [
 ];
 
 const SILENCE_MS = 5000;
-const END_WAIT_MS = 900;
+const END_WAIT_MS = 650;     // slightly shorter helps on Android
 const MIN_HOLD_MS = 400;
 
 /* =========================
    STATE
 ========================= */
 let callConnected = false;
+
+// Speech recognition lifecycle (recreated per attempt)
 let recognition = null;
 let isRecognizing = false;
 let transcript = "";
 let silenceTimer = null;
+
 let micReady = false;
-
-let currentAudio = null;
-let speakSeq = 0;
-
 let holding = false;
 let holdStartTs = 0;
 let micFailCount = 0;
+let stopRequested = false;
+let restartWhileHolding = true;
 
-let lastResults = []; // list of cars from search
-let currentCar = null;
+let currentAudio = null;
+let speakSeq = 0;
 
 /* =========================
    STORAGE
@@ -332,7 +320,16 @@ function getLadyVoicePack(){
 }
 
 /* =========================
-   VOICE / MIC
+   SEARCH REDIRECT (Android-style results page)
+========================= */
+function redirectToResults(queryText){
+  const q = (queryText || "").trim();
+  if(!q) return;
+  window.location.href = "search-results.html?q=" + encodeURIComponent(q);
+}
+
+/* =========================
+   VOICE / MIC (TTS)
 ========================= */
 function stopAllVoice(){
   if(currentAudio){
@@ -342,12 +339,15 @@ function stopAllVoice(){
 }
 
 function stopMic(){
+  stopRequested = true;
+  clearSilence();
+
   if(!recognition) return;
   try{ recognition.onresult=null; recognition.onerror=null; recognition.onend=null; }catch(e){}
   try{ recognition.abort(); }catch(e){}
   try{ recognition.stop(); }catch(e){}
   isRecognizing = false;
-  clearSilence();
+  recognition = null;
 }
 
 async function warmupMic(){
@@ -410,11 +410,142 @@ async function ring(){
   }
 }
 
-if("webkitSpeechRecognition" in window){
-  recognition = new webkitSpeechRecognition();
-  recognition.lang = "en-IN";
-  recognition.interimResults = true;
-  recognition.continuous = true;
+/* =========================
+   Speech Recognition (RELIABLE ANDROID FIX)
+========================= */
+function isSpeechSupported(){
+  return ("webkitSpeechRecognition" in window);
+}
+
+function createRecognition(){
+  if(!isSpeechSupported()) return null;
+  const r = new webkitSpeechRecognition();
+  r.lang = "en-IN";
+  r.interimResults = true;
+  r.continuous = false; // IMPORTANT: more stable on Android PWA
+  return r;
+}
+
+async function startRecognitionWithRetry(maxAttempts){
+  stopRequested = false;
+
+  // Always recreate recognition to avoid "stuck mic"
+  recognition = createRecognition();
+  if(!recognition) return { ok:false, reason:"unsupported" };
+
+  transcript = "";
+  isRecognizing = true;
+
+  recognition.onresult = (e)=>{
+    try{
+      let lastFinal = "";
+      let lastAny = "";
+      for(let i=0;i<e.results.length;i++){
+        const rr = e.results[i];
+        const txt = rr && rr[0] && rr[0].transcript ? rr[0].transcript : "";
+        if(txt) lastAny = txt;
+        if(rr && rr.isFinal && txt) lastFinal = txt;
+      }
+      transcript = (lastFinal || lastAny || transcript || "");
+    }catch(err){}
+  };
+
+  recognition.onerror = async (ev)=>{
+    const err = (ev && ev.error) ? String(ev.error) : "unknown";
+    isRecognizing = false;
+    clearSilence();
+
+    // Common Android errors
+    if(err === "not-allowed" || err === "service-not-allowed"){
+      await speak("Mic permission allow nahi. Please site settings mein microphone allow karein.");
+      holding = false;
+      return;
+    }
+    if(err === "audio-capture"){
+      await speak("Mic capture nahi ho raha. Please headphone/bluetooth off karke dobara try karein.");
+      holding = false;
+      return;
+    }
+    if(err === "network"){
+      await speak("Network issue ki wajah se mic kaam nahi kar raha. Please internet check karein.");
+      holding = false;
+      return;
+    }
+    // no-speech is common; we handle it by allowing restart while holding
+  };
+
+  recognition.onend = ()=>{
+    isRecognizing = false;
+    clearSilence();
+
+    // While holding, auto-restart quickly (helps Android missing starts)
+    if(holding && restartWhileHolding && !stopRequested){
+      setTimeout(async ()=>{
+        if(holding && !stopRequested){
+          await startRecognitionWithRetry(2);
+        }
+      }, 150);
+    }
+  };
+
+  // Try starting multiple times
+  for(let attempt=1; attempt<=maxAttempts; attempt++){
+    if(stopRequested) break;
+    try{
+      recognition.start();
+      return { ok:true };
+    }catch(e){
+      // wait and retry
+      await new Promise(r=>setTimeout(r, 250 * attempt));
+      // recreate recognition each attempt
+      recognition = createRecognition();
+      if(!recognition) break;
+      // re-bind handlers again after recreate
+      recognition.onresult = (e)=>{ try{
+        let lastFinal="", lastAny="";
+        for(let i=0;i<e.results.length;i++){
+          const rr=e.results[i];
+          const txt=rr && rr[0] && rr[0].transcript ? rr[0].transcript : "";
+          if(txt) lastAny=txt;
+          if(rr && rr.isFinal && txt) lastFinal=txt;
+        }
+        transcript = (lastFinal || lastAny || transcript || "");
+      }catch(err){} };
+      recognition.onerror = async (ev)=>{
+        const err = (ev && ev.error) ? String(ev.error) : "unknown";
+        isRecognizing = false;
+        clearSilence();
+        if(err === "not-allowed" || err === "service-not-allowed"){
+          await speak("Mic permission allow nahi. Please site settings mein microphone allow karein.");
+          holding = false;
+          return;
+        }
+        if(err === "audio-capture"){
+          await speak("Mic capture nahi ho raha. Please headphone/bluetooth off karke dobara try karein.");
+          holding = false;
+          return;
+        }
+        if(err === "network"){
+          await speak("Network issue ki wajah se mic kaam nahi kar raha. Please internet check karein.");
+          holding = false;
+          return;
+        }
+      };
+      recognition.onend = ()=>{
+        isRecognizing = false;
+        clearSilence();
+        if(holding && restartWhileHolding && !stopRequested){
+          setTimeout(async ()=>{
+            if(holding && !stopRequested){
+              await startRecognitionWithRetry(2);
+            }
+          }, 150);
+        }
+      };
+    }
+  }
+
+  return { ok:false, reason:"start_failed" };
 }
 
 /* Hold-to-talk */
@@ -426,8 +557,15 @@ async function startListening(){
   stopAllVoice();
   hideSupport();
 
-  if(!recognition){
+  const btn = $("callBtn");
+  btn.classList.add("talking");
+  btn.innerText = "LISTENING...";
+  setStatus("Sun rahi hoon...");
+
+  if(!isSpeechSupported()){
     holding = false;
+    btn.classList.remove("talking");
+    btn.innerText = "HOLD TO TALK";
     await speak("Mic supported nahi hai. Please type karke search karein.");
     return;
   }
@@ -435,52 +573,27 @@ async function startListening(){
   const ok = await warmupMic();
   if(!ok){
     holding = false;
+    btn.classList.remove("talking");
+    btn.innerText = "HOLD TO TALK";
     await speak("Mic permission allow nahi. Please type kar dein.");
     return;
   }
 
-  transcript = "";
-  isRecognizing = true;
-
-  const btn = $("callBtn");
-  btn.classList.add("talking");
-  btn.innerText = "LISTENING...";
-
-  setStatus("Sun rahi hoon...");
-
   clearSilence();
   silenceTimer = setTimeout(async ()=>{
-    if(isRecognizing && !transcript){
+    if(holding && (!transcript || !transcript.trim())){
       const p = getProfile();
       await speak(respectfulName(p) + ", model, year aur city bol dein.");
     }
   }, SILENCE_MS);
 
-  recognition.onresult = (e)=>{
-    try{
-      let last = "";
-      for(let i=0;i<e.results.length;i++){
-        const r = e.results[i];
-        if(r && r[0] && r[0].transcript) last = r[0].transcript;
-      }
-      if(last) transcript = last;
-    }catch(err){}
-  };
-
-  recognition.onerror = ()=>{
-    isRecognizing = false;
-    clearSilence();
-  };
-
-  recognition.onend = ()=>{
-    isRecognizing = false;
-    clearSilence();
-  };
-
-  try{ recognition.start(); }catch(e){
+  const r = await startRecognitionWithRetry(3);
+  if(!r.ok){
     holding = false;
-    isRecognizing = false;
-    clearSilence();
+    btn.classList.remove("talking");
+    btn.innerText = "HOLD TO TALK";
+    await speak("Mic start nahi ho raha. Please ek dafa refresh karke dobara try karein.");
+    return;
   }
 }
 
@@ -492,13 +605,11 @@ async function stopListening(){
   btn.classList.remove("talking");
   btn.innerText = "HOLD TO TALK";
 
-  if(!recognition || !isRecognizing) return;
-
   const heldMs = Date.now() - holdStartTs;
   if(heldMs < MIN_HOLD_MS) await new Promise(r=>setTimeout(r, MIN_HOLD_MS - heldMs));
 
-  clearSilence();
-  try{ recognition.stop(); }catch(e){}
+  // stop recognition cleanly
+  stopMic();
   await new Promise(r=>setTimeout(r, END_WAIT_MS));
 
   const spoken = (transcript || "").trim();
@@ -561,7 +672,7 @@ function looksLikeCarSearch(t){
 }
 
 /* =========================
-   GATEWAY CALLS (search.php)
+   GATEWAY CALLS (search.php) - kept for auth + refresh + carPhone
 ========================= */
 async function gateway(payload){
   const res = await fetch(GATEWAY_API,{
@@ -621,124 +732,9 @@ async function getCarPhone(carIdOrSlug){
   if(r.ok && r.json && r.json.phone){
     return { ok:true, data:r.json };
   }
-  // common errors
   const msg = (r.json && (r.json.message || r.json.error)) ? (r.json.message || r.json.error) : "Unable to fetch phone";
   return { ok:false, msg };
 }
-
-/* =========================
-   SEARCH + RENDER
-========================= */
-async function runSearch(text){
-  hideSupport();
-  $("results").innerHTML = "<p>Gaariyan dhoondi ja rahi hain...</p>";
-
-  const r = await gateway({ action:"search", text });
-  const json = r.json;
-
-  lastResults = (json && json.data) ? json.data : [];
-  $("results").innerHTML = "";
-
-  if(!lastResults.length){
-    $("results").innerHTML = "<p>No cars available</p>";
-    return 0;
-  }
-
-  lastResults.forEach((c,i)=>{
-    const img = (c.images && c.images[0]) ? c.images[0] : "";
-    const price = c.price ? Number(c.price).toLocaleString() : "Call";
-    const title = c.title || "-";
-    const year = c.year || "-";
-    const city = (c.location && c.location.city) ? c.location.city : "-";
-
-    $("results").innerHTML += `
-      <div class="car" onclick="openDetail(${i})">
-        ${img ? `<img src="${img}">` : ""}
-        <h3 style="margin:8px 0 4px 0;">${title}</h3>
-        <div class="muted">${year} • ${city}</div>
-        <strong>PKR ${price}</strong>
-      </div>
-    `;
-  });
-
-  return lastResults.length;
-}
-
-/* Detail page */
-window.openDetail = function(i){
-  currentCar = lastResults[i];
-  if(!currentCar) return;
-
-  $("detailPage").style.display = "block";
-  $("detailTitle").innerText = currentCar.title || "Car Detail";
-  $("detailPrice").innerText = "PKR " + (currentCar.price ? Number(currentCar.price).toLocaleString() : "Call");
-
-  $("gallery").innerHTML = "";
-  (currentCar.images || []).forEach(u=>{
-    $("gallery").innerHTML += `<img src="${u}">`;
-  });
-
-  $("specGrid").innerHTML = `
-    <div class="box">Year<strong>${currentCar.year || "-"}</strong></div>
-    <div class="box">City<strong>${(currentCar.location && currentCar.location.city) ? currentCar.location.city : "-"}</strong></div>
-    <div class="box">Mileage<strong>${currentCar.mileage ? (currentCar.mileage + " km") : "-"}</strong></div>
-    <div class="box">Fuel<strong>${currentCar.fuelType || "-"}</strong></div>
-    <div class="box">Trans<strong>${currentCar.transmission || "-"}</strong></div>
-    <div class="box">Seats<strong>${currentCar.seatingCapacity || "-"}</strong></div>
-  `;
-
-  $("phoneBox").style.display = "none";
-  $("realPhone").innerText = "";
-  $("phoneOwner").innerText = "";
-
-  const t = getTokens();
-  $("contactHint").innerText = t.access ? "Tap to view phone (verified required)" : "🔒 Login to view phone number";
-
-  // try to show seller name if present
-  const dealerName = currentCar.dealerId && (currentCar.dealerId.businessName || currentCar.dealerId.name);
-  const userName = currentCar.userId && (currentCar.userId.full_name || currentCar.userId.name);
-  $("sellerName").innerText = dealerName ? dealerName : (userName ? userName : "");
-};
-
-$("backBtn").onclick = ()=>{ $("detailPage").style.display = "none"; };
-
-/* Contact seller */
-$("contactBtn").onclick = async ()=>{
-  if(!currentCar) return;
-
-  // prefer id or slug (your API supports both)
-  const carId = currentCar._id || currentCar.slug;
-  if(!carId){
-    await speak("Maazrat, is ad ka id available nahi. Please dobara try karein.");
-    return;
-  }
-
-  const t = getTokens();
-  if(!t.access){
-    openAuthModal();
-    await speak("Phone number dekhne ke liye login zaroori hai.");
-    return;
-  }
-
-  await speak("Theek hai, main number nikal rahi hoon.");
-  const r = await getCarPhone(carId);
-  if(!r.ok){
-    // show support if verification issue
-    if((r.msg||"").toLowerCase().includes("verification") || (r.msg||"").toLowerCase().includes("forbidden")){
-      showSupport();
-      await speak("Phone ke liye email aur phone verification required hai. Complaint ke liye aap " + COMPANY_NUMBER + " par call kar sakte hain.");
-    } else {
-      await speak("Maazrat, abhi phone nahi mil saka. " + (r.msg || ""));
-    }
-    return;
-  }
-
-  $("phoneBox").style.display = "block";
-  $("realPhone").innerText = r.data.phone || "";
-  $("phoneOwner").innerText = (r.data.name ? ("Name: " + r.data.name) : "") + (typeof r.data.isDealer === "boolean" ? (" • Dealer: " + (r.data.isDealer ? "Yes" : "No")) : "");
-
-  await speak("Jee, yeh contact number hai.");
-};
 
 /* =========================
    CONVERSATION ROUTER
@@ -747,7 +743,6 @@ async function handleSpoken(text){
   const p = getProfile();
   const who = respectfulName(p);
 
-  // Capture user's name first
   if(!p.name){
     if(isAskingMyName(text)){
       const lady = p.lady || getOrAssignLady();
@@ -765,12 +760,10 @@ async function handleSpoken(text){
     return;
   }
 
-  // FAQ first
   if(isAskingAddress(text)){ await speak(who + ", hamara office address hai: " + OFFICE_ADDRESS); return; }
   if(isAskingPhone(text)){ showSupport(); await speak(who + ", contact number hai: " + COMPANY_NUMBER + ". WhatsApp bhi isi par hai."); return; }
   if(isAskingWebsite(text)){ await speak(who + ", hamari website hai: " + WEBSITE); return; }
 
-  // complaint/support
   if(wantsComplaint(text)){
     showSupport();
     await speak(who + ", complaint ke liye please is number par call karein: " + COMPANY_NUMBER + ".");
@@ -779,7 +772,6 @@ async function handleSpoken(text){
     hideSupport();
   }
 
-  // boss
   if(wantsBoss(text)){
     await speak(who + ", theek hai. Main aap ko Umar se connect kar rahi hoon.");
     await ring();
@@ -787,7 +779,6 @@ async function handleSpoken(text){
     return;
   }
 
-  // change lady
   if(wantsNewLady(text)){
     const cur = p.lady || getOrAssignLady();
     const others = LADIES.filter(x=>x!==cur);
@@ -806,16 +797,14 @@ async function handleSpoken(text){
     return;
   }
 
-  // If not car search, answer politely
   if(!looksLikeCarSearch(text)){
     await speak(rand(UNKNOWN_LINES));
     return;
   }
 
   $("query").value = text;
-  const count = await runSearch(text);
-  if(count > 0) await speak(rand(RESULT_LINES));
-  else await speak(rand(NO_RESULT_LINES));
+  setStatus("Opening results...");
+  redirectToResults(text);
 }
 
 /* =========================
@@ -917,9 +906,8 @@ $("searchBtn").addEventListener("click", async ()=>{
     await speak(rand(UNKNOWN_LINES));
     return;
   }
-  const count = await runSearch(t);
-  if(count > 0) await speak(rand(RESULT_LINES));
-  else await speak(rand(NO_RESULT_LINES));
+  setStatus("Opening results...");
+  redirectToResults(t);
 });
 
 $("authBtn").addEventListener("click", ()=>{
@@ -998,15 +986,9 @@ $("logoutBtn").addEventListener("click", async ()=>{
 (function init(){
   hideSupport();
   setStatus("");
-
   const t = getTokens();
   $("authBtn").innerText = t.access ? "Account" : "Login";
-
-  // ✅ REQUIRED for PWA Install
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js").catch(()=>{});
-    });
-  }
 })();
 </script>
+</body>
+</html>
