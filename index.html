@@ -37,10 +37,8 @@
   .muted{opacity:.75;font-size:12px;}
   .btnRed{background:#E81F25 !important;}
 
-  /* Support box */
   #supportBox{display:none;margin-top:10px;background:#fff;border-radius:12px;padding:10px;}
 
-  /* Modal */
   .modalBack{
     position:fixed; inset:0; background:rgba(0,0,0,.55);
     display:none; align-items:center; justify-content:center; z-index:9999;
@@ -57,7 +55,6 @@
   .ok{color:#0a7a2f; font-weight:bold;}
   .bad{color:#b00020; font-weight:bold;}
 
-  /* Detail Page */
   #detailPage{
     position:fixed; inset:0; background:#fff; z-index:999; display:none; overflow-y:auto;
   }
@@ -77,9 +74,6 @@
   .contactBox{background:#000;color:#fff;border-radius:14px;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
   .contactBtn{background:#E81F25;color:#fff;border-radius:12px;padding:10px 12px;font-weight:bold;min-width:140px;text-align:center;}
   .lock{opacity:.7;font-size:13px;}
-
-  /* Loader */
-  #loaderMore{background:#fff;border-radius:12px;padding:10px;margin-bottom:10px;}
 </style>
 </head>
 
@@ -98,7 +92,7 @@
     <h2>Voice Search</h2>
   </div>
 
-  <input id="query" placeholder="Jaise: Honda City Lahore 2020" />
+  <input id="query" placeholder="Jaise: Black Honda City Lahore over 20 lakh" />
   <div class="row">
     <button id="searchBtn">Search</button>
     <button id="authBtn" class="btnRed">Login</button>
@@ -111,7 +105,7 @@
 
   <div id="supportBox" class="card">
     <strong>Complaints / Support:</strong>
-    <div style="margin-top:6px;font-size:18px;color:#E81F25;font-weight:bold;">051 8319037</div>
+    <div style="margin-top:6px;font-size:18px;color:#E81F25;font-weight:bold;">0300 8319037</div>
     <div class="small">Please call this number for complaints.</div>
   </div>
 
@@ -159,13 +153,14 @@
     <div id="modalMsg" class="small"></div>
 
     <div id="loginForm">
-      <input id="loginEmail" placeholder="Email" />
+      <!-- ✅ Email OR Phone -->
+      <input id="loginId" placeholder="Email or Phone (03008319037)" />
       <input id="loginPass" placeholder="Password" type="password" />
       <div class="row2">
         <button id="doLogin" class="btnRed">Login</button>
         <button id="goRegister">Register</button>
       </div>
-      <div class="small">If token expires, we auto-refresh.</div>
+      <div class="small">Email ya phone se login ho jata hai.</div>
     </div>
 
     <div id="registerForm" style="display:none;">
@@ -195,9 +190,9 @@
 /* =========================
    CONFIG
 ========================= */
-const VOICE_API  = "https://meilibeauty.co.uk/voice.php";
-const GATEWAY_API = "https://meilibeauty.co.uk/search.php"; // ✅ MUST be where you upload search.php
-const COMPANY_NUMBER = "051 8319037";
+const VOICE_API  = "voice.php";
+const GATEWAY_API = "search.php";
+const COMPANY_NUMBER = "0300 8319037";
 const WEBSITE = "www.drivepk.com";
 const OFFICE_ADDRESS = "195, Peshawar Road, Chur Chowk Beside PSO Pump, Westridge, Rawalpindi.";
 
@@ -211,30 +206,30 @@ const VOICE_BY_LADY = {
   "Shaheen":  { voice:"sage",    speed:0.95 }
 };
 
-const BOSS_UMAR = { voice:"coral", speed:0.95 };
+// ✅ Boss Umar voice changed to onyx
+const BOSS_UMAR = { voice:"onyx", speed:0.95 };
 
 const RESULT_LINES = [
-  "Jee, yeh aap ke search results hain.",
-  "Acha jee, results aa gaye hain.",
-  "Theek hai, matching gaariyan mil gayi hain.",
-  "Yeh rahi aap ki search results."
+  "Jee Bhai jaan, yeh aap ke search results hain.",
+  "Acha Bhai jaan, results aa gaye hain.",
+  "Theek hai Bhai jaan, matching gaariyan mil gayi hain.",
+  "Bhai jaan, yeh rahi aap ki search results."
 ];
-
 const NO_RESULT_LINES = [
-  "Is search par koi gaari available nahi.",
-  "Maazrat, is waqt koi matching gaari nahi mili.",
-  "Koi gaari nahi mili, aap model ya city change karke try karein."
+  "Bhai jaan, is search par koi gaari available nahi.",
+  "Maazrat Bhai jaan, is waqt koi matching gaari nahi mili.",
+  "Bhai jaan, koi gaari nahi mili, aap model ya city change karke try karein."
 ];
-
 const UNKNOWN_LINES = [
-  "Sorry, abhi mujhe is ka jawab maloom nahi hai.",
-  "Abhi main sirf gaari search mein help karti hoon. Aap car ka model, year aur city bol dein.",
-  "Maazrat, is cheez mein help nahi ho pa rahi. Aap gaari ka brand aur city batayein."
+  "Sorry Bhai jaan, abhi mujhe is ka jawab maloom nahi hai.",
+  "Bhai jaan, main sirf gaari search mein help karti hoon. Aap car ka model, year aur city bol dein.",
+  "Maazrat Bhai jaan, is cheez mein help nahi ho pa rahi. Aap gaari ka brand aur city batayein."
 ];
 
 const SILENCE_MS = 5000;
 const END_WAIT_MS = 900;
 const MIN_HOLD_MS = 400;
+const PAGE_SIZE = 20;
 
 /* =========================
    STATE
@@ -256,12 +251,10 @@ let micFailCount = 0;
 let lastResults = [];
 let currentCar = null;
 
-// ✅ Pagination state for downward scrolling
 let currentSearchText = "";
 let currentPage = 1;
 let hasMore = true;
 let isLoadingMore = false;
-const PAGE_SIZE = 20;
 
 /* =========================
    STORAGE
@@ -305,42 +298,17 @@ function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function randLady(){ return LADIES[Math.floor(Math.random()*LADIES.length)]; }
 function normalize(t){ return (t||"").toLowerCase().replace(/[^\w\s]/g," ").replace(/\s+/g," ").trim(); }
 
+// ✅ Always address as Bhai jaan
+function respectfulName(){ return "Bhai jaan"; }
+
 function getOrAssignLady(){
   const p = getProfile();
   if(!p.lady){ p.lady = randLady(); saveProfile(p); }
   return p.lady;
 }
 
-function isDoctorName(nm){
-  const s = (nm||"").toLowerCase().trim();
-  return s.startsWith("dr") || s.startsWith("doctor") || s.includes(" dr ") || s.includes("doctor ");
-}
-
-function respectfulName(profile){
-  if(!profile || !profile.name) return "bhai";
-  const nm = (profile.name||"").trim();
-  if(isDoctorName(nm)) return "Dr sahib";
-  return nm.split(" ")[0] + " bhai";
-}
-
-function extractName(text){
-  const t = (text||"").trim();
-  const m = t.match(/(my name is|mera naam)\s+(.+)/i);
-  let raw = m ? m[2] : t;
-  raw = raw.replace(/[^a-zA-Z\s]/g," ").replace(/\s+/g," ").trim();
-  if(!raw) return null;
-  const parts = raw.split(" ").slice(0,3);
-  return parts.map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(" ");
-}
-
-function getLadyVoicePack(){
-  const p = getProfile();
-  const lady = p.lady || getOrAssignLady();
-  return VOICE_BY_LADY[lady] || { voice:"marin", speed:0.95 };
-}
-
 /* =========================
-   VOICE / MIC
+   VOICE
 ========================= */
 function stopAllVoice(){
   if(currentAudio){
@@ -348,7 +316,6 @@ function stopAllVoice(){
     currentAudio = null;
   }
 }
-
 function stopMic(){
   if(!recognition) return;
   try{ recognition.onresult=null; recognition.onerror=null; recognition.onend=null; }catch(e){}
@@ -357,7 +324,6 @@ function stopMic(){
   isRecognizing = false;
   clearSilence();
 }
-
 async function warmupMic(){
   if(micReady) return true;
   try{
@@ -365,11 +331,8 @@ async function warmupMic(){
     s.getTracks().forEach(t=>t.stop());
     micReady = true;
     return true;
-  }catch{
-    return false;
-  }
+  }catch{ return false; }
 }
-
 async function speak(text, voicePack){
   const mySeq = ++speakSeq;
   stopMic();
@@ -377,7 +340,9 @@ async function speak(text, voicePack){
   clearSilence();
   setStatus(text);
 
-  const vp = voicePack || getLadyVoicePack();
+  const p = getProfile();
+  const lady = p.lady || getOrAssignLady();
+  const vp = voicePack || (VOICE_BY_LADY[lady] || { voice:"marin", speed:0.95 });
   const safeSpeed = Number((vp.speed || 0.95).toFixed(2));
 
   let res;
@@ -387,9 +352,7 @@ async function speak(text, voicePack){
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({ text, voice: vp.voice, speed: safeSpeed })
     });
-  }catch{
-    return;
-  }
+  }catch{ return; }
 
   if(!res || !res.ok) return;
 
@@ -406,7 +369,6 @@ async function speak(text, voicePack){
     audio.play().catch(done);
   });
 }
-
 async function ring(){
   const times = Math.floor(Math.random()*3)+1;
   for(let i=0;i<times;i++){
@@ -425,7 +387,6 @@ if("webkitSpeechRecognition" in window){
   recognition.continuous = true;
 }
 
-/* Hold-to-talk */
 async function startListening(){
   if(!callConnected || holding) return;
   holding = true;
@@ -436,14 +397,14 @@ async function startListening(){
 
   if(!recognition){
     holding = false;
-    await speak("Mic supported nahi hai. Please type karke search karein.");
+    await speak("Mic supported nahi hai Bhai jaan. Please type karke search karein.");
     return;
   }
 
   const ok = await warmupMic();
   if(!ok){
     holding = false;
-    await speak("Mic permission allow nahi. Please type kar dein.");
+    await speak("Mic permission allow nahi Bhai jaan. Please type kar dein.");
     return;
   }
 
@@ -454,13 +415,12 @@ async function startListening(){
   btn.classList.add("talking");
   btn.innerText = "LISTENING...";
 
-  setStatus("Sun rahi hoon...");
+  setStatus("Sun rahi hoon Bhai jaan...");
 
   clearSilence();
   silenceTimer = setTimeout(async ()=>{
     if(isRecognizing && !transcript){
-      const p = getProfile();
-      await speak(respectfulName(p) + ", model, year aur city bol dein.");
+      await speak("Bhai jaan, model, year, city, color ya budget bol dein.");
     }
   }, SILENCE_MS);
 
@@ -474,21 +434,11 @@ async function startListening(){
       if(last) transcript = last;
     }catch(err){}
   };
-
-  recognition.onerror = ()=>{
-    isRecognizing = false;
-    clearSilence();
-  };
-
-  recognition.onend = ()=>{
-    isRecognizing = false;
-    clearSilence();
-  };
+  recognition.onerror = ()=>{ isRecognizing=false; clearSilence(); };
+  recognition.onend = ()=>{ isRecognizing=false; clearSilence(); };
 
   try{ recognition.start(); }catch(e){
-    holding = false;
-    isRecognizing = false;
-    clearSilence();
+    holding=false; isRecognizing=false; clearSilence();
   }
 }
 
@@ -512,60 +462,13 @@ async function stopListening(){
   const spoken = (transcript || "").trim();
   if(!spoken){
     micFailCount++;
-    if(micFailCount === 1){
-      await speak("Awaaz clear nahi aayi. Button ko press karke hold rakhein, phir bol kar release karein.");
-    } else {
-      await speak("Lagta hai mic record nahi kar raha. Aap type karke bhi likh sakte hain.");
-    }
+    if(micFailCount === 1) await speak("Awaaz clear nahi aayi Bhai jaan. Press karke hold rakhein, bol kar release karein.");
+    else await speak("Lagta hai mic record nahi kar raha Bhai jaan. Aap type karke bhi likh sakte hain.");
     return;
   }
 
   micFailCount = 0;
   await handleSpoken(spoken);
-}
-
-/* =========================
-   INTENTS + FAQ
-========================= */
-function wantsBoss(t){
-  t = normalize(t);
-  return ["boss","manager","supervisor","owner","boss se baat","boss se milao","boss se baat karwao","mujhe boss se baat karni hai","umar","umar se baat"].some(x=>t.includes(x));
-}
-function wantsComplaint(t){
-  t = normalize(t);
-  return ["complaint","complain","shikayat","issue","problem","masla","support","customer care"].some(x=>t.includes(x));
-}
-function wantsNewLady(t){
-  t = normalize(t);
-  return ["change lady","switch lady","another lady","other lady","dusri madam","dusri lady","aur madam chahiye","koi aur lady","dusri madam se baat karwao","koi khoobsurat lady chahiye"].some(x=>t.includes(x));
-}
-function isAskingMyName(t){
-  t = normalize(t);
-  return t.includes("your name") || t.includes("aap ka naam") || t.includes("ap ka naam") || t.includes("naam kya");
-}
-function isAskingAddress(t){
-  t = normalize(t);
-  return t.includes("address") || t.includes("office") || t.includes("location") || t.includes("kidhar") || t.includes("kahan") || t.includes("pata");
-}
-function isAskingPhone(t){
-  t = normalize(t);
-  return t.includes("phone") || t.includes("number") || t.includes("contact") || t.includes("whatsapp");
-}
-function isAskingWebsite(t){
-  t = normalize(t);
-  return t.includes("website") || t.includes("site") || t.includes("url") || t.includes("link");
-}
-
-const BRANDS=["toyota","honda","suzuki","kia","hyundai","mg","haval","changan","byd","nissan","bmw","audi","mercedes","proton","dfsk","baic","isuzu","jac","peugeot"];
-const CITIES=["lahore","karachi","islamabad","rawalpindi","peshawar","multan","faisalabad","quetta","sialkot","gujranwala","abbottabad","mansehra","swat"];
-function looksLikeCarSearch(t){
-  const x = normalize(t);
-  if(!x) return false;
-  if(/\b(19|20)\d{2}\b/.test(x)) return true;
-  if(x.includes("gaari")||x.includes("car")||x.includes("model")||x.includes("year")) return true;
-  if(BRANDS.some(b=>x.includes(b))) return true;
-  if(CITIES.some(c=>x.includes(c))) return true;
-  return false;
 }
 
 /* =========================
@@ -583,7 +486,7 @@ async function gateway(payload){
 }
 
 /* =========================
-   SEARCH + RENDER (WITH INFINITE SCROLL)
+   SEARCH + INFINITE SCROLL
 ========================= */
 async function runSearch(text){
   hideSupport();
@@ -607,11 +510,11 @@ async function loadMoreResults(isFirst=false){
   if(isLoadingMore || !hasMore) return 0;
   isLoadingMore = true;
 
-  // loader
   if(!isFirst){
     const loader = document.createElement("div");
     loader.id = "loaderMore";
-    loader.innerHTML = "<p>Loading more cars...</p>";
+    loader.className = "card";
+    loader.innerHTML = "Loading more cars...";
     $("results").appendChild(loader);
   }
 
@@ -627,8 +530,6 @@ async function loadMoreResults(isFirst=false){
 
   const json = r.json || {};
   const newData = json.data || [];
-
-  // if api returns hasNext in pagination, search.php already converts it to hasMore
   hasMore = (typeof json.hasMore === "boolean") ? json.hasMore : false;
 
   if(isFirst) $("results").innerHTML = "";
@@ -660,7 +561,6 @@ async function loadMoreResults(isFirst=false){
   return newData.length;
 }
 
-/* Infinite scroll trigger */
 window.addEventListener("scroll", async ()=>{
   const nearBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 450);
   if(nearBottom && currentSearchText){
@@ -668,7 +568,7 @@ window.addEventListener("scroll", async ()=>{
   }
 });
 
-/* Detail page */
+/* Detail */
 window.openDetail = function(i){
   currentCar = lastResults[i];
   if(!currentCar) return;
@@ -678,9 +578,7 @@ window.openDetail = function(i){
   $("detailPrice").innerText = "PKR " + (currentCar.price ? Number(currentCar.price).toLocaleString() : "Call");
 
   $("gallery").innerHTML = "";
-  (currentCar.images || []).forEach(u=>{
-    $("gallery").innerHTML += `<img src="${u}">`;
-  });
+  (currentCar.images || []).forEach(u=>{ $("gallery").innerHTML += `<img src="${u}">`; });
 
   $("specGrid").innerHTML = `
     <div class="box">Year<strong>${currentCar.year || "-"}</strong></div>
@@ -691,55 +589,42 @@ window.openDetail = function(i){
     <div class="box">Seats<strong>${currentCar.seatingCapacity || "-"}</strong></div>
   `;
 
-  $("phoneBox").style.display = "none";
-  $("realPhone").innerText = "";
-  $("phoneOwner").innerText = "";
-
-  // token system is from your old gateway; keep as-is
-  const t = getTokens();
-  $("contactHint").innerText = t.access ? "Tap to view phone (verified required)" : "🔒 Login to view phone number";
-
-  const dealerName = currentCar.dealerId && (currentCar.dealerId.businessName || currentCar.dealerId.name);
-  const userName = currentCar.userId && (currentCar.userId.full_name || currentCar.userId.name);
-  $("sellerName").innerText = dealerName ? dealerName : (userName ? userName : "");
+  $("contactHint").innerText = getTokens().access ? "Tap to view phone" : "🔒 Login to view phone number";
 };
-
 $("backBtn").onclick = ()=>{ $("detailPage").style.display = "none"; };
 
-/* Contact seller (kept same as your existing logic) */
-async function getCarPhone(carIdOrSlug){
-  // your current API for phone is not provided in this message,
-  // so we keep it as you already had (it will work only if your gateway supports it)
-  return { ok:false, msg:"Phone API not connected in this build." };
-}
-
-$("contactBtn").onclick = async ()=>{
-  await speak("Phone feature abhi connected nahi hai.");
-};
+$("contactBtn").onclick = async ()=>{ await speak("Bhai jaan, phone number module abhi connect nahi hai."); };
 
 /* =========================
-   CONVERSATION ROUTER
+   TALK ROUTER
 ========================= */
-async function handleSpoken(text){
-  const p = getProfile();
-  const who = respectfulName(p);
+function wantsComplaint(t){
+  t = normalize(t);
+  return ["complaint","complain","shikayat","issue","problem","masla","support","customer care"].some(x=>t.includes(x));
+}
+function isAskingAddress(t){
+  t = normalize(t);
+  return t.includes("address") || t.includes("office") || t.includes("location") || t.includes("kidhar") || t.includes("kahan") || t.includes("pata");
+}
+function isAskingPhone(t){
+  t = normalize(t);
+  return t.includes("phone") || t.includes("number") || t.includes("contact") || t.includes("whatsapp");
+}
+function isAskingWebsite(t){
+  t = normalize(t);
+  return t.includes("website") || t.includes("site") || t.includes("url") || t.includes("link");
+}
+function wantsBoss(t){
+  t = normalize(t);
+  return ["boss","manager","supervisor","owner","boss se baat","boss se milao","boss se baat karwao","umar","umar se baat"].some(x=>t.includes(x));
+}
+function wantsNewLady(t){
+  t = normalize(t);
+  return ["change lady","switch lady","another lady","other lady","dusri madam","dusri lady","koi aur lady"].some(x=>t.includes(x));
+}
 
-  if(!p.name){
-    if(isAskingMyName(text)){
-      const lady = p.lady || getOrAssignLady();
-      await speak("Mera naam " + lady + " hai. Kia main aap ka naam pooch sakti hoon?");
-      return;
-    }
-    const nm = extractName(text);
-    if(!nm){
-      await speak("Naam clear nahi aaya. Sirf apna naam dobara bol dein.");
-      return;
-    }
-    p.name = nm;
-    saveProfile(p);
-    await speak("Shukriya " + respectfulName(p) + ". Ab apni requirement bol dein.");
-    return;
-  }
+async function handleSpoken(text){
+  const who = respectfulName();
 
   if(isAskingAddress(text)){ await speak(who + ", hamara office address hai: " + OFFICE_ADDRESS); return; }
   if(isAskingPhone(text)){ showSupport(); await speak(who + ", contact number hai: " + COMPANY_NUMBER + ". WhatsApp bhi isi par hai."); return; }
@@ -749,37 +634,23 @@ async function handleSpoken(text){
     showSupport();
     await speak(who + ", complaint ke liye please is number par call karein: " + COMPANY_NUMBER + ".");
     return;
-  } else {
-    hideSupport();
-  }
+  } else hideSupport();
 
   if(wantsBoss(text)){
     await speak(who + ", theek hai. Main aap ko Umar se connect kar rahi hoon.");
     await ring();
-    await speak(who + ", Assalam o Alaikum. Main Umar hoon. Aap ka masla kya hai?", BOSS_UMAR);
+    // ✅ Boss line changed
+    await speak("Assalam o Alaikum " + who + ". How may I help you?", BOSS_UMAR);
     return;
   }
 
   if(wantsNewLady(text)){
+    const p = getProfile();
     const cur = p.lady || getOrAssignLady();
     const others = LADIES.filter(x=>x!==cur);
-    p.lady = (others.length ? others[Math.floor(Math.random()*others.length)] : randLady());
+    p.lady = others.length ? others[Math.floor(Math.random()*others.length)] : randLady();
     saveProfile(p);
-    const newLady = p.lady;
-
-    await speak(who + ", theek hai. Ab " + newLady + " baat karegi.");
-    await speak("Assalam o Alaikum " + who + ". Main " + newLady + " hoon.");
-    return;
-  }
-
-  if(isAskingMyName(text)){
-    const lady = p.lady || getOrAssignLady();
-    await speak(who + ", mera naam " + lady + " hai.");
-    return;
-  }
-
-  if(!looksLikeCarSearch(text)){
-    await speak(rand(UNKNOWN_LINES));
+    await speak("Theek hai " + who + ". Ab " + p.lady + " baat karegi, " + who + ".");
     return;
   }
 
@@ -810,20 +681,16 @@ async function connectCall(){
   btn.innerText = "HOLD TO TALK";
   $("hint").innerText = "Press & hold and speak.";
 
-  const p = getProfile();
   const lady = getOrAssignLady();
 
-  if(!p.name){
-    await speak("Assalam o Alaikum! DrivePK mein khush aamadid. Mera naam " + lady + " hai. Kia main aap ka naam pooch sakti hoon?");
-  }else{
-    await speak(respectfulName(p) + ", Assalam o Alaikum. Model, year aur city bol dein.");
-  }
+  // ✅ New Urdu line as requested
+  await speak("Assalam o Alaikum! DrivePK mein khush aamadid. Mera naam " + lady + " hai. Bhai jaan, main aap ki kya madad karo?");
 
   await warmupMic();
 }
 
 /* =========================
-   AUTH MODAL UI (kept)
+   AUTH MODAL UI + LOGIN (Email OR Phone)
 ========================= */
 function openAuthModal(){
   $("modalBack").style.display = "flex";
@@ -845,7 +712,7 @@ function renderAuthState(){
     $("loggedInBox").style.display = "block";
     const u = t.user || {};
     $("whoami").innerText = u.full_name || u.name || "Logged in";
-    $("whoEmail").innerText = u.email || "";
+    $("whoEmail").innerText = u.email || u.phone || "";
     $("authBtn").innerText = "Account";
   }else{
     $("modalTitle").innerText = "Login";
@@ -856,12 +723,30 @@ function renderAuthState(){
   }
 }
 
+// login/register via gateway (search.php must support these actions)
+async function doLogin(identifier, password){
+  // If identifier looks like phone, normalize
+  const idTrim = (identifier || "").trim();
+  const isPhone = /^[0-9+ ]{10,15}$/.test(idTrim.replace(/\s+/g,""));
+  const payload = { action:"login", password };
+  if(isPhone) payload.phone = idTrim.replace(/\s+/g,"");
+  else payload.email = idTrim;
+
+  const r = await gateway(payload);
+  if(r.ok && r.json && r.json.success && r.json.data){
+    setTokens(r.json.data);
+    return { ok:true, msg:r.json.message || "Login successful" };
+  }
+  return { ok:false, msg:(r.json && r.json.message) ? r.json.message : "Login failed" };
+}
+
+function showSupport(){ $("supportBox").style.display = "block"; }
+function hideSupport(){ $("supportBox").style.display = "none"; }
+
 /* =========================
    EVENTS
 ========================= */
-$("callBtn").addEventListener("click", async ()=>{
-  if(!callConnected) await connectCall();
-});
+$("callBtn").addEventListener("click", async ()=>{ if(!callConnected) await connectCall(); });
 
 $("callBtn").addEventListener("pointerdown", (e)=>{
   if(!callConnected) return;
@@ -883,23 +768,14 @@ $("callBtn").addEventListener("pointercancel", (e)=>{
 $("searchBtn").addEventListener("click", async ()=>{
   const t = ($("query").value || "").trim();
   if(!t) return;
-  if(!looksLikeCarSearch(t)){
-    await speak(rand(UNKNOWN_LINES));
-    return;
-  }
   const count = await runSearch(t);
   if(count > 0) await speak(rand(RESULT_LINES));
   else await speak(rand(NO_RESULT_LINES));
 });
 
-$("authBtn").addEventListener("click", ()=>{
-  openAuthModal();
-});
-
+$("authBtn").addEventListener("click", ()=> openAuthModal());
 $("closeModal").addEventListener("click", closeAuthModal);
-$("modalBack").addEventListener("click", (e)=>{
-  if(e.target === $("modalBack")) closeAuthModal();
-});
+$("modalBack").addEventListener("click", (e)=>{ if(e.target === $("modalBack")) closeAuthModal(); });
 
 $("goRegister").addEventListener("click", ()=>{
   $("modalTitle").innerText = "Register";
@@ -908,7 +784,6 @@ $("goRegister").addEventListener("click", ()=>{
   $("loggedInBox").style.display = "none";
   $("modalMsg").innerHTML = "";
 });
-
 $("goLogin").addEventListener("click", ()=>{
   $("modalTitle").innerText = "Login";
   $("loginForm").style.display = "block";
@@ -917,21 +792,32 @@ $("goLogin").addEventListener("click", ()=>{
   $("modalMsg").innerHTML = "";
 });
 
+// ✅ LOGIN ACTION (Email OR Phone)
 $("doLogin").addEventListener("click", async ()=>{
-  setModalMsg(false, "Login API not connected in this build.");
+  const id = ($("loginId").value||"").trim();
+  const pass = ($("loginPass").value||"").trim();
+  if(!id || !pass){
+    setModalMsg(false, "Email ya phone aur password required.");
+    return;
+  }
+  setModalMsg(true, "Logging in...");
+  const r = await doLogin(id, pass);
+  setModalMsg(r.ok, r.msg);
+  if(r.ok){
+    renderAuthState();
+    await speak("Theek hai Bhai jaan, login ho gaya.");
+  }else{
+    await speak("Maazrat Bhai jaan, login nahi ho saka.");
+  }
 });
-$("doRegister").addEventListener("click", async ()=>{
-  setModalMsg(false, "Register API not connected in this build.");
-});
+
 $("logoutBtn").addEventListener("click", async ()=>{
   clearTokens();
   setModalMsg(true, "Logged out.");
   renderAuthState();
+  await speak("Theek hai Bhai jaan, logout ho gaya.");
 });
 
-/* =========================
-   INIT
-========================= */
 (function init(){
   hideSupport();
   setStatus("");
