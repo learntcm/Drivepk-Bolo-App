@@ -39,6 +39,7 @@
 
   #supportBox{display:none;margin-top:10px;background:#fff;border-radius:12px;padding:10px;}
 
+  /* Modal */
   .modalBack{
     position:fixed; inset:0; background:rgba(0,0,0,.55);
     display:none; align-items:center; justify-content:center; z-index:9999;
@@ -51,10 +52,16 @@
   .modal .row2{display:flex; gap:8px; margin-top:8px;}
   .modal .row2 button{flex:1; height:44px;}
   .xbtn{float:right;background:#eee;color:#000;width:40px;height:36px;border-radius:10px;}
-  .small{font-size:12px; opacity:.8; margin-top:6px;}
+  .small{font-size:12px; opacity:.85; margin-top:6px;}
   .ok{color:#0a7a2f; font-weight:bold;}
   .bad{color:#b00020; font-weight:bold;}
+  .linkRow{display:flex; justify-content:space-between; align-items:center; margin-top:6px;}
+  .alink{font-size:12px; color:#0b57d0; text-decoration:underline; cursor:pointer; user-select:none;}
+  .showRow{display:flex; gap:8px; align-items:center; margin-top:6px;}
+  .showRow input{width:18px;height:18px;margin:0;}
+  .showRow label{font-size:12px;opacity:.85;}
 
+  /* Detail Page */
   #detailPage{
     position:fixed; inset:0; background:#fff; z-index:999; display:none; overflow-y:auto;
   }
@@ -71,9 +78,6 @@
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
   .box{background:#111;color:#fff;border-radius:12px;padding:10px 6px;text-align:center;font-size:13px;}
   .box strong{display:block;font-size:15px;margin-top:4px;}
-  .contactBox{background:#000;color:#fff;border-radius:14px;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
-  .contactBtn{background:#E81F25;color:#fff;border-radius:12px;padding:10px 12px;font-weight:bold;min-width:140px;text-align:center;}
-  .lock{opacity:.7;font-size:13px;}
 </style>
 </head>
 
@@ -127,20 +131,6 @@
   <div class="detailBody">
     <div class="price" id="detailPrice"></div>
     <div class="grid" id="specGrid"></div>
-
-    <div class="contactBox">
-      <div>
-        <div class="lock" id="contactHint">🔒 Login to view phone number</div>
-        <div class="muted" id="sellerName"></div>
-      </div>
-      <div class="contactBtn" id="contactBtn">Contact Seller</div>
-    </div>
-
-    <div id="phoneBox" class="card" style="display:none;margin-top:10px;">
-      <div class="pill">Contact</div>
-      <div style="margin-top:6px;font-size:20px;font-weight:bold;color:#E81F25;" id="realPhone"></div>
-      <div class="small" id="phoneOwner"></div>
-    </div>
   </div>
 </div>
 
@@ -155,22 +145,29 @@
     <div id="loginForm">
       <input id="loginId" placeholder="Email or Phone (03008319037)" />
       <input id="loginPass" placeholder="Password" type="password" />
+      <div class="showRow">
+        <input type="checkbox" id="showPass">
+        <label for="showPass">Show password</label>
+      </div>
+
+      <div class="linkRow">
+        <span class="alink" id="forgotLink">Forgot password?</span>
+        <span class="alink" id="goRegister">Register</span>
+      </div>
+
       <div class="row2">
         <button id="doLogin" class="btnRed">Login</button>
-        <button id="goRegister">Register</button>
       </div>
-      <div class="small">Email ya phone se login ho jata hai.</div>
+
+      <div class="small">Tip: You can login with email OR phone number.</div>
     </div>
 
     <div id="registerForm" style="display:none;">
-      <input id="regName" placeholder="Full Name" />
-      <input id="regEmail" placeholder="Email" />
-      <input id="regPhone" placeholder="Phone (3001234567)" />
-      <input id="regPass" placeholder="Password (Password123)" type="password" />
-      <input id="regPass2" placeholder="Confirm Password" type="password" />
-      <div class="row2">
-        <button id="doRegister" class="btnRed">Create</button>
-        <button id="goLogin">Back</button>
+      <div class="small">Registration is handled on DrivePK website/app.</div>
+      <button id="openRegister" class="btnRed" style="margin-top:8px;">Open Register Page</button>
+      <div class="linkRow">
+        <span class="alink" id="goLogin">Back to Login</span>
+        <span></span>
       </div>
     </div>
 
@@ -187,8 +184,7 @@
 
 <script>
 /* =========================
-   IMPORTANT: PUT FULL URLS
-   (GitHub pages cannot run PHP)
+   IMPORTANT URLS (keep these)
 ========================= */
 const VOICE_API  = "https://meilibeauty.co.uk/voice.php";
 const GATEWAY_API = "https://meilibeauty.co.uk/search.php";
@@ -221,11 +217,6 @@ const NO_RESULT_LINES = [
   "Bhai jaan, is search par koi gaari available nahi.",
   "Maazrat Bhai jaan, is waqt koi matching gaari nahi mili.",
   "Bhai jaan, koi gaari nahi mili, aap model ya city change karke try karein."
-];
-const UNKNOWN_LINES = [
-  "Sorry Bhai jaan, abhi mujhe is ka jawab maloom nahi hai.",
-  "Bhai jaan, main sirf gaari search mein help karti hoon. Aap car ka model, year aur city bol dein.",
-  "Maazrat Bhai jaan, is cheez mein help nahi ho pa rahi. Aap gaari ka brand aur city batayein."
 ];
 
 const SILENCE_MS = 5000;
@@ -281,17 +272,12 @@ function clearSilence(){ if(silenceTimer){ clearTimeout(silenceTimer); silenceTi
 function showSupport(){ $("supportBox").style.display = "block"; }
 function hideSupport(){ $("supportBox").style.display = "none"; }
 function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-function normalize(t){ return (t||"").toLowerCase().replace(/[^\w\s]/g," ").replace(/\s+/g," ").trim(); }
 
 function respectfulName(){ return "Bhai jaan"; }
 
 function getOrAssignLady(){
   const p = getProfile();
-  if(!p.lady){
-    const LADIES = ["Kiran","Reshma","Mahnoor","Gul Noor","Dil Bahar","Shaheen"];
-    p.lady = LADIES[Math.floor(Math.random()*LADIES.length)];
-    saveProfile(p);
-  }
+  if(!p.lady){ p.lady = LADIES[Math.floor(Math.random()*LADIES.length)]; saveProfile(p); }
   return p.lady;
 }
 
@@ -321,7 +307,6 @@ async function warmupMic(){
     return true;
   }catch{ return false; }
 }
-
 async function speak(text, voicePack){
   const mySeq = ++speakSeq;
   stopMic();
@@ -341,17 +326,9 @@ async function speak(text, voicePack){
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({ text, voice: vp.voice, speed: safeSpeed })
     });
-  }catch(err){
-    setStatus("VOICE ERROR: " + (err && err.message ? err.message : "fetch failed"));
-    return;
-  }
+  }catch{ return; }
 
-  if(!res || !res.ok){
-    let t="";
-    try{ t = await res.text(); }catch(e){}
-    setStatus("VOICE HTTP " + (res?res.status:"") + " " + (t?(" - "+t.slice(0,120)):""));
-    return;
-  }
+  if(!res || !res.ok) return;
 
   const blob = await res.blob();
   if(mySeq !== speakSeq) return;
@@ -366,7 +343,6 @@ async function speak(text, voicePack){
     audio.play().catch(done);
   });
 }
-
 async function ring(){
   const times = Math.floor(Math.random()*3)+1;
   for(let i=0;i<times;i++){
@@ -466,7 +442,10 @@ async function stopListening(){
   }
 
   micFailCount = 0;
-  await handleSpoken(spoken);
+  $("query").value = spoken;
+  const count = await runSearch(spoken);
+  if(count > 0) await speak(rand(RESULT_LINES));
+  else await speak(rand(NO_RESULT_LINES));
 }
 
 /* =========================
@@ -493,7 +472,6 @@ async function gateway(payload){
    SEARCH + INFINITE SCROLL
 ========================= */
 async function runSearch(text){
-  hideSupport();
   $("results").innerHTML = "";
   lastResults = [];
 
@@ -528,7 +506,7 @@ async function loadMoreResults(isFirst=false){
   if(lm) lm.remove();
 
   if(!r.ok){
-    $("results").innerHTML = `<div class="card"><b>SEARCH ERROR</b><br>Status: ${r.status}<br>${r.err?("Error: "+r.err+"<br>"):""}${r.json?("Msg: "+(r.json.message||"") ):""}</div>`;
+    $("results").innerHTML = `<div class="card"><b>SEARCH ERROR</b><br>Status: ${r.status}<br>${r.json?(r.json.message||""):""}</div>`;
     hasMore = false;
     isLoadingMore = false;
     return 0;
@@ -596,65 +574,130 @@ window.openDetail = function(i){
   `;
 };
 $("backBtn").onclick = ()=>{ $("detailPage").style.display = "none"; };
-$("contactBtn").onclick = async ()=>{ await speak("Bhai jaan, phone number module abhi connect nahi hai."); };
 
 /* =========================
-   ROUTER
+   AUTH MODAL (FIXED)
 ========================= */
-function wantsBoss(t){
-  t = normalize(t);
-  return ["boss","manager","supervisor","owner","boss se baat","boss se milao","boss se baat karwao","umar","umar se baat"].some(x=>t.includes(x));
+function openAuthModal(){
+  $("modalBack").style.display = "flex";
+  renderAuthState();
 }
-function wantsComplaint(t){
-  t = normalize(t);
-  return ["complaint","complain","shikayat","issue","problem","masla","support","customer care"].some(x=>t.includes(x));
+function closeAuthModal(){
+  $("modalBack").style.display = "none";
+  $("modalMsg").innerHTML = "";
 }
-function isAskingAddress(t){
-  t = normalize(t);
-  return t.includes("address") || t.includes("office") || t.includes("location") || t.includes("kidhar") || t.includes("kahan") || t.includes("pata");
+function setModalMsg(ok, msg){
+  $("modalMsg").innerHTML = `<span class="${ok?'ok':'bad'}">${msg}</span>`;
 }
-function isAskingPhone(t){
-  t = normalize(t);
-  return t.includes("phone") || t.includes("number") || t.includes("contact") || t.includes("whatsapp");
-}
-function isAskingWebsite(t){
-  t = normalize(t);
-  return t.includes("website") || t.includes("site") || t.includes("url") || t.includes("link");
+function renderAuthState(){
+  const t = getTokens();
+  if(t.access){
+    $("modalTitle").innerText = "Account";
+    $("loginForm").style.display = "none";
+    $("registerForm").style.display = "none";
+    $("loggedInBox").style.display = "block";
+    const u = t.user || {};
+    $("whoami").innerText = u.full_name || u.name || "Logged in";
+    $("whoEmail").innerText = u.email || u.phone || "";
+    $("authBtn").innerText = "Account";
+  }else{
+    $("modalTitle").innerText = "Login";
+    $("loginForm").style.display = "block";
+    $("registerForm").style.display = "none";
+    $("loggedInBox").style.display = "none";
+    $("authBtn").innerText = "Login";
+  }
 }
 
-async function handleSpoken(text){
-  const who = respectfulName();
+async function doLogin(identifier, password){
+  const idTrim = (identifier || "").trim();
+  const isPhone = /^[0-9+ ]{10,15}$/.test(idTrim.replace(/\s+/g,""));
+  const payload = { action:"login", password };
+  if(isPhone) payload.phone = idTrim.replace(/\s+/g,"");
+  else payload.email = idTrim;
 
-  if(isAskingAddress(text)){ await speak(who + ", hamara office address hai: " + OFFICE_ADDRESS); return; }
-  if(isAskingPhone(text)){ showSupport(); await speak(who + ", contact number hai: " + COMPANY_NUMBER + ". WhatsApp bhi isi par hai."); return; }
-  if(isAskingWebsite(text)){ await speak(who + ", hamari website hai: " + WEBSITE); return; }
+  const r = await gateway(payload);
+  if(r.ok && r.json && (r.json.success === true || r.json.ok === true) && r.json.data){
+    setTokens(r.json.data);
+    return { ok:true, msg:r.json.message || "Login successful" };
+  }
 
-  if(wantsComplaint(text)){
-    showSupport();
-    await speak(who + ", complaint ke liye please is number par call karein: " + COMPANY_NUMBER + ".");
-    return;
-  } else hideSupport();
+  // if backend returns {success:false,message:"..."} OR other shape
+  const msg = (r.json && (r.json.message || r.json.error)) ? (r.json.message || r.json.error) : ("Login failed (HTTP "+r.status+")");
+  return { ok:false, msg };
+}
 
-  if(wantsBoss(text)){
-    await speak(who + ", theek hai. Main aap ko Umar se connect kar rahi hoon.");
-    await ring();
-    await speak("Assalam o Alaikum " + who + ". How may I help you?", BOSS_UMAR);
+/* Show password */
+$("showPass").addEventListener("change", ()=>{
+  $("loginPass").type = $("showPass").checked ? "text" : "password";
+});
+
+/* Forgot password link (opens DrivePK website) */
+$("forgotLink").addEventListener("click", async ()=>{
+  // If you have a specific reset page, change this URL:
+  window.open("https://drivepk.com/forgot-password", "_blank");
+  setModalMsg(true, "Forgot password page opened in new tab.");
+});
+
+/* Auth button */
+$("authBtn").addEventListener("click", openAuthModal);
+$("closeModal").addEventListener("click", closeAuthModal);
+$("modalBack").addEventListener("click", (e)=>{ if(e.target === $("modalBack")) closeAuthModal(); });
+
+/* Register link */
+$("goRegister").addEventListener("click", ()=>{
+  $("modalTitle").innerText = "Register";
+  $("loginForm").style.display = "none";
+  $("registerForm").style.display = "block";
+  $("loggedInBox").style.display = "none";
+  $("modalMsg").innerHTML = "";
+});
+$("goLogin").addEventListener("click", ()=>{
+  $("modalTitle").innerText = "Login";
+  $("loginForm").style.display = "block";
+  $("registerForm").style.display = "none";
+  $("loggedInBox").style.display = "none";
+  $("modalMsg").innerHTML = "";
+});
+$("openRegister").addEventListener("click", ()=>{
+  window.open("https://drivepk.com/register", "_blank");
+});
+
+/* Login button (FIXED: shows message if API fails) */
+$("doLogin").addEventListener("click", async ()=>{
+  const id = ($("loginId").value||"").trim();
+  const pass = ($("loginPass").value||"").trim();
+  if(!id || !pass){
+    setModalMsg(false, "Email/Phone aur password required.");
     return;
   }
 
-  $("query").value = text;
-  const count = await runSearch(text);
-  if(count > 0) await speak(rand(RESULT_LINES));
-  else await speak(rand(NO_RESULT_LINES));
-}
+  setModalMsg(true, "Logging in...");
+
+  const r = await doLogin(id, pass);
+  setModalMsg(r.ok, r.msg);
+
+  if(r.ok){
+    renderAuthState();
+    await speak("Theek hai Bhai jaan, login ho gaya.");
+  }else{
+    await speak("Maazrat Bhai jaan, login nahi ho saka.");
+  }
+});
+
+/* Logout */
+$("logoutBtn").addEventListener("click", async ()=>{
+  clearTokens();
+  setModalMsg(true, "Logged out.");
+  renderAuthState();
+  await speak("Theek hai Bhai jaan, logout ho gaya.");
+});
 
 /* =========================
-   CONNECT CALL
+   EVENTS
 ========================= */
-async function connectCall(){
-  stopAllVoice();
-  stopMic();
-  hideSupport();
+$("callBtn").addEventListener("click", async ()=>{
+  if(callConnected) return;
 
   const btn = $("callBtn");
   btn.classList.add("calling");
@@ -671,14 +714,8 @@ async function connectCall(){
 
   const lady = getOrAssignLady();
   await speak("Assalam o Alaikum! DrivePK mein khush aamadid. Mera naam " + lady + " hai. Bhai jaan, main aap ki kya madad karo?");
-
   await warmupMic();
-}
-
-/* =========================
-   EVENTS
-========================= */
-$("callBtn").addEventListener("click", async ()=>{ if(!callConnected) await connectCall(); });
+});
 
 $("callBtn").addEventListener("pointerdown", (e)=>{
   if(!callConnected) return;
@@ -705,12 +742,11 @@ $("searchBtn").addEventListener("click", async ()=>{
   else await speak(rand(NO_RESULT_LINES));
 });
 
-$("authBtn").addEventListener("click", ()=>{ $("modalBack").style.display="flex"; });
-$("closeModal").addEventListener("click", ()=>{ $("modalBack").style.display="none"; });
-
 (function init(){
   hideSupport();
   setStatus("");
+  const t = getTokens();
+  $("authBtn").innerText = t.access ? "Account" : "Login";
 })();
 </script>
 </body>
