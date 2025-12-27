@@ -37,8 +37,10 @@
   .muted{opacity:.75;font-size:12px;}
   .btnRed{background:#E81F25 !important;}
 
+  /* Support box */
   #supportBox{display:none;margin-top:10px;background:#fff;border-radius:12px;padding:10px;}
 
+  /* Modal */
   .modalBack{
     position:fixed; inset:0; background:rgba(0,0,0,.55);
     display:none; align-items:center; justify-content:center; z-index:9999;
@@ -55,6 +57,7 @@
   .ok{color:#0a7a2f; font-weight:bold;}
   .bad{color:#b00020; font-weight:bold;}
 
+  /* Detail Page */
   #detailPage{
     position:fixed; inset:0; background:#fff; z-index:999; display:none; overflow-y:auto;
   }
@@ -92,7 +95,7 @@
     <h2>Voice Search</h2>
   </div>
 
-  <input id="query" placeholder="Jaise: Black Honda City Lahore over 20 lakh" />
+  <input id="query" placeholder="Jaise: MG Lahore 2022" />
   <div class="row">
     <button id="searchBtn">Search</button>
     <button id="authBtn" class="btnRed">Login</button>
@@ -105,7 +108,7 @@
 
   <div id="supportBox" class="card">
     <strong>Complaints / Support:</strong>
-    <div style="margin-top:6px;font-size:18px;color:#E81F25;font-weight:bold;">0300 8319037</div>
+    <div style="margin-top:6px;font-size:18px;color:#E81F25;font-weight:bold;">051 8319037</div>
     <div class="small">Please call this number for complaints.</div>
   </div>
 
@@ -126,6 +129,7 @@
 
   <div class="detailBody">
     <div class="price" id="detailPrice"></div>
+
     <div class="grid" id="specGrid"></div>
 
     <div class="contactBox">
@@ -153,14 +157,13 @@
     <div id="modalMsg" class="small"></div>
 
     <div id="loginForm">
-      <!-- ✅ Email OR Phone -->
-      <input id="loginId" placeholder="Email or Phone (03008319037)" />
+      <input id="loginEmail" placeholder="Email" />
       <input id="loginPass" placeholder="Password" type="password" />
       <div class="row2">
         <button id="doLogin" class="btnRed">Login</button>
         <button id="goRegister">Register</button>
       </div>
-      <div class="small">Email ya phone se login ho jata hai.</div>
+      <div class="small">If token expires, we auto-refresh.</div>
     </div>
 
     <div id="registerForm" style="display:none;">
@@ -190,9 +193,9 @@
 /* =========================
    CONFIG
 ========================= */
-const VOICE_API  = "voice.php";
-const GATEWAY_API = "search.php";
-const COMPANY_NUMBER = "0300 8319037";
+const VOICE_API  = "https://meilibeauty.co.uk/voice.php";
+const GATEWAY_API = "https://meilibeauty.co.uk/search.php"; // mobile gateway
+const COMPANY_NUMBER = "051 8319037";
 const WEBSITE = "www.drivepk.com";
 const OFFICE_ADDRESS = "195, Peshawar Road, Chur Chowk Beside PSO Pump, Westridge, Rawalpindi.";
 
@@ -206,30 +209,31 @@ const VOICE_BY_LADY = {
   "Shaheen":  { voice:"sage",    speed:0.95 }
 };
 
-// ✅ Boss Umar voice changed to onyx
-const BOSS_UMAR = { voice:"onyx", speed:0.95 };
+// Boss voice pack (you can change to onyx later)
+const BOSS_UMAR = { voice:"coral", speed:0.95 };
 
 const RESULT_LINES = [
-  "Jee Bhai jaan, yeh aap ke search results hain.",
-  "Acha Bhai jaan, results aa gaye hain.",
-  "Theek hai Bhai jaan, matching gaariyan mil gayi hain.",
-  "Bhai jaan, yeh rahi aap ki search results."
+  "Jee, yeh aap ke search results hain.",
+  "Acha jee, results aa gaye hain.",
+  "Theek hai, matching gaariyan mil gayi hain.",
+  "Yeh rahi aap ki search results."
 ];
+
 const NO_RESULT_LINES = [
-  "Bhai jaan, is search par koi gaari available nahi.",
-  "Maazrat Bhai jaan, is waqt koi matching gaari nahi mili.",
-  "Bhai jaan, koi gaari nahi mili, aap model ya city change karke try karein."
+  "Is search par koi gaari available nahi.",
+  "Maazrat, is waqt koi matching gaari nahi mili.",
+  "Koi gaari nahi mili, aap model ya city change karke try karein."
 ];
+
 const UNKNOWN_LINES = [
-  "Sorry Bhai jaan, abhi mujhe is ka jawab maloom nahi hai.",
-  "Bhai jaan, main sirf gaari search mein help karti hoon. Aap car ka model, year aur city bol dein.",
-  "Maazrat Bhai jaan, is cheez mein help nahi ho pa rahi. Aap gaari ka brand aur city batayein."
+  "Sorry, abhi mujhe is ka jawab maloom nahi hai.",
+  "Abhi main sirf gaari search mein help karti hoon. Aap car ka model, year aur city bol dein.",
+  "Maazrat, is cheez mein help nahi ho pa rahi. Aap gaari ka brand aur city batayein."
 ];
 
 const SILENCE_MS = 5000;
 const END_WAIT_MS = 900;
 const MIN_HOLD_MS = 400;
-const PAGE_SIZE = 20;
 
 /* =========================
    STATE
@@ -248,13 +252,8 @@ let holding = false;
 let holdStartTs = 0;
 let micFailCount = 0;
 
-let lastResults = [];
+let lastResults = []; // list of cars from search
 let currentCar = null;
-
-let currentSearchText = "";
-let currentPage = 1;
-let hasMore = true;
-let isLoadingMore = false;
 
 /* =========================
    STORAGE
@@ -298,17 +297,42 @@ function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function randLady(){ return LADIES[Math.floor(Math.random()*LADIES.length)]; }
 function normalize(t){ return (t||"").toLowerCase().replace(/[^\w\s]/g," ").replace(/\s+/g," ").trim(); }
 
-// ✅ Always address as Bhai jaan
-function respectfulName(){ return "Bhai jaan"; }
-
 function getOrAssignLady(){
   const p = getProfile();
   if(!p.lady){ p.lady = randLady(); saveProfile(p); }
   return p.lady;
 }
 
+function isDoctorName(nm){
+  const s = (nm||"").toLowerCase().trim();
+  return s.startsWith("dr") || s.startsWith("doctor") || s.includes(" dr ") || s.includes("doctor ");
+}
+
+function respectfulName(profile){
+  if(!profile || !profile.name) return "bhai";
+  const nm = (profile.name||"").trim();
+  if(isDoctorName(nm)) return "Dr sahib";
+  return nm.split(" ")[0] + " bhai";
+}
+
+function extractName(text){
+  const t = (text||"").trim();
+  const m = t.match(/(my name is|mera naam)\s+(.+)/i);
+  let raw = m ? m[2] : t;
+  raw = raw.replace(/[^a-zA-Z\s]/g," ").replace(/\s+/g," ").trim();
+  if(!raw) return null;
+  const parts = raw.split(" ").slice(0,3);
+  return parts.map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(" ");
+}
+
+function getLadyVoicePack(){
+  const p = getProfile();
+  const lady = p.lady || getOrAssignLady();
+  return VOICE_BY_LADY[lady] || { voice:"marin", speed:0.95 };
+}
+
 /* =========================
-   VOICE
+   VOICE / MIC
 ========================= */
 function stopAllVoice(){
   if(currentAudio){
@@ -316,6 +340,7 @@ function stopAllVoice(){
     currentAudio = null;
   }
 }
+
 function stopMic(){
   if(!recognition) return;
   try{ recognition.onresult=null; recognition.onerror=null; recognition.onend=null; }catch(e){}
@@ -324,6 +349,7 @@ function stopMic(){
   isRecognizing = false;
   clearSilence();
 }
+
 async function warmupMic(){
   if(micReady) return true;
   try{
@@ -331,8 +357,11 @@ async function warmupMic(){
     s.getTracks().forEach(t=>t.stop());
     micReady = true;
     return true;
-  }catch{ return false; }
+  }catch{
+    return false;
+  }
 }
+
 async function speak(text, voicePack){
   const mySeq = ++speakSeq;
   stopMic();
@@ -340,9 +369,7 @@ async function speak(text, voicePack){
   clearSilence();
   setStatus(text);
 
-  const p = getProfile();
-  const lady = p.lady || getOrAssignLady();
-  const vp = voicePack || (VOICE_BY_LADY[lady] || { voice:"marin", speed:0.95 });
+  const vp = voicePack || getLadyVoicePack();
   const safeSpeed = Number((vp.speed || 0.95).toFixed(2));
 
   let res;
@@ -352,7 +379,9 @@ async function speak(text, voicePack){
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({ text, voice: vp.voice, speed: safeSpeed })
     });
-  }catch{ return; }
+  }catch{
+    return;
+  }
 
   if(!res || !res.ok) return;
 
@@ -369,6 +398,7 @@ async function speak(text, voicePack){
     audio.play().catch(done);
   });
 }
+
 async function ring(){
   const times = Math.floor(Math.random()*3)+1;
   for(let i=0;i<times;i++){
@@ -387,6 +417,7 @@ if("webkitSpeechRecognition" in window){
   recognition.continuous = true;
 }
 
+/* Hold-to-talk */
 async function startListening(){
   if(!callConnected || holding) return;
   holding = true;
@@ -397,14 +428,14 @@ async function startListening(){
 
   if(!recognition){
     holding = false;
-    await speak("Mic supported nahi hai Bhai jaan. Please type karke search karein.");
+    await speak("Mic supported nahi hai. Please type karke search karein.");
     return;
   }
 
   const ok = await warmupMic();
   if(!ok){
     holding = false;
-    await speak("Mic permission allow nahi Bhai jaan. Please type kar dein.");
+    await speak("Mic permission allow nahi. Please type kar dein.");
     return;
   }
 
@@ -415,12 +446,13 @@ async function startListening(){
   btn.classList.add("talking");
   btn.innerText = "LISTENING...";
 
-  setStatus("Sun rahi hoon Bhai jaan...");
+  setStatus("Sun rahi hoon...");
 
   clearSilence();
   silenceTimer = setTimeout(async ()=>{
     if(isRecognizing && !transcript){
-      await speak("Bhai jaan, model, year, city, color ya budget bol dein.");
+      const p = getProfile();
+      await speak(respectfulName(p) + ", model, year aur city bol dein.");
     }
   }, SILENCE_MS);
 
@@ -434,11 +466,21 @@ async function startListening(){
       if(last) transcript = last;
     }catch(err){}
   };
-  recognition.onerror = ()=>{ isRecognizing=false; clearSilence(); };
-  recognition.onend = ()=>{ isRecognizing=false; clearSilence(); };
+
+  recognition.onerror = ()=>{
+    isRecognizing = false;
+    clearSilence();
+  };
+
+  recognition.onend = ()=>{
+    isRecognizing = false;
+    clearSilence();
+  };
 
   try{ recognition.start(); }catch(e){
-    holding=false; isRecognizing=false; clearSilence();
+    holding = false;
+    isRecognizing = false;
+    clearSilence();
   }
 }
 
@@ -462,8 +504,11 @@ async function stopListening(){
   const spoken = (transcript || "").trim();
   if(!spoken){
     micFailCount++;
-    if(micFailCount === 1) await speak("Awaaz clear nahi aayi Bhai jaan. Press karke hold rakhein, bol kar release karein.");
-    else await speak("Lagta hai mic record nahi kar raha Bhai jaan. Aap type karke bhi likh sakte hain.");
+    if(micFailCount === 1){
+      await speak("Awaaz clear nahi aayi. Button ko press karke hold rakhein, phir bol kar release karein.");
+    } else {
+      await speak("Lagta hai mic record nahi kar raha. Aap type karke bhi likh sakte hain.");
+    }
     return;
   }
 
@@ -472,135 +517,23 @@ async function stopListening(){
 }
 
 /* =========================
-   GATEWAY CALLS
+   INTENTS + FAQ
 ========================= */
-async function gateway(payload){
-  const res = await fetch(GATEWAY_API,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify(payload)
-  });
-  let json = null;
-  try{ json = await res.json(); }catch(e){}
-  return { ok: res.ok, status: res.status, json };
+function wantsBoss(t){
+  t = normalize(t);
+  return ["boss","manager","supervisor","owner","boss se baat","boss se milao","boss se baat karwao","mujhe boss se baat karni hai","umar","umar se baat"].some(x=>t.includes(x));
 }
-
-/* =========================
-   SEARCH + INFINITE SCROLL
-========================= */
-async function runSearch(text){
-  hideSupport();
-  $("results").innerHTML = "";
-  lastResults = [];
-
-  currentSearchText = text;
-  currentPage = 1;
-  hasMore = true;
-  isLoadingMore = false;
-
-  $("results").innerHTML = "<div class='card'>Searching...</div>";
-  const firstCount = await loadMoreResults(true);
-
-  if(firstCount > 0) return firstCount;
-  $("results").innerHTML = "<div class='card'>No cars available</div>";
-  return 0;
-}
-
-async function loadMoreResults(isFirst=false){
-  if(isLoadingMore || !hasMore) return 0;
-  isLoadingMore = true;
-
-  if(!isFirst){
-    const loader = document.createElement("div");
-    loader.id = "loaderMore";
-    loader.className = "card";
-    loader.innerHTML = "Loading more cars...";
-    $("results").appendChild(loader);
-  }
-
-  const r = await gateway({
-    action:"search",
-    text: currentSearchText,
-    page: currentPage,
-    limit: PAGE_SIZE
-  });
-
-  const lm = document.getElementById("loaderMore");
-  if(lm) lm.remove();
-
-  const json = r.json || {};
-  const newData = json.data || [];
-  hasMore = (typeof json.hasMore === "boolean") ? json.hasMore : false;
-
-  if(isFirst) $("results").innerHTML = "";
-
-  newData.forEach((c)=>{
-    lastResults.push(c);
-    const idx = lastResults.length - 1;
-
-    const img = (c.images && c.images[0]) ? c.images[0] : "";
-    const price = c.price ? Number(c.price).toLocaleString() : "Call";
-    const title = c.title || "-";
-    const year = c.year || "-";
-    const city = (c.location && c.location.city) ? c.location.city : "-";
-
-    const wrap = document.createElement("div");
-    wrap.className = "car";
-    wrap.onclick = ()=>openDetail(idx);
-    wrap.innerHTML = `
-      ${img ? `<img src="${img}" loading="lazy">` : ""}
-      <h3 style="margin:8px 0 4px 0;">${title}</h3>
-      <div class="muted">${year} • ${city}</div>
-      <strong>PKR ${price}</strong>
-    `;
-    $("results").appendChild(wrap);
-  });
-
-  if(newData.length > 0) currentPage++;
-  isLoadingMore = false;
-  return newData.length;
-}
-
-window.addEventListener("scroll", async ()=>{
-  const nearBottom = (window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 450);
-  if(nearBottom && currentSearchText){
-    await loadMoreResults(false);
-  }
-});
-
-/* Detail */
-window.openDetail = function(i){
-  currentCar = lastResults[i];
-  if(!currentCar) return;
-
-  $("detailPage").style.display = "block";
-  $("detailTitle").innerText = currentCar.title || "Car Detail";
-  $("detailPrice").innerText = "PKR " + (currentCar.price ? Number(currentCar.price).toLocaleString() : "Call");
-
-  $("gallery").innerHTML = "";
-  (currentCar.images || []).forEach(u=>{ $("gallery").innerHTML += `<img src="${u}">`; });
-
-  $("specGrid").innerHTML = `
-    <div class="box">Year<strong>${currentCar.year || "-"}</strong></div>
-    <div class="box">City<strong>${(currentCar.location && currentCar.location.city) ? currentCar.location.city : "-"}</strong></div>
-    <div class="box">Mileage<strong>${currentCar.mileage ? (currentCar.mileage + " km") : "-"}</strong></div>
-    <div class="box">Fuel<strong>${currentCar.fuelType || "-"}</strong></div>
-    <div class="box">Trans<strong>${currentCar.transmission || "-"}</strong></div>
-    <div class="box">Seats<strong>${currentCar.seatingCapacity || "-"}</strong></div>
-  `;
-
-  $("contactHint").innerText = getTokens().access ? "Tap to view phone" : "🔒 Login to view phone number";
-};
-$("backBtn").onclick = ()=>{ $("detailPage").style.display = "none"; };
-
-$("contactBtn").onclick = async ()=>{ await speak("Bhai jaan, phone number module abhi connect nahi hai."); };
-
-/* =========================
-   TALK ROUTER
-========================= */
 function wantsComplaint(t){
   t = normalize(t);
   return ["complaint","complain","shikayat","issue","problem","masla","support","customer care"].some(x=>t.includes(x));
+}
+function wantsNewLady(t){
+  t = normalize(t);
+  return ["change lady","switch lady","another lady","other lady","dusri madam","dusri lady","aur madam chahiye","koi aur lady","dusri madam se baat karwao","koi khoobsurat lady chahiye"].some(x=>t.includes(x));
+}
+function isAskingMyName(t){
+  t = normalize(t);
+  return t.includes("your name") || t.includes("aap ka naam") || t.includes("ap ka naam") || t.includes("naam kya");
 }
 function isAskingAddress(t){
   t = normalize(t);
@@ -614,43 +547,268 @@ function isAskingWebsite(t){
   t = normalize(t);
   return t.includes("website") || t.includes("site") || t.includes("url") || t.includes("link");
 }
-function wantsBoss(t){
-  t = normalize(t);
-  return ["boss","manager","supervisor","owner","boss se baat","boss se milao","boss se baat karwao","umar","umar se baat"].some(x=>t.includes(x));
-}
-function wantsNewLady(t){
-  t = normalize(t);
-  return ["change lady","switch lady","another lady","other lady","dusri madam","dusri lady","koi aur lady"].some(x=>t.includes(x));
+
+const BRANDS=["toyota","honda","suzuki","kia","hyundai","mg","haval","changan","byd","nissan","bmw","audi","mercedes","proton","dfsk","baic","isuzu","jac","peugeot"];
+const CITIES=["lahore","karachi","islamabad","rawalpindi","peshawar","multan","faisalabad","quetta","sialkot","gujranwala","abbottabad","mansehra","swat"];
+function looksLikeCarSearch(t){
+  const x = normalize(t);
+  if(!x) return false;
+  if(/\b(19|20)\d{2}\b/.test(x)) return true;
+  if(x.includes("gaari")||x.includes("car")||x.includes("model")||x.includes("year")) return true;
+  if(BRANDS.some(b=>x.includes(b))) return true;
+  if(CITIES.some(c=>x.includes(c))) return true;
+  return false;
 }
 
+/* =========================
+   GATEWAY CALLS (search.php)
+========================= */
+async function gateway(payload){
+  const res = await fetch(GATEWAY_API,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(payload)
+  });
+  let json = null;
+  try{ json = await res.json(); }catch(e){}
+  return { ok: res.ok, status: res.status, json };
+}
+
+function isTokenExpired(){
+  const t = getTokens();
+  return !t.access || (t.expiresAt && Date.now() > t.expiresAt);
+}
+
+async function refreshIfNeeded(){
+  const t = getTokens();
+  if(!t.refresh) return false;
+  if(!isTokenExpired()) return true;
+
+  const r = await gateway({ action:"refresh", refreshToken: t.refresh });
+  if(r.ok && r.json && r.json.success && r.json.data){
+    setTokens(r.json.data);
+    return true;
+  }
+  return false;
+}
+
+async function doLogin(email, password){
+  const r = await gateway({ action:"login", email, password });
+  if(r.ok && r.json && r.json.success && r.json.data){
+    setTokens(r.json.data);
+    return { ok:true, msg:r.json.message || "Login successful" };
+  }
+  return { ok:false, msg:(r.json && r.json.message) ? r.json.message : "Login failed" };
+}
+
+async function doRegister(payload){
+  payload.action = "register";
+  const r = await gateway(payload);
+  if(r.ok && r.json && r.json.success && r.json.data){
+    setTokens(r.json.data);
+    return { ok:true, msg:r.json.message || "Registration successful" };
+  }
+  return { ok:false, msg:(r.json && r.json.message) ? r.json.message : "Registration failed" };
+}
+
+async function getCarPhone(carIdOrSlug){
+  const ok = await refreshIfNeeded();
+  if(!ok){
+    return { ok:false, msg:"Please login first (verified phone/email required)." };
+  }
+  const token = getTokens().access;
+  const r = await gateway({ action:"carPhone", id: carIdOrSlug, token });
+  if(r.ok && r.json && r.json.phone){
+    return { ok:true, data:r.json };
+  }
+  // common errors
+  const msg = (r.json && (r.json.message || r.json.error)) ? (r.json.message || r.json.error) : "Unable to fetch phone";
+  return { ok:false, msg };
+}
+
+/* =========================
+   SEARCH + RENDER
+========================= */
+async function runSearch(text){
+  hideSupport();
+  $("results").innerHTML = "<p>Gaariyan dhoondi ja rahi hain...</p>";
+
+  const r = await gateway({ action:"search", text });
+  const json = r.json;
+
+  lastResults = (json && json.data) ? json.data : [];
+  $("results").innerHTML = "";
+
+  if(!lastResults.length){
+    $("results").innerHTML = "<p>No cars available</p>";
+    return 0;
+  }
+
+  lastResults.forEach((c,i)=>{
+    const img = (c.images && c.images[0]) ? c.images[0] : "";
+    const price = c.price ? Number(c.price).toLocaleString() : "Call";
+    const title = c.title || "-";
+    const year = c.year || "-";
+    const city = (c.location && c.location.city) ? c.location.city : "-";
+
+    $("results").innerHTML += `
+      <div class="car" onclick="openDetail(${i})">
+        ${img ? `<img src="${img}">` : ""}
+        <h3 style="margin:8px 0 4px 0;">${title}</h3>
+        <div class="muted">${year} • ${city}</div>
+        <strong>PKR ${price}</strong>
+      </div>
+    `;
+  });
+
+  return lastResults.length;
+}
+
+/* Detail page */
+window.openDetail = function(i){
+  currentCar = lastResults[i];
+  if(!currentCar) return;
+
+  $("detailPage").style.display = "block";
+  $("detailTitle").innerText = currentCar.title || "Car Detail";
+  $("detailPrice").innerText = "PKR " + (currentCar.price ? Number(currentCar.price).toLocaleString() : "Call");
+
+  $("gallery").innerHTML = "";
+  (currentCar.images || []).forEach(u=>{
+    $("gallery").innerHTML += `<img src="${u}">`;
+  });
+
+  $("specGrid").innerHTML = `
+    <div class="box">Year<strong>${currentCar.year || "-"}</strong></div>
+    <div class="box">City<strong>${(currentCar.location && currentCar.location.city) ? currentCar.location.city : "-"}</strong></div>
+    <div class="box">Mileage<strong>${currentCar.mileage ? (currentCar.mileage + " km") : "-"}</strong></div>
+    <div class="box">Fuel<strong>${currentCar.fuelType || "-"}</strong></div>
+    <div class="box">Trans<strong>${currentCar.transmission || "-"}</strong></div>
+    <div class="box">Seats<strong>${currentCar.seatingCapacity || "-"}</strong></div>
+  `;
+
+  $("phoneBox").style.display = "none";
+  $("realPhone").innerText = "";
+  $("phoneOwner").innerText = "";
+
+  const t = getTokens();
+  $("contactHint").innerText = t.access ? "Tap to view phone (verified required)" : "🔒 Login to view phone number";
+
+  // try to show seller name if present
+  const dealerName = currentCar.dealerId && (currentCar.dealerId.businessName || currentCar.dealerId.name);
+  const userName = currentCar.userId && (currentCar.userId.full_name || currentCar.userId.name);
+  $("sellerName").innerText = dealerName ? dealerName : (userName ? userName : "");
+};
+
+$("backBtn").onclick = ()=>{ $("detailPage").style.display = "none"; };
+
+/* Contact seller */
+$("contactBtn").onclick = async ()=>{
+  if(!currentCar) return;
+
+  // prefer id or slug (your API supports both)
+  const carId = currentCar._id || currentCar.slug;
+  if(!carId){
+    await speak("Maazrat, is ad ka id available nahi. Please dobara try karein.");
+    return;
+  }
+
+  const t = getTokens();
+  if(!t.access){
+    openAuthModal();
+    await speak("Phone number dekhne ke liye login zaroori hai.");
+    return;
+  }
+
+  await speak("Theek hai, main number nikal rahi hoon.");
+  const r = await getCarPhone(carId);
+  if(!r.ok){
+    // show support if verification issue
+    if((r.msg||"").toLowerCase().includes("verification") || (r.msg||"").toLowerCase().includes("forbidden")){
+      showSupport();
+      await speak("Phone ke liye email aur phone verification required hai. Complaint ke liye aap " + COMPANY_NUMBER + " par call kar sakte hain.");
+    } else {
+      await speak("Maazrat, abhi phone nahi mil saka. " + (r.msg || ""));
+    }
+    return;
+  }
+
+  $("phoneBox").style.display = "block";
+  $("realPhone").innerText = r.data.phone || "";
+  $("phoneOwner").innerText = (r.data.name ? ("Name: " + r.data.name) : "") + (typeof r.data.isDealer === "boolean" ? (" • Dealer: " + (r.data.isDealer ? "Yes" : "No")) : "");
+
+  await speak("Jee, yeh contact number hai.");
+};
+
+/* =========================
+   CONVERSATION ROUTER
+========================= */
 async function handleSpoken(text){
-  const who = respectfulName();
+  const p = getProfile();
+  const who = respectfulName(p);
 
+  // Capture user's name first
+  if(!p.name){
+    if(isAskingMyName(text)){
+      const lady = p.lady || getOrAssignLady();
+      await speak("Mera naam " + lady + " hai. Kia main aap ka naam pooch sakti hoon?");
+      return;
+    }
+    const nm = extractName(text);
+    if(!nm){
+      await speak("Naam clear nahi aaya. Sirf apna naam dobara bol dein.");
+      return;
+    }
+    p.name = nm;
+    saveProfile(p);
+    await speak("Shukriya " + respectfulName(p) + ". Ab apni requirement bol dein.");
+    return;
+  }
+
+  // FAQ first
   if(isAskingAddress(text)){ await speak(who + ", hamara office address hai: " + OFFICE_ADDRESS); return; }
   if(isAskingPhone(text)){ showSupport(); await speak(who + ", contact number hai: " + COMPANY_NUMBER + ". WhatsApp bhi isi par hai."); return; }
   if(isAskingWebsite(text)){ await speak(who + ", hamari website hai: " + WEBSITE); return; }
 
+  // complaint/support
   if(wantsComplaint(text)){
     showSupport();
     await speak(who + ", complaint ke liye please is number par call karein: " + COMPANY_NUMBER + ".");
     return;
-  } else hideSupport();
+  } else {
+    hideSupport();
+  }
 
+  // boss
   if(wantsBoss(text)){
     await speak(who + ", theek hai. Main aap ko Umar se connect kar rahi hoon.");
     await ring();
-    // ✅ Boss line changed
-    await speak("Assalam o Alaikum " + who + ". How may I help you?", BOSS_UMAR);
+    await speak(who + ", Assalam o Alaikum. Main Umar hoon. Aap ka masla kya hai?", BOSS_UMAR);
     return;
   }
 
+  // change lady
   if(wantsNewLady(text)){
-    const p = getProfile();
     const cur = p.lady || getOrAssignLady();
     const others = LADIES.filter(x=>x!==cur);
-    p.lady = others.length ? others[Math.floor(Math.random()*others.length)] : randLady();
+    p.lady = rand(others.length ? others : LADIES);
     saveProfile(p);
-    await speak("Theek hai " + who + ". Ab " + p.lady + " baat karegi, " + who + ".");
+    const newLady = p.lady;
+
+    await speak(who + ", theek hai. Ab " + newLady + " baat karegi.");
+    await speak("Assalam o Alaikum " + who + ". Main " + newLady + " hoon.");
+    return;
+  }
+
+  if(isAskingMyName(text)){
+    const lady = p.lady || getOrAssignLady();
+    await speak(who + ", mera naam " + lady + " hai.");
+    return;
+  }
+
+  // If not car search, answer politely
+  if(!looksLikeCarSearch(text)){
+    await speak(rand(UNKNOWN_LINES));
     return;
   }
 
@@ -681,16 +839,20 @@ async function connectCall(){
   btn.innerText = "HOLD TO TALK";
   $("hint").innerText = "Press & hold and speak.";
 
+  const p = getProfile();
   const lady = getOrAssignLady();
 
-  // ✅ New Urdu line as requested
-  await speak("Assalam o Alaikum! DrivePK mein khush aamadid. Mera naam " + lady + " hai. Bhai jaan, main aap ki kya madad karo?");
+  if(!p.name){
+    await speak("Assalam o Alaikum! DrivePK mein khush aamadid. Mera naam " + lady + " hai. Kia main aap ka naam pooch sakti hoon?");
+  }else{
+    await speak(respectfulName(p) + ", Assalam o Alaikum. Model, year aur city bol dein.");
+  }
 
   await warmupMic();
 }
 
 /* =========================
-   AUTH MODAL UI + LOGIN (Email OR Phone)
+   AUTH MODAL UI
 ========================= */
 function openAuthModal(){
   $("modalBack").style.display = "flex";
@@ -703,6 +865,7 @@ function closeAuthModal(){
 function setModalMsg(ok, msg){
   $("modalMsg").innerHTML = `<span class="${ok?'ok':'bad'}">${msg}</span>`;
 }
+
 function renderAuthState(){
   const t = getTokens();
   if(t.access){
@@ -712,7 +875,7 @@ function renderAuthState(){
     $("loggedInBox").style.display = "block";
     const u = t.user || {};
     $("whoami").innerText = u.full_name || u.name || "Logged in";
-    $("whoEmail").innerText = u.email || u.phone || "";
+    $("whoEmail").innerText = u.email || "";
     $("authBtn").innerText = "Account";
   }else{
     $("modalTitle").innerText = "Login";
@@ -723,30 +886,12 @@ function renderAuthState(){
   }
 }
 
-// login/register via gateway (search.php must support these actions)
-async function doLogin(identifier, password){
-  // If identifier looks like phone, normalize
-  const idTrim = (identifier || "").trim();
-  const isPhone = /^[0-9+ ]{10,15}$/.test(idTrim.replace(/\s+/g,""));
-  const payload = { action:"login", password };
-  if(isPhone) payload.phone = idTrim.replace(/\s+/g,"");
-  else payload.email = idTrim;
-
-  const r = await gateway(payload);
-  if(r.ok && r.json && r.json.success && r.json.data){
-    setTokens(r.json.data);
-    return { ok:true, msg:r.json.message || "Login successful" };
-  }
-  return { ok:false, msg:(r.json && r.json.message) ? r.json.message : "Login failed" };
-}
-
-function showSupport(){ $("supportBox").style.display = "block"; }
-function hideSupport(){ $("supportBox").style.display = "none"; }
-
 /* =========================
    EVENTS
 ========================= */
-$("callBtn").addEventListener("click", async ()=>{ if(!callConnected) await connectCall(); });
+$("callBtn").addEventListener("click", async ()=>{
+  if(!callConnected) await connectCall();
+});
 
 $("callBtn").addEventListener("pointerdown", (e)=>{
   if(!callConnected) return;
@@ -768,14 +913,23 @@ $("callBtn").addEventListener("pointercancel", (e)=>{
 $("searchBtn").addEventListener("click", async ()=>{
   const t = ($("query").value || "").trim();
   if(!t) return;
+  if(!looksLikeCarSearch(t)){
+    await speak(rand(UNKNOWN_LINES));
+    return;
+  }
   const count = await runSearch(t);
   if(count > 0) await speak(rand(RESULT_LINES));
   else await speak(rand(NO_RESULT_LINES));
 });
 
-$("authBtn").addEventListener("click", ()=> openAuthModal());
+$("authBtn").addEventListener("click", ()=>{
+  openAuthModal();
+});
+
 $("closeModal").addEventListener("click", closeAuthModal);
-$("modalBack").addEventListener("click", (e)=>{ if(e.target === $("modalBack")) closeAuthModal(); });
+$("modalBack").addEventListener("click", (e)=>{
+  if(e.target === $("modalBack")) closeAuthModal();
+});
 
 $("goRegister").addEventListener("click", ()=>{
   $("modalTitle").innerText = "Register";
@@ -784,6 +938,7 @@ $("goRegister").addEventListener("click", ()=>{
   $("loggedInBox").style.display = "none";
   $("modalMsg").innerHTML = "";
 });
+
 $("goLogin").addEventListener("click", ()=>{
   $("modalTitle").innerText = "Login";
   $("loginForm").style.display = "block";
@@ -792,22 +947,41 @@ $("goLogin").addEventListener("click", ()=>{
   $("modalMsg").innerHTML = "";
 });
 
-// ✅ LOGIN ACTION (Email OR Phone)
 $("doLogin").addEventListener("click", async ()=>{
-  const id = ($("loginId").value||"").trim();
-  const pass = ($("loginPass").value||"").trim();
-  if(!id || !pass){
-    setModalMsg(false, "Email ya phone aur password required.");
+  const email = ($("loginEmail").value||"").trim();
+  const pass  = ($("loginPass").value||"").trim();
+  if(!email || !pass){
+    setModalMsg(false, "Email aur password required.");
     return;
   }
   setModalMsg(true, "Logging in...");
-  const r = await doLogin(id, pass);
+  const r = await doLogin(email, pass);
   setModalMsg(r.ok, r.msg);
   if(r.ok){
     renderAuthState();
-    await speak("Theek hai Bhai jaan, login ho gaya.");
-  }else{
-    await speak("Maazrat Bhai jaan, login nahi ho saka.");
+    await speak("Login ho gaya. Ab aap phone number dekh sakte hain.");
+  }
+});
+
+$("doRegister").addEventListener("click", async ()=>{
+  const payload = {
+    name: ($("regName").value||"").trim(),
+    email: ($("regEmail").value||"").trim(),
+    phone: ($("regPhone").value||"").trim(),
+    password: ($("regPass").value||"").trim(),
+    confirmPassword: ($("regPass2").value||"").trim(),
+    subscribeToNewsletter: true
+  };
+  if(!payload.name || !payload.email || !payload.phone || !payload.password || !payload.confirmPassword){
+    setModalMsg(false, "Sab fields fill karein.");
+    return;
+  }
+  setModalMsg(true, "Creating account...");
+  const r = await doRegister(payload);
+  setModalMsg(r.ok, r.msg);
+  if(r.ok){
+    renderAuthState();
+    await speak("Account ban gaya. Ab verification complete karke phone dekh sakte hain.");
   }
 });
 
@@ -815,12 +989,16 @@ $("logoutBtn").addEventListener("click", async ()=>{
   clearTokens();
   setModalMsg(true, "Logged out.");
   renderAuthState();
-  await speak("Theek hai Bhai jaan, logout ho gaya.");
+  await speak("Theek hai, logout ho gaya.");
 });
 
+/* =========================
+   INIT
+========================= */
 (function init(){
   hideSupport();
   setStatus("");
+
   const t = getTokens();
   $("authBtn").innerText = t.access ? "Account" : "Login";
 })();
