@@ -21,7 +21,6 @@
   .row{display:flex;gap:8px;}
   .row button{flex:1;}
 
-  /* CALL BUTTON STATES */
   .call{
     background:#E81F25;
     font-size:16px;
@@ -31,9 +30,7 @@
     touch-action: manipulation;
   }
   .call.calling{background:#999;color:#000;}
-  /* Ready to talk = Green */
   .call.ready{background:#19a75b;color:#fff;}
-  /* Pressed = Darker green + pressed effect */
   .call.talking{background:#0f7a40;color:#fff;filter:brightness(0.98);transform:scale(0.985);}
 
   #hint{margin-top:6px;font-size:12px;color:#333;opacity:.85;}
@@ -186,11 +183,16 @@
 
 <script>
 /* =========================
-   URLS
+   URLS (AWS FIRST, FALLBACK to meilibeauty)
 ========================= */
-const VOICE_API  = "https://meilibeauty.co.uk/voice.php";
-const GATEWAY_API = "https://meilibeauty.co.uk/search.php";
-const CHAT_API = "https://meilibeauty.co.uk/chat.php";
+const ORIGIN = window.location.origin.replace(/\/$/, "");
+
+const VOICE_API_LOCAL   = ORIGIN + "/voice";      // if you later add Node voice route
+const SEARCH_API_LOCAL  = ORIGIN + "/api/search"; // if you later add Node search route
+const CHAT_API          = "/chat";                // ✅ Node AI route (same server)
+
+const VOICE_API_FALLBACK  = "https://meilibeauty.co.uk/voice.php";
+const SEARCH_API_FALLBACK = "https://meilibeauty.co.uk/search.php";
 
 const LADIES = ["Kiran","Reshma","Mahnoor","Gul Noor","Dil Bahar","Shaheen"];
 const VOICE_BY_LADY = {
@@ -219,8 +221,8 @@ const UNKNOWN_LINES = [
   "Bhai jaan, main aap ko sahi jawab batati hoon."
 ];
 
-const END_WAIT_MS = 450;     // smaller wait
-const MIN_HOLD_MS = 250;     // faster response
+const END_WAIT_MS = 450;
+const MIN_HOLD_MS = 250;
 const PAGE_SIZE = 20;
 
 /* =========================
@@ -242,7 +244,6 @@ let micFailCount=0;
 let lastResults=[], currentCar=null;
 let currentSearchText="", currentPage=1, hasMore=true, isLoadingMore=false;
 
-// NEW: mic keep-alive
 let wantMic = false;
 let restartTimer = null;
 
@@ -295,7 +296,7 @@ function clearTokens(){
 }
 
 /* =========================
-   VOICE
+   VOICE (AWS first, fallback)
 ========================= */
 function stopAllVoice(){
   if(currentAudio){
@@ -303,12 +304,24 @@ function stopAllVoice(){
     currentAudio = null;
   }
 }
+async function fetchVoice(body){
+  // try local first
+  try{
+    const res = await fetch(VOICE_API_LOCAL, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(body)
+    });
+    if(res.ok) return res;
+  }catch(e){}
+  // fallback
+  return fetch(VOICE_API_FALLBACK, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify(body)
+  });
+}
 
-/**
- * IMPORTANT FIX:
- * - do NOT stop mic automatically while user is holding.
- * - speak() will NOT call stopMic() now.
- */
 async function speak(text, voicePack){
   const mySeq = ++speakSeq;
   stopAllVoice();
@@ -320,11 +333,7 @@ async function speak(text, voicePack){
 
   let res;
   try{
-    res = await fetch(VOICE_API,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ text, voice: vp.voice, speed: safeSpeed })
-    });
+    res = await fetchVoice({ text, voice: vp.voice, speed: safeSpeed });
   }catch{ return; }
   if(!res || !res.ok) return;
 
@@ -366,37 +375,18 @@ async function warmupMic(){
     return false;
   }
 }
-
-function stopMicHard(){
-  if(!recognition) return;
-  try{ recognition.onresult=null; recognition.onerror=null; recognition.onend=null; }catch(e){}
-  try{ recognition.abort(); }catch(e){}
-  try{ recognition.stop(); }catch(e){}
-  isRecognizing=false;
-}
-
-/**
- * NEW: Restart recognition safely while holding
- */
 function scheduleRestart(){
   if(restartTimer) clearTimeout(restartTimer);
   restartTimer = setTimeout(()=>{
     if(wantMic && holding && callConnected){
-      try{
-        recognition.start();
-        isRecognizing=true;
-      }catch(e){}
+      try{ recognition.start(); isRecognizing=true; }catch(e){}
     }
   }, 350);
 }
-
 if("webkitSpeechRecognition" in window){
   recognition = new webkitSpeechRecognition();
   recognition.lang = "en-IN";
   recognition.interimResults = true;
-
-  // IMPORTANT FIX:
-  // continuous=true still ends on many Androids, but helps
   recognition.continuous = true;
 }
 
@@ -417,12 +407,26 @@ function looksLikeCarSearch(t){
 }
 
 /* =========================
-   NETWORK
+   NETWORK (SEARCH AWS first, fallback)
 ========================= */
 async function gateway(payload){
+  // try local first
+  try{
+    const r1 = await fetch(SEARCH_API_LOCAL,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
+    if(r1.ok){
+      let j1=null; try{ j1 = await r1.json(); }catch(e){}
+      return { ok:true, status:r1.status, json:j1 };
+    }
+  }catch(e){}
+
+  // fallback
   let res;
   try{
-    res = await fetch(GATEWAY_API,{
+    res = await fetch(SEARCH_API_FALLBACK,{
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify(payload)
@@ -435,21 +439,28 @@ async function gateway(payload){
   return { ok: res.ok, status: res.status, json };
 }
 
+/* ✅ AI (Node) */
 async function askAI(text){
   let res;
   try{
     res = await fetch(CHAT_API,{
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ text })
+      body: JSON.stringify({ message: text })
     });
   }catch{
     return { ok:false, msg:"AI server not reachable" };
   }
   let j=null;
   try{ j = await res.json(); }catch(e){}
-  if(res.ok && j && j.ok && j.answer) return { ok:true, answer:j.answer };
-  return { ok:false, msg:(j && (j.message || j.error)) ? (j.message || j.error) : "AI error" };
+  if(res.ok && j && j.success === true && typeof j.reply === "string"){
+    return { ok:true, answer: j.reply };
+  }
+  const msg =
+    (j && j.error && (j.error.message || j.error.details)) ? (j.error.message || j.error.details) :
+    (j && (j.message || j.reply)) ? (j.message || j.reply) :
+    "AI error";
+  return { ok:false, msg };
 }
 
 /* =========================
@@ -559,7 +570,7 @@ window.openDetail = function(i){
 $("backBtn").onclick = ()=>{ $("detailPage").style.display = "none"; };
 
 /* =========================
-   MIC HOLD-TO-TALK (FIXED)
+   MIC HOLD-TO-TALK
 ========================= */
 async function startListening(){
   if(!callConnected || holding) return;
@@ -568,7 +579,6 @@ async function startListening(){
   holdStartTs = Date.now();
   wantMic = true;
 
-  // Button color while holding
   const btn = $("callBtn");
   btn.classList.remove("ready");
   btn.classList.add("talking");
@@ -600,9 +610,6 @@ async function startListening(){
 
   transcript = "";
   isRecognizing = true;
-
-  // IMPORTANT FIX:
-  // Do NOT call speak() while holding (it can interrupt mic on some phones).
   setStatus("Sun rahi hoon Bhai jaan... (hold & speak)");
 
   recognition.onresult = (e)=>{
@@ -613,33 +620,21 @@ async function startListening(){
         if(r && r[0] && r[0].transcript) last = r[0].transcript;
       }
       if(last) transcript = last;
-      // show live text
       if(last) setStatus("Heard: " + last);
     }catch(err){}
   };
 
-  recognition.onerror = (ev)=>{
-    // Some errors happen even if mic is OK; keep alive when holding
+  recognition.onerror = ()=>{
     isRecognizing = false;
-    if(wantMic && holding){
-      scheduleRestart();
-    }
+    if(wantMic && holding) scheduleRestart();
   };
 
   recognition.onend = ()=>{
-    // ANDROID FIX: recognition ends by itself after few seconds
     isRecognizing = false;
-    if(wantMic && holding){
-      scheduleRestart();
-    }
+    if(wantMic && holding) scheduleRestart();
   };
 
-  try{
-    recognition.start();
-  }catch(e){
-    // start may throw if already started; retry once
-    scheduleRestart();
-  }
+  try{ recognition.start(); }catch(e){ scheduleRestart(); }
 }
 
 async function stopListening(){
@@ -652,7 +647,6 @@ async function stopListening(){
   btn.classList.add("ready");
   btn.innerText = "HOLD TO TALK";
 
-  // stop recognition cleanly
   const heldMs = Date.now() - holdStartTs;
   if(heldMs < MIN_HOLD_MS) await new Promise(r=>setTimeout(r, MIN_HOLD_MS - heldMs));
 
@@ -672,7 +666,6 @@ async function stopListening(){
   micFailCount = 0;
   $("query").value = spoken;
 
-  // Car search OR normal chat
   if(looksLikeCarSearch(spoken)){
     const count = await runSearch(spoken);
     if(count > 0) await speak(rand(RESULT_LINES));
@@ -688,7 +681,7 @@ async function stopListening(){
 }
 
 /* =========================
-   AUTH MODAL
+   AUTH MODAL (unchanged)
 ========================= */
 function openAuthModal(){ $("modalBack").style.display="flex"; renderAuthState(); }
 function closeAuthModal(){ $("modalBack").style.display="none"; $("modalMsg").innerHTML=""; }
@@ -740,9 +733,7 @@ async function doLogin(identifier,password){
   return { ok:false, msg: backendMsg || "Login failed" };
 }
 
-/* =========================
-   EVENTS
-========================= */
+/* EVENTS */
 $("showPass").addEventListener("change", ()=>{ $("loginPass").type = $("showPass").checked ? "text" : "password"; });
 $("forgotLink").addEventListener("click", ()=>{
   window.open("https://drivepk.com/forgot-password", "_blank");
@@ -779,12 +770,8 @@ $("doLogin").addEventListener("click", async ()=>{
   setModalMsg(true,"Logging in...");
   const r = await doLogin(id, pass);
   setModalMsg(r.ok, r.msg);
-  if(r.ok){
-    renderAuthState();
-    await speak("Theek hai Bhai jaan, login ho gaya.");
-  }else{
-    await speak("Bhai jaan, login nahi ho saka.");
-  }
+  if(r.ok) await speak("Theek hai Bhai jaan, login ho gaya.");
+  else await speak("Bhai jaan, login nahi ho saka.");
 });
 
 $("logoutBtn").addEventListener("click", async ()=>{
@@ -809,7 +796,6 @@ $("callBtn").addEventListener("click", async ()=>{
   btn.classList.remove("calling");
   btn.disabled=false;
 
-  // READY STATE = GREEN
   btn.classList.add("ready");
   btn.innerText="HOLD TO TALK";
   $("hint").innerText="Press & hold and speak.";
@@ -860,16 +846,14 @@ $("searchBtn").addEventListener("click", async ()=>{
   $("authBtn").innerText = t.access ? "Account" : "Login";
 })();
 </script>
+
+<!-- REQUIRED ORDER -->
 <script src="bolo.mobileDebug.js"></script>
 <script src="bolo.bossCommands.js"></script>
 <script src="bolo.bossObserver.js"></script>
 <script src="bolo.textCommandRouter.js"></script>
 <script src="bolo.routerPatch.js"></script>
-  
+<script src="bolo.forceAI.js"></script>
+
 </body>
 </html>
-  
-
-
-
-
