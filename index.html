@@ -193,7 +193,7 @@
     <div class="adminMini">
       <span class="badge">Browser Test Mode</span>
       <div class="small">
-        Reminder is set to <strong>1 minute</strong> for testing. Data is saved only in this browser using localStorage.
+        Reminder is set to <strong>5 minutes</strong> for testing. Multiple test posts are allowed in this browser. The latest post is tracked for the sold/still available reminder.
       </div>
     </div>
 
@@ -286,7 +286,7 @@
         <button id="markAvailableBtn" class="successBtn">Still Available</button>
       </div>
       <div class="small" style="color:#fff;opacity:.85;">
-        You cannot post another vehicle until this question is answered.
+        Testing mode allows another post, but the latest post is the one tracked for this reminder.
       </div>
     </div>
   </div>
@@ -301,7 +301,7 @@ const GATEWAY_API = "https://meilibeauty.co.uk/search.php"; // mobile gateway
 const COMPANY_NUMBER = "051 8319037";
 const WEBSITE = "www.drivepk.com";
 const OFFICE_ADDRESS = "195, Peshawar Road, Chur Chowk Beside PSO Pump, Westridge, Rawalpindi.";
-const POST_CONFIRMATION_MS = 60 * 1000; // 1 minute browser testing
+const POST_CONFIRMATION_MS = 5 * 60 * 1000; // 5 minutes browser testing
 const POST_SPEECH_MAX_MS = 60 * 1000; // max recording window for full vehicle details
 const POST_SPEECH_SILENCE_MS = 0; // disabled in hold-to-talk mode
 const POST_LOCK_SLIDE_PX = 70; // swipe/slide up distance to lock recording
@@ -817,11 +817,12 @@ function renderActivePostSummary(){
     return;
   }
   const dueIn = post.nextConfirmationAt - Date.now();
+  const archive = JSON.parse(localStorage.getItem("drivepk_vehicle_post_archive") || "[]");
   box.innerHTML = `
     <div class="card activePostBox">
-      <span class="pill pillRed">Active Browser Test Post</span>
+      <span class="pill pillRed">Latest Browser Test Post</span>
       <div style="margin-top:8px;font-weight:bold;">${escapeHtml(post.make)} ${escapeHtml(post.model)} ${escapeHtml(post.year)}</div>
-      <div class="small">Price: PKR ${formatMoney(post.price)} • City: ${escapeHtml(post.city)} • Confirmation due: ${countdownText(dueIn)}</div>
+      <div class="small">Price: PKR ${formatMoney(post.price)} • City: ${escapeHtml(post.city)} • Reminder due: ${countdownText(dueIn)}${archive.length ? " • Previous test posts saved: " + archive.length : ""}</div>
     </div>
   `;
 }
@@ -835,32 +836,20 @@ function renderPostBlockBox(){
   }
 
   const due = Date.now() >= post.nextConfirmationAt;
-  if(due){
-    box.innerHTML = `
-      <div class="alert">
-        <strong>You must confirm your active vehicle first.</strong>
-        <div class="small">${escapeHtml(post.make)} ${escapeHtml(post.model)} ${escapeHtml(post.year)} • PKR ${formatMoney(post.price)}</div>
-        <div class="row" style="margin-top:8px;">
-          <button class="dangerBtn" onclick="markVehicleSold()">Sold</button>
-          <button class="successBtn" onclick="markVehicleAvailable()">Still Available</button>
-        </div>
+  box.innerHTML = `
+    <div class="alert">
+      <strong>Testing mode: latest active post is being tracked.</strong>
+      <div class="small">
+        Latest: ${escapeHtml(post.make)} ${escapeHtml(post.model)} ${escapeHtml(post.year)} • PKR ${formatMoney(post.price)}<br>
+        ${due ? "Confirmation is due now. You can still post another vehicle for testing." : "Reminder due in " + countdownText(post.nextConfirmationAt - Date.now()) + ". You can still post another vehicle for testing."}
       </div>
-    `;
-  } else {
-    box.innerHTML = `
-      <div class="alert">
-        <strong>You already have an active test post.</strong>
-        <div class="small">
-          ${escapeHtml(post.make)} ${escapeHtml(post.model)} ${escapeHtml(post.year)} • PKR ${formatMoney(post.price)}<br>
-          You cannot post another vehicle until confirmation is due in ${countdownText(post.nextConfirmationAt - Date.now())}.
-        </div>
-        <div class="row" style="margin-top:8px;">
-          <button class="dangerBtn" onclick="markVehicleSold()">Mark Sold Now</button>
-        </div>
+      <div class="row" style="margin-top:8px;">
+        <button class="dangerBtn" onclick="markVehicleSold()">Mark Latest Sold</button>
+        <button class="successBtn" onclick="markVehicleAvailable()">Latest Still Available</button>
       </div>
-    `;
-  }
-  $("saveVehicleBtn").disabled = true;
+    </div>
+  `;
+  $("saveVehicleBtn").disabled = false;
 }
 function checkVehicleReminder(force){
   const post = getVehiclePost();
@@ -900,7 +889,7 @@ window.markVehicleAvailable = function(){
     saveVehiclePost(post);
   }
   $("vehicleReminderModal").style.display = "none";
-  $("postFormMsg").innerHTML = `<span class="ok">Vehicle kept active for another 1 minute test cycle.</span>`;
+  $("postFormMsg").innerHTML = `<span class="ok">Vehicle kept active for another 5 minute test cycle.</span>`;
   renderActivePostSummary();
   renderPostBlockBox();
 };
@@ -1408,19 +1397,20 @@ $("postVoiceBtn").addEventListener("pointercancel", ()=>{
 });
 
 $("saveVehicleBtn").addEventListener("click", ()=>{
-  const active = getVehiclePost();
-  if(active && active.isActive){
-    checkVehicleReminder(true);
-    return;
-  }
+  const previousActive = getVehiclePost();
   const post = buildPostFromForm();
   const errors = validatePost(post);
   if(errors.length){
     $("postFormMsg").innerHTML = `<span class="bad">Please fix: ${escapeHtml(errors.join(", "))}</span>`;
     return;
   }
+  if(previousActive && previousActive.isActive){
+    previousActive.status = "active_test_replaced";
+    previousActive.replacedAt = Date.now();
+    archiveVehiclePost(previousActive);
+  }
   saveVehiclePost(post);
-  $("postFormMsg").innerHTML = `<span class="ok">Vehicle posted in browser test mode. Confirmation reminder will appear after 1 minute.</span>`;
+  $("postFormMsg").innerHTML = `<span class="ok">Vehicle posted in browser test mode. Confirmation reminder will appear after 5 minutes. Multiple testing posts are allowed; the latest post is tracked for reminder.</span>`;
   renderActivePostSummary();
   renderPostBlockBox();
   updatePostPreview();
