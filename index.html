@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>DrivePK BOLO</title>
+<title>DrivePK BOLO - Post Vehicle V8</title>
 
 <style>
   :root{--red:#E81F25;--black:#000;--dark:#111;--bg:#e6e6e6;--white:#fff;--muted:#666;}
@@ -72,18 +72,29 @@
   .lock{opacity:.7;font-size:13px;}
 
   /* Post vehicle testing */
-  .sectionTitle{font-size:18px;margin:12px 0 8px;font-weight:800;}
-  .formGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .sectionTitle{font-size:22px;margin:14px 0 10px;font-weight:800;}
+  .formGrid{display:grid;grid-template-columns:1fr;gap:10px;}
   .formGrid input,.formGrid select{margin-bottom:0;}
+  .fieldGroup{margin-bottom:2px;}
+  .fieldLabel{display:block;font-size:16px;font-weight:800;margin:2px 0 6px;color:#111;}
+  .bigField{height:54px !important;font-size:18px !important;padding:0 16px !important;}
+  .bigArea{min-height:120px !important;font-size:17px !important;line-height:1.45;padding:14px 16px !important;}
+  .softNote{background:#f4f4f4;border-radius:12px;padding:10px 12px;margin:10px 0;font-size:14px;line-height:1.5;}
+  .profileNotice{background:#fff;border:1px solid #ddd;border-radius:12px;padding:10px;margin:10px 0;font-size:14px;line-height:1.5;}
+  .profileNotice strong{display:block;margin-bottom:4px;}
+  .contactPreview{background:#fff;border:1px solid #ddd;border-radius:12px;padding:10px;margin:10px 0;}
+  .contactPreview .num{font-size:16px;font-weight:800;color:var(--red);}
+
   .full{grid-column:1 / -1;}
   .voicePanel{background:#000;color:#fff;border-radius:16px;padding:12px;margin:10px 0;}
-  .voicePanel strong{display:block;font-size:16px;margin-bottom:4px;}
+  .voicePanel strong{display:block;font-size:18px;margin-bottom:6px;}
   .voicePanel .row{margin-top:10px;}
   .voiceBtn{background:var(--red);touch-action:none;user-select:none;-webkit-user-select:none;}
   .voiceBtn.listening{filter:brightness(.75);transform:scale(.99);}
   .voiceBtn.locked{background:#0a7a2f!important;}
   .draftPreview{background:#f7f7f7;border:1px solid #ddd;border-radius:12px;padding:10px;margin-top:10px;}
-  .activePostBox{border:2px solid var(--red);}
+  .activePostBox{border:2px solid var(--red);} 
+  .dueBox{border:2px solid var(--red);background:#fff7f7;}
   .alert{border-radius:12px;padding:10px;background:#fff4f4;border:1px solid #ffd0d0;margin-bottom:10px;}
   .adminMini{background:#f2f2f2;border-radius:12px;padding:10px;margin:10px 0;}
   .reminderCard{background:#000;color:#fff;border-radius:16px;padding:14px;}
@@ -115,7 +126,7 @@
   <input id="query" placeholder="Jaise: MG Lahore 2022" />
   <div class="row">
     <button id="searchBtn">Search</button>
-    <button id="authBtn" class="btnRed">Login</button>
+    <button id="authBtn" class="btnRed">Sign Up</button>
   </div>
 
   <button class="postVehicleBtn" id="postVehicleBtn">POST VEHICLE</button>
@@ -176,47 +187,61 @@
   </div>
 
   <div class="pageBody">
-    <div id="postBlockBox"></div>
-
+    <div id="postProfileBox"></div>
     <div class="voicePanel">
-      <strong>Voice Details</strong>
-      <div class="small" style="color:#fff;opacity:.85;">
-        Tap the red button once, speak vehicle details slowly, then tap <strong>Stop & Fill</strong>. This uses the same stable browser speech style that was listening before. If no speech is detected for 10 seconds, the app will say “Please speak clearly now.” Example: Toyota Corolla 2017 white registered Sindh 90000 km good condition one owner 2 panel touch up.
+      <strong>Awaz se Tafseel</strong>
+      <div class="small" style="color:#fff;opacity:.88;line-height:1.6;">
+        Laal button dabayen, phir gaari ki tafseel aista aista bolen. Baad mein <strong>Stop & Fill</strong> dabayen. Agar 10 second tak awaz na aaye to app kahega: <strong>Please speak clearly now</strong>.
+      </div>
+      <div class="softNote" style="background:rgba(255,255,255,.12);color:#fff;">
+        Misal: Toyota Corolla 2017 white Lahore price 20 lakh registered Sindh 90000 km good condition one owner 2 panel touch up.
       </div>
       <div class="row">
-        <button id="playPostGuideBtn" class="secondaryBtn">Play Urdu Guide</button>
-        <button id="postVoiceBtn" class="voiceBtn">Start Speaking</button>
+        <button id="playPostGuideBtn" class="secondaryBtn">Urdu Guide Sunain</button>
+        <button id="postVoiceBtn" class="voiceBtn">Bolna Shuru Karein</button>
       </div>
       <div id="postVoiceStatus" class="small" style="color:#fff;"></div>
     </div>
 
-    <div class="adminMini">
-      <span class="badge">Browser Test Mode</span>
-      <div class="small">
-        Reminder is set to <strong>5 minutes</strong> for testing. Multiple test posts are allowed in this browser. The latest post is tracked for the sold/still available reminder.
+    <div class="sectionTitle">Gaari Ki Tafseel</div>
+    <div class="softNote">Price aur city upar rakhi gayi hain taake customer sequence mein form bhar sake. Phone number customer profile se aayega.</div>
+    <div class="formGrid">
+      <div class="fieldGroup">
+        <label class="fieldLabel" for="pvMake">Make / Company</label>
+        <input class="bigField" id="pvMake" placeholder="Jaise Toyota" />
       </div>
-    </div>
-
-    <div class="sectionTitle">Vehicle Details From Voice</div>
-    <div class="formGrid">
-      <input id="pvMake" placeholder="Make e.g. Toyota" />
-      <input id="pvModel" placeholder="Model e.g. Corolla" />
-      <input id="pvYear" placeholder="Year e.g. 2017" inputmode="numeric" />
-      <input id="pvColor" placeholder="Color e.g. White" />
-      <input id="pvRegisteredIn" placeholder="Registered In e.g. Sindh" />
-      <input id="pvMileage" placeholder="Mileage e.g. 90000" inputmode="numeric" />
-      <textarea class="full" id="pvExtraInfo" placeholder="Extra information e.g. good condition, one owner, 2 panel touch up, call owner any time."></textarea>
-    </div>
-
-    <div class="sectionTitle">Manual Required Fields</div>
-    <div class="alert">
-      Phone, WhatsApp, price and city should be typed manually to avoid speech recognition mistakes.
-    </div>
-    <div class="formGrid">
-      <input id="pvPhone" placeholder="Phone Number e.g. 03001234567" inputmode="tel" />
-      <input id="pvWhatsapp" placeholder="WhatsApp Number e.g. 03001234567" inputmode="tel" />
-      <input id="pvPrice" placeholder="Price e.g. 2000000" inputmode="numeric" />
-      <input id="pvCity" placeholder="City e.g. Lahore" />
+      <div class="fieldGroup">
+        <label class="fieldLabel" for="pvModel">Model</label>
+        <input class="bigField" id="pvModel" placeholder="Jaise Corolla" />
+      </div>
+      <div class="fieldGroup">
+        <label class="fieldLabel" for="pvYear">Model Year</label>
+        <input class="bigField" id="pvYear" placeholder="Jaise 2017" inputmode="numeric" />
+      </div>
+      <div class="fieldGroup">
+        <label class="fieldLabel" for="pvPrice">Price</label>
+        <input class="bigField" id="pvPrice" placeholder="Jaise 2000000" inputmode="numeric" />
+      </div>
+      <div class="fieldGroup">
+        <label class="fieldLabel" for="pvCity">City</label>
+        <input class="bigField" id="pvCity" placeholder="Jaise Lahore" />
+      </div>
+      <div class="fieldGroup">
+        <label class="fieldLabel" for="pvColor">Color</label>
+        <input class="bigField" id="pvColor" placeholder="Jaise White" />
+      </div>
+      <div class="fieldGroup">
+        <label class="fieldLabel" for="pvRegisteredIn">Registered In</label>
+        <input class="bigField" id="pvRegisteredIn" placeholder="Jaise Sindh" />
+      </div>
+      <div class="fieldGroup">
+        <label class="fieldLabel" for="pvMileage">Mileage</label>
+        <input class="bigField" id="pvMileage" placeholder="Jaise 90000" inputmode="numeric" />
+      </div>
+      <div class="fieldGroup">
+        <label class="fieldLabel" for="pvExtraInfo">Additional Tafseel</label>
+        <textarea class="full bigArea" id="pvExtraInfo" placeholder="Jaise good condition, one owner, 2 panel touch up, call owner any time."></textarea>
+      </div>
     </div>
 
     <div id="postFormMsg" class="small"></div>
@@ -227,7 +252,7 @@
     </div>
 
     <div class="row" style="margin-top:8px;">
-      <button id="resetDemoBtn" class="dangerBtn">Reset Browser Test Data</button>
+      <button id="resetDemoBtn" class="dangerBtn">Test Data Reset Karein</button>
     </div>
 
     <div id="postPreview" class="draftPreview" style="display:none;"></div>
@@ -238,39 +263,41 @@
 <div class="modalBack" id="modalBack">
   <div class="modal">
     <button class="xbtn" id="closeModal">✕</button>
-    <h3 id="modalTitle">Login</h3>
+    <h3 id="modalTitle">Browser Sign Up</h3>
 
     <div id="modalMsg" class="small"></div>
 
     <div id="loginForm">
-      <input id="loginEmail" placeholder="Email" />
-      <input id="loginPass" placeholder="Password" type="password" />
-      <div class="row2">
-        <button id="doLogin" class="btnRed">Login</button>
-        <button id="goRegister">Register</button>
+      <div class="profileNotice">
+        <strong>Profile zaroori hai</strong>
+        Gaari post karne ke liye pehle apna naam aur phone number save karein. Ye details browser mein save hongi aur advert mein contact ke liye automatically lag jayengi.
       </div>
-      <div class="small">If token expires, we auto-refresh.</div>
+      <button id="goRegister" class="btnRed">Sign Up / Profile Save Karein</button>
     </div>
 
     <div id="registerForm" style="display:none;">
       <input id="regName" placeholder="Full Name" />
-      <input id="regEmail" placeholder="Email" />
-      <input id="regPhone" placeholder="Phone (3001234567)" />
-      <input id="regPass" placeholder="Password (Password123)" type="password" />
-      <input id="regPass2" placeholder="Confirm Password" type="password" />
+      <input id="regPhone" placeholder="Main Phone Number e.g. 03001234567" inputmode="tel" />
+      <input id="regPass" placeholder="WhatsApp / Second Number optional" inputmode="tel" />
+      <input id="regPass2" placeholder="City optional e.g. Lahore" />
+      <input id="regEmail" placeholder="Email optional" inputmode="email" />
       <div class="row2">
-        <button id="doRegister" class="btnRed">Create</button>
+        <button id="doRegister" class="btnRed">Save Profile</button>
         <button id="goLogin">Back</button>
       </div>
+      <div class="small">OTP abhi required nahi hai. Ye sirf browser testing ke liye local save hoga.</div>
     </div>
 
     <div id="loggedInBox" style="display:none;">
       <div class="card">
-        <div class="pill">Logged In</div>
+        <div class="pill">Browser Profile</div>
         <div style="margin-top:6px;font-weight:bold;" id="whoami"></div>
         <div class="small" id="whoEmail"></div>
       </div>
-      <button id="logoutBtn" style="background:#000;margin-top:8px;">Logout</button>
+      <div class="row2">
+        <button id="editProfileBtn" class="btnRed">Edit Profile</button>
+        <button id="logoutBtn" style="background:#000;">Clear Profile</button>
+      </div>
     </div>
   </div>
 </div>
@@ -279,14 +306,14 @@
 <div class="modalBack" id="vehicleReminderModal">
   <div class="modal">
     <div class="reminderCard">
-      <h3>Vehicle Availability Check</h3>
+      <h3>Gaari Availability Check</h3>
       <div id="reminderVehicleMeta" class="meta"></div>
       <div class="row">
         <button id="markSoldBtn" class="dangerBtn">Sold</button>
-        <button id="markAvailableBtn" class="successBtn">Still Available</button>
+        <button id="markAvailableBtn" class="successBtn">Abhi Bhi Available</button>
       </div>
       <div class="small" style="color:#fff;opacity:.85;">
-        Testing mode allows another post, but the latest post is the one tracked for this reminder.
+        Testing ke liye multiple posts allowed hain, lekin reminder latest active post par lagega.
       </div>
     </div>
   </div>
@@ -397,6 +424,58 @@ function clearTokens(){
   localStorage.removeItem("dp_refresh");
   localStorage.removeItem("dp_expiresAt");
   localStorage.removeItem("dp_user");
+}
+function getBrowserUser(){
+  return JSON.parse(localStorage.getItem("drivepk_browser_user") || "null");
+}
+function saveBrowserUser(user){
+  localStorage.setItem("drivepk_browser_user", JSON.stringify(user));
+  localStorage.setItem("dp_access", "browser_test_token");
+  localStorage.setItem("dp_user", JSON.stringify({
+    name:user.name,
+    full_name:user.name,
+    phone:user.phone,
+    whatsapp:user.whatsapp,
+    city:user.city,
+    email:user.email
+  }));
+}
+function clearBrowserUser(){
+  localStorage.removeItem("drivepk_browser_user");
+  clearTokens();
+}
+function hasBrowserUser(){
+  const u = getBrowserUser();
+  return !!(u && u.name && u.phone);
+}
+function formatContactLine(user){
+  if(!user) return "";
+  const second = user.whatsapp && user.whatsapp !== user.phone ? " • Second/WhatsApp: " + user.whatsapp : "";
+  return "Phone: " + user.phone + second;
+}
+function prefillProfileIntoPostForm(){
+  const u = getBrowserUser();
+  if(!u) return;
+  if(u.city && !$("pvCity").value.trim()) $("pvCity").value = u.city;
+  updatePostProfileBox();
+  updatePostPreview();
+}
+function updatePostProfileBox(){
+  const box = $("postProfileBox");
+  if(!box) return;
+  const u = getBrowserUser();
+  if(!u){
+    box.innerHTML = `<div class="profileNotice"><strong>Profile required</strong> Pehle Sign Up karein. Phone number browser profile se advert mein add hoga.</div>`;
+    return;
+  }
+  box.innerHTML = `
+    <div class="contactPreview">
+      <strong>Seller Profile</strong>
+      <div class="small">Name: ${escapeHtml(u.name || "-")}</div>
+      <div class="num">${escapeHtml(formatContactLine(u))}</div>
+      ${u.city ? `<div class="small">City: ${escapeHtml(u.city)}</div>` : ""}
+    </div>
+  `;
 }
 
 /* Browser vehicle post storage */
@@ -664,7 +743,7 @@ function playPostVehicleGuide(){
     audio.onerror = ()=>{ currentAudio = null; $("postVoiceStatus").innerText = "Guide audio could not play. Tap again."; };
     audio.play().catch(()=>{
       currentAudio = null;
-      $("postVoiceStatus").innerText = "Tap Play Urdu Guide again if browser blocked autoplay.";
+      $("postVoiceStatus").innerText = "Agar guide play na ho to Urdu Guide dobara dabayen.";
     });
   }catch(e){
     $("postVoiceStatus").innerText = "Guide audio could not play.";
@@ -734,7 +813,7 @@ function parseVehicleSpeech(text){
     registeredIn: extractRegisteredIn(text),
     mileage: extractMileage(text)
   };
-  parsed.extraInfo = stripKnownVehicleParts(text, parsed);
+  parsed.extraInfo = normalizeExtraInfoText(stripKnownVehicleParts(text, parsed));
   return parsed;
 }
 function fillPostFormFromSpeech(text){
@@ -747,11 +826,13 @@ function fillPostFormFromSpeech(text){
   if(parsed.mileage) $("pvMileage").value = parsed.mileage;
   if(parsed.extraInfo){
     const old = $("pvExtraInfo").value.trim();
-    $("pvExtraInfo").value = old ? (old + ". " + parsed.extraInfo) : parsed.extraInfo;
+    const merged = old ? (old + ". " + parsed.extraInfo) : parsed.extraInfo;
+    $("pvExtraInfo").value = normalizeExtraInfoText(merged);
   }
   updatePostPreview();
 }
 function buildPostFromForm(){
+  const u = getBrowserUser();
   return {
     id: "local_" + Date.now(),
     make: $("pvMake").value.trim(),
@@ -761,8 +842,11 @@ function buildPostFromForm(){
     registeredIn: $("pvRegisteredIn").value.trim(),
     mileage: cleanNumber($("pvMileage").value),
     extraInfo: $("pvExtraInfo").value.trim(),
-    phone: cleanNumber($("pvPhone").value),
-    whatsapp: cleanNumber($("pvWhatsapp").value),
+    sellerName: u ? u.name : "",
+    phone: u ? cleanNumber(u.phone) : "",
+    whatsapp: u ? cleanNumber(u.whatsapp || u.phone) : "",
+    sellerCity: u ? (u.city || "") : "",
+    sellerEmail: u ? (u.email || "") : "",
     price: cleanNumber($("pvPrice").value),
     city: $("pvCity").value.trim(),
     status: "active",
@@ -775,37 +859,41 @@ function buildPostFromForm(){
 }
 function validatePost(post){
   const missing = [];
+  if(!hasBrowserUser()) missing.push("Browser profile / phone number");
   if(!post.make) missing.push("Make");
   if(!post.model) missing.push("Model");
   if(!post.year) missing.push("Year");
-  if(!post.phone) missing.push("Phone");
-  if(!post.whatsapp) missing.push("WhatsApp");
   if(!post.price) missing.push("Price");
   if(!post.city) missing.push("City");
   if(post.year && !/^(19|20)\d{2}$/.test(post.year)) missing.push("Valid year");
-  if(post.phone && post.phone.length < 10) missing.push("Valid phone");
-  if(post.whatsapp && post.whatsapp.length < 10) missing.push("Valid WhatsApp");
   return missing;
 }
 function clearPostForm(){
-  ["pvMake","pvModel","pvYear","pvColor","pvRegisteredIn","pvMileage","pvExtraInfo","pvPhone","pvWhatsapp","pvPrice","pvCity"].forEach(id=>$(id).value="");
+  ["pvMake","pvModel","pvYear","pvPrice","pvCity","pvColor","pvRegisteredIn","pvMileage","pvExtraInfo"].forEach(id=>$(id).value="");
   $("postFormMsg").innerHTML = "";
   $("postPreview").style.display = "none";
 }
 function updatePostPreview(){
   const post = buildPostFromForm();
+  const u = getBrowserUser();
   if(!post.make && !post.model && !post.year && !post.price) {
     $("postPreview").style.display = "none";
     return;
   }
   $("postPreview").style.display = "block";
   $("postPreview").innerHTML = `
-    <strong>Preview</strong>
+    <strong>Advert Preview</strong>
     <div class="small">
       ${escapeHtml(post.make)} ${escapeHtml(post.model)} ${escapeHtml(post.year)}<br>
-      Color: ${escapeHtml(post.color || "-")} • Registered: ${escapeHtml(post.registeredIn || "-")} • Mileage: ${escapeHtml(post.mileage || "-")} km<br>
       Price: PKR ${formatMoney(post.price)} • City: ${escapeHtml(post.city || "-")}<br>
-      Extra: ${escapeHtml(post.extraInfo || "-")}
+      Color: ${escapeHtml(post.color || "-")} • Registered: ${escapeHtml(post.registeredIn || "-")} • Mileage: ${escapeHtml(post.mileage || "-")} km<br>
+      Tafseel: ${escapeHtml(post.extraInfo || "-")}
+    </div>
+    <div class="contactPreview">
+      <strong>Seller Contact From Signup</strong>
+      <div class="small">Name: ${escapeHtml((u && u.name) || "-")}</div>
+      <div class="num">${escapeHtml(u ? formatContactLine(u) : "Profile required")}</div>
+      ${(u && u.email) ? `<div class="small">Email: ${escapeHtml(u.email)}</div>` : ""}
     </div>
   `;
 }
@@ -817,38 +905,25 @@ function renderActivePostSummary(){
     return;
   }
   const dueIn = post.nextConfirmationAt - Date.now();
-  const archive = JSON.parse(localStorage.getItem("drivepk_vehicle_post_archive") || "[]");
+  if(dueIn > 0){
+    box.innerHTML = "";
+    return;
+  }
   box.innerHTML = `
-    <div class="card activePostBox">
-      <span class="pill pillRed">Latest Browser Test Post</span>
-      <div style="margin-top:8px;font-weight:bold;">${escapeHtml(post.make)} ${escapeHtml(post.model)} ${escapeHtml(post.year)}</div>
-      <div class="small">Price: PKR ${formatMoney(post.price)} • City: ${escapeHtml(post.city)} • Reminder due: ${countdownText(dueIn)}${archive.length ? " • Previous test posts saved: " + archive.length : ""}</div>
+    <div class="card dueBox">
+      <span class="pill pillRed">Update Required</span>
+      <div style="margin-top:8px;font-weight:bold;font-size:17px;">${escapeHtml(post.make)} ${escapeHtml(post.model)} ${escapeHtml(post.year)}</div>
+      <div class="small">Is gaari ki update darkar hai. Price: PKR ${formatMoney(post.price)} • City: ${escapeHtml(post.city || "-")}</div>
+      <div class="row" style="margin-top:8px;">
+        <button class="dangerBtn" onclick="markVehicleSold()">Sold</button>
+        <button class="successBtn" onclick="markVehicleAvailable()">Abhi Bhi Available</button>
+      </div>
     </div>
   `;
 }
 function renderPostBlockBox(){
-  const post = getVehiclePost();
   const box = $("postBlockBox");
-  if(!post || !post.isActive){
-    box.innerHTML = "";
-    $("saveVehicleBtn").disabled = false;
-    return;
-  }
-
-  const due = Date.now() >= post.nextConfirmationAt;
-  box.innerHTML = `
-    <div class="alert">
-      <strong>Testing mode: latest active post is being tracked.</strong>
-      <div class="small">
-        Latest: ${escapeHtml(post.make)} ${escapeHtml(post.model)} ${escapeHtml(post.year)} • PKR ${formatMoney(post.price)}<br>
-        ${due ? "Confirmation is due now. You can still post another vehicle for testing." : "Reminder due in " + countdownText(post.nextConfirmationAt - Date.now()) + ". You can still post another vehicle for testing."}
-      </div>
-      <div class="row" style="margin-top:8px;">
-        <button class="dangerBtn" onclick="markVehicleSold()">Mark Latest Sold</button>
-        <button class="successBtn" onclick="markVehicleAvailable()">Latest Still Available</button>
-      </div>
-    </div>
-  `;
+  if(box) box.innerHTML = "";
   $("saveVehicleBtn").disabled = false;
 }
 function checkVehicleReminder(force){
@@ -858,7 +933,7 @@ function checkVehicleReminder(force){
   if(!post || !post.isActive) return;
   if(force || Date.now() >= post.nextConfirmationAt){
     $("reminderVehicleMeta").innerHTML = `
-      Is your <strong>${escapeHtml(post.make)} ${escapeHtml(post.model)} ${escapeHtml(post.year)}</strong> still available?<br>
+      Kya aap ki <strong>${escapeHtml(post.make)} ${escapeHtml(post.model)} ${escapeHtml(post.year)}</strong> abhi bhi available hai?<br>
       Price: <strong>PKR ${formatMoney(post.price)}</strong><br>
       City: <strong>${escapeHtml(post.city || "-")}</strong>
     `;
@@ -875,7 +950,7 @@ window.markVehicleSold = function(){
   }
   clearVehiclePost();
   $("vehicleReminderModal").style.display = "none";
-  $("postFormMsg").innerHTML = `<span class="ok">Vehicle marked as sold and removed from active browser test listings. You can post another vehicle now.</span>`;
+  $("postFormMsg").innerText = "Gaari sold mark ho gayi hai aur active list se hata di gayi hai. Ab aap doosri gaari post kar sakte hain.";
   renderActivePostSummary();
   renderPostBlockBox();
 };
@@ -889,14 +964,20 @@ window.markVehicleAvailable = function(){
     saveVehiclePost(post);
   }
   $("vehicleReminderModal").style.display = "none";
-  $("postFormMsg").innerHTML = `<span class="ok">Vehicle kept active for another 5 minute test cycle.</span>`;
+  $("postFormMsg").innerText = "Gaari ko mazeed 5 minute ke liye active rakha gaya hai.";
   renderActivePostSummary();
   renderPostBlockBox();
 };
 
 function openPostVehiclePage(){
+  if(!hasBrowserUser()){
+    openAuthModal();
+    $("postFormMsg").innerText = "Gaari post karne se pehle browser profile save karein.";
+    return;
+  }
   checkVehicleReminder(false);
   $("postVehiclePage").style.display = "block";
+  prefillProfileIntoPostForm();
   renderPostBlockBox();
   setTimeout(playPostVehicleGuide, 180);
 }
@@ -911,7 +992,7 @@ function clearPostVehicleSpeechTimers(){
 }
 function resetPostVehicleSpeechButton(){
   $("postVoiceBtn").classList.remove("listening");
-  $("postVoiceBtn").innerText = "Start Speaking";
+  $("postVoiceBtn").innerText = "Bolna Shuru Karein";
 }
 function getFullPostVehicleSpeechText(){
   return (postVoiceAccumulatedText + " " + postVoiceCurrentText).replace(/\s+/g," ").trim();
@@ -932,7 +1013,7 @@ function finishPostVehicleSpeech(noSpeechPrompt){
 
   if(finalText){
     fillPostFormFromSpeech(finalText);
-    $("postVoiceStatus").innerText = "Voice details added. Please type phone, WhatsApp, price and city manually.";
+    $("postVoiceStatus").innerText = "Awaz se tafseel aa gayi hai. Zaroori fields check karke save karein.";
   }else{
     $("postVoiceStatus").innerText = "No voice detected. Please speak clearly now.";
     if(noSpeechPrompt) speakNoSpeechPrompt();
@@ -1347,24 +1428,30 @@ function setModalMsg(ok, msg){
   $("modalMsg").innerHTML = `<span class="${ok?'ok':'bad'}">${escapeHtml(msg)}</span>`;
 }
 function renderAuthState(){
-  const t = getTokens();
-  if(t.access){
-    $("modalTitle").innerText = "Account";
+  const u = getBrowserUser();
+  if(u && u.name && u.phone){
+    $("modalTitle").innerText = "Browser Profile";
     $("loginForm").style.display = "none";
     $("registerForm").style.display = "none";
     $("loggedInBox").style.display = "block";
-    const u = t.user || {};
-    $("whoami").innerText = u.full_name || u.name || "Logged in";
-    $("whoEmail").innerText = u.email || "";
-    $("authBtn").innerText = "Account";
+    $("whoami").innerText = u.name || "Profile saved";
+    $("whoEmail").innerText = formatContactLine(u) + (u.city ? " • City: " + u.city : "") + (u.email ? " • Email: " + u.email : "");
+    $("authBtn").innerText = "Profile";
+    ["regName","regPhone","regPass","regPass2","regEmail"].forEach(id=>{
+      if($(id)){
+        const map = {regName:"name",regPhone:"phone",regPass:"whatsapp",regPass2:"city",regEmail:"email"};
+        $(id).value = u[map[id]] || "";
+      }
+    });
   }else{
-    $("modalTitle").innerText = "Login";
-    $("loginForm").style.display = "block";
-    $("registerForm").style.display = "none";
+    $("modalTitle").innerText = "Browser Sign Up";
+    $("loginForm").style.display = "none";
+    $("registerForm").style.display = "block";
     $("loggedInBox").style.display = "none";
-    $("authBtn").innerText = "Login";
+    $("authBtn").innerText = "Sign Up";
   }
 }
+
 
 /* =========================
    EVENTS
@@ -1379,7 +1466,8 @@ $("saveVehicleBtn").addEventListener("click", ()=>{
   const post = buildPostFromForm();
   const errors = validatePost(post);
   if(errors.length){
-    $("postFormMsg").innerHTML = `<span class="bad">Please fix: ${escapeHtml(errors.join(", "))}</span>`;
+    $("postFormMsg").innerText = "Please fix: " + errors.join(", ");
+    if(!hasBrowserUser()) openAuthModal();
     return;
   }
   if(previousActive && previousActive.isActive){
@@ -1400,13 +1488,13 @@ $("resetDemoBtn").addEventListener("click", ()=>{
   localStorage.removeItem("drivepk_vehicle_post_archive");
   clearPostForm();
   $("vehicleReminderModal").style.display = "none";
-  $("postFormMsg").innerHTML = `<span class="ok">Browser test data reset. You can post again.</span>`;
+  $("postFormMsg").innerText = "Test data reset ho gaya hai. Aap dobara post kar sakte hain.";
   renderActivePostSummary();
   renderPostBlockBox();
 });
 $("markSoldBtn").addEventListener("click", window.markVehicleSold);
 $("markAvailableBtn").addEventListener("click", window.markVehicleAvailable);
-["pvMake","pvModel","pvYear","pvColor","pvRegisteredIn","pvMileage","pvExtraInfo","pvPhone","pvWhatsapp","pvPrice","pvCity"].forEach(id=>{
+["pvMake","pvModel","pvYear","pvPrice","pvCity","pvColor","pvRegisteredIn","pvMileage","pvExtraInfo"].forEach(id=>{
   $(id).addEventListener("input", updatePostPreview);
 });
 
@@ -1483,60 +1571,54 @@ $("modalBack").addEventListener("click", (e)=>{
   if(e.target === $("modalBack")) closeAuthModal();
 });
 $("goRegister").addEventListener("click", ()=>{
-  $("modalTitle").innerText = "Register";
+  $("modalTitle").innerText = "Browser Sign Up";
   $("loginForm").style.display = "none";
   $("registerForm").style.display = "block";
   $("loggedInBox").style.display = "none";
   $("modalMsg").innerHTML = "";
 });
-$("goLogin").addEventListener("click", ()=>{
-  $("modalTitle").innerText = "Login";
-  $("loginForm").style.display = "block";
-  $("registerForm").style.display = "none";
+$("goLogin").addEventListener("click", renderAuthState);
+$("doLogin").addEventListener("click", renderAuthState);
+$("doRegister").addEventListener("click", async ()=>{
+  const user = {
+    name: ($("regName").value||"").trim(),
+    phone: cleanNumber($("regPhone").value||""),
+    whatsapp: cleanNumber($("regPass").value||""),
+    city: ($("regPass2").value||"").trim(),
+    email: ($("regEmail").value||"").trim(),
+    createdAt: Date.now(),
+    source: "browser_profile_test"
+  };
+  if(!user.name || !user.phone){
+    setModalMsg(false, "Name aur main phone number required hain.");
+    return;
+  }
+  if(user.phone.length < 10){
+    setModalMsg(false, "Valid phone number likhein.");
+    return;
+  }
+  if(!user.whatsapp) user.whatsapp = user.phone;
+  saveBrowserUser(user);
+  setModalMsg(true, "Profile browser mein save ho gaya.");
+  renderAuthState();
+  updatePostProfileBox();
+  updatePostPreview();
+  await speak("Profile save ho gaya. Ab aap gaari post kar sakte hain.");
+});
+$("editProfileBtn").addEventListener("click", ()=>{
+  $("modalTitle").innerText = "Edit Browser Profile";
+  $("loginForm").style.display = "none";
+  $("registerForm").style.display = "block";
   $("loggedInBox").style.display = "none";
   $("modalMsg").innerHTML = "";
 });
-$("doLogin").addEventListener("click", async ()=>{
-  const email = ($("loginEmail").value||"").trim();
-  const pass  = ($("loginPass").value||"").trim();
-  if(!email || !pass){
-    setModalMsg(false, "Email aur password required.");
-    return;
-  }
-  setModalMsg(true, "Logging in...");
-  const r = await doLogin(email, pass);
-  setModalMsg(r.ok, r.msg);
-  if(r.ok){
-    renderAuthState();
-    await speak("Login ho gaya. Ab aap phone number dekh sakte hain.");
-  }
-});
-$("doRegister").addEventListener("click", async ()=>{
-  const payload = {
-    name: ($("regName").value||"").trim(),
-    email: ($("regEmail").value||"").trim(),
-    phone: ($("regPhone").value||"").trim(),
-    password: ($("regPass").value||"").trim(),
-    confirmPassword: ($("regPass2").value||"").trim(),
-    subscribeToNewsletter: true
-  };
-  if(!payload.name || !payload.email || !payload.phone || !payload.password || !payload.confirmPassword){
-    setModalMsg(false, "Sab fields fill karein.");
-    return;
-  }
-  setModalMsg(true, "Creating account...");
-  const r = await doRegister(payload);
-  setModalMsg(r.ok, r.msg);
-  if(r.ok){
-    renderAuthState();
-    await speak("Account ban gaya. Ab verification complete karke phone dekh sakte hain.");
-  }
-});
 $("logoutBtn").addEventListener("click", async ()=>{
-  clearTokens();
-  setModalMsg(true, "Logged out.");
+  clearBrowserUser();
+  setModalMsg(true, "Browser profile clear ho gaya.");
   renderAuthState();
-  await speak("Theek hai, logout ho gaya.");
+  updatePostProfileBox();
+  updatePostPreview();
+  await speak("Profile clear ho gaya.");
 });
 
 /* =========================
@@ -1545,8 +1627,7 @@ $("logoutBtn").addEventListener("click", async ()=>{
 (function init(){
   hideSupport();
   setStatus("");
-  const t = getTokens();
-  $("authBtn").innerText = t.access ? "Account" : "Login";
+  renderAuthState();
   renderActivePostSummary();
   renderPostBlockBox();
   checkVehicleReminder(false);
